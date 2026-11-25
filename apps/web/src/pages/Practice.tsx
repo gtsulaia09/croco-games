@@ -152,22 +152,22 @@ function PracticeGame({ gameType }: { gameType: GameType }) {
   );
 
   return (
-    <div className="grid gap-2 fade-in">
-      {/* Compact Single-Row Game Header (maximizes vertical space for the board) */}
-      <div className="flex flex-wrap items-center gap-2 px-1">
-        <Link to="/practice" className="btn-ghost btn-sm px-2">
+    <div className="grid gap-2 min-w-0 fade-in">
+      {/* Sleek Unified Neo-Arena Top Bar (single practiceBanner node, wraps cleanly on 360px mobile) */}
+      <div className="rounded-2xl bg-surface/90 border border-line/80 px-3 py-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 min-w-0">
+        <Link to="/practice" className="btn-ghost btn-sm px-2.5">
           <ArrowLeft size={14} /> {t("common.back")}
         </Link>
         <div className="flex items-center gap-2 min-w-0">
-          <GameBadgeIcon game={gameType} size={18} />
-          <h1 className="font-bold text-sm sm:text-base text-white truncate">{t(`games.${gameType}.name`)}</h1>
+          <GameBadgeIcon game={gameType} size={20} />
+          <h1 className="font-extrabold text-sm sm:text-base text-white truncate">{t(`games.${gameType}.name`)}</h1>
           <span className={`chip hidden md:inline-flex ${GAME_THEMES[gameType].badgeClass}`}>{t(`games.${gameType}.tag`)}</span>
         </div>
-        <button className="btn-secondary btn-sm ml-auto" onClick={() => setVersion((v) => v + 1)}>
+        <button className="btn-secondary btn-sm ml-auto xl:order-last" onClick={() => setVersion((v) => v + 1)}>
           <RotateCcw size={13} /> {t("practice.newGame")}
         </button>
+        <p className="w-full xl:w-auto xl:max-w-md xl:truncate text-[11px] text-muted leading-snug break-words">{t("demo.practiceBanner")}</p>
       </div>
-      <p className="text-[11px] text-warning/90 px-1 leading-snug">{t("demo.practiceBanner")}</p>
 
       {error && <ErrorText error={error} />}
 

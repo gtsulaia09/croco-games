@@ -5,7 +5,7 @@ import { useT } from "../i18n";
 import { PlayingCard } from "../components/ui";
 import { MiniCardCount, opponentsOrder, SeatTag, TrumpBadge, TurnBar, useSeatName, type BoardProps } from "./common";
 
-/** Dedicated Three-Card Bura table with smart same-suit selection, sideways trump deck, and 31-point target gauge. */
+/** Dedicated Three-Card Bura Neo-Arena with jumbo hero cards, angled trump deck, and 31-point target gauge. */
 export default function Bura3Board({ view, mySeat, seats, deadline, onAction }: BoardProps<Bura3View>) {
   const t = useT();
   const name = useSeatName(seats);
@@ -17,7 +17,6 @@ export default function Bura3Board({ view, mySeat, seats, deadline, onAction }: 
 
   const sameSuit = selected.length > 0 && selected.every((c) => c[1] === selected[0]![1]);
 
-  // Smart card toggle: when leading, clicking a different suit switches cleanly to that suit instead of creating an illegal mix.
   const toggle = (c: string) => {
     setSelected((cur) => {
       if (cur.includes(c)) return cur.filter((x) => x !== c);
@@ -54,28 +53,28 @@ export default function Bura3Board({ view, mySeat, seats, deadline, onAction }: 
         seats={seats}
         extra={
           <>
-            <span className="chip bg-bg/75 border border-white/10 text-text-2">{t("game.hand", { n: view.handNumber })}</span>
+            <span className="chip bg-white/8 border border-white/14 text-white">{t("game.hand", { n: view.handNumber })}</span>
             <TrumpBadge card={view.trumpCard} suit={view.trump} />
-            <span className="chip bg-bg/75 border border-white/10 text-text-2">{t("game.stock", { n: view.stockCount })}</span>
-            <span className="chip bg-gold/15 border border-gold/35 text-gold">{t("bura.target", { n: view.targetPoints })}</span>
+            <span className="chip bg-white/8 border border-white/14 text-text-2">{t("game.stock", { n: view.stockCount })}</span>
+            <span className="chip bg-gold/20 border border-gold/45 text-gold font-bold">{t("bura.target", { n: view.targetPoints })}</span>
           </>
         }
       />
 
       {lastMessage && (
-        <div className="rounded-xl bg-gold/15 border border-gold/40 px-3 py-1.5 text-xs font-semibold text-gold text-center flex items-center justify-center gap-1.5">
-          <Award size={14} /> {lastMessage}
+        <div className="rounded-2xl bg-gold/18 border border-gold/45 px-3.5 py-2 text-xs font-extrabold text-gold text-center flex items-center justify-center gap-1.5">
+          <Award size={15} /> {lastMessage}
         </div>
       )}
 
       {/* Opponents Row */}
-      <div className="flex flex-wrap gap-2 justify-center">
+      <div className="flex flex-wrap gap-2.5 justify-center">
         {opponentsOrder(players, mySeat).map((s) => (
-          <div key={s} className="min-w-44 flex-1 max-w-xs">
+          <div key={s} className="min-w-48 flex-1 max-w-xs">
             <SeatTag seat={s} seats={seats} active={view.toAct === s} compact>
               <MiniCardCount count={view.players[s]!.handCount} />
-              <span className="text-text-2">{t("bura.pile", { n: view.players[s]!.capturedCount })}</span>
-              <span className="text-gold font-bold tabular-nums">
+              <span className="text-text-2 font-semibold">{t("bura.pile", { n: view.players[s]!.capturedCount })}</span>
+              <span className="text-gold font-extrabold tabular-nums">
                 {view.scores[s]}/{view.targetPoints}
               </span>
             </SeatTag>
@@ -83,121 +82,128 @@ export default function Bura3Board({ view, mySeat, seats, deadline, onAction }: 
         ))}
       </div>
 
-      {/* Center Table: Stock + Sideways Trump Card & Trick Clash Zone */}
-      <div className="rounded-2xl border border-white/12 bg-black/22 p-3.5 sm:p-4 min-h-36 flex flex-wrap items-center justify-center gap-6 sm:gap-10">
-        <div className="flex flex-col items-center gap-1.5 shrink-0">
-          <div className="relative flex items-center justify-center w-22 h-22">
+      {/* Sculpted Center Table Well: Angled Trump + Stock Deck & Full-Size Trick Clash */}
+      <div className="table-well min-h-40 flex flex-wrap items-center justify-center gap-6 sm:gap-12">
+        <div className="flex flex-col items-center gap-2 shrink-0">
+          <div className="relative flex items-center justify-center w-26 h-26">
             {view.trumpCard && (
-              <span className="absolute -left-1 rotate-[-14deg]">
+              <span className="absolute -left-1.5 rotate-[-14deg] drop-shadow-lg">
                 <PlayingCard card={view.trumpCard} size="sm" />
               </span>
             )}
             {view.stockCount > 0 && (
-              <span className="relative translate-x-4 translate-y-1">
+              <span className="relative translate-x-5 translate-y-1">
                 <PlayingCard back size="sm" />
               </span>
             )}
           </div>
-          <span className="text-[11px] text-text-2 font-medium tabular-nums">{t("game.stock", { n: view.stockCount })}</span>
+          <span className="chip bg-[#070e17]/85 border border-white/15 text-text-2 tabular-nums">{t("game.stock", { n: view.stockCount })}</span>
         </div>
 
-        <div className="flex flex-wrap gap-4 justify-center items-center min-w-40">
+        <div className="flex flex-wrap gap-4 sm:gap-6 justify-center items-center min-w-44">
           {view.trick?.plays.length ? (
             view.trick.plays.map((p) => {
               const best = view.trick!.bestSeat === p.seat;
               return (
                 <div
                   key={p.seat}
-                  className={`flex flex-col items-center gap-1.5 rounded-xl p-2 border card-enter ${
-                    best ? "bg-primary/14 border-primary/50" : "bg-black/20 border-white/10"
+                  className={`flex flex-col items-center gap-2 rounded-2xl p-2.5 border card-enter ${
+                    best ? "bg-primary/16 border-primary shadow-[0_0_20px_rgba(0,217,95,0.22)]" : "bg-[#070e17]/55 border-white/14"
                   }`}
                 >
-                  <div className="flex gap-1.5">
+                  <div className="flex flex-wrap gap-1.5 justify-center">
                     {p.faceUp
-                      ? p.faceUp.map((c) => <PlayingCard key={c} card={c} size="sm" />)
-                      : Array.from({ length: p.count }, (_, i) => <PlayingCard key={i} back size="sm" />)}
+                      ? p.faceUp.map((c) => <PlayingCard key={c} card={c} size="md" />)
+                      : Array.from({ length: p.count }, (_, i) => <PlayingCard key={i} back size="md" />)}
                   </div>
-                  <span className={`text-[11px] font-semibold ${best ? "text-primary" : "text-text-2"}`}>{name(p.seat)}</span>
+                  <span className={`text-xs font-extrabold ${best ? "text-primary" : "text-white"}`}>{name(p.seat)}</span>
                 </div>
               );
             })
           ) : (
-            <div className="text-center grid gap-1">
-              <span className="text-xs text-white/40 font-medium">{t("games.bura3.name")}</span>
-              <span className="text-[11px] text-white/30">{t("bura.cardValues")}</span>
+            <div className="text-center grid gap-1.5">
+              <span className="text-sm font-extrabold uppercase tracking-wider text-white/45">{t("games.bura3.name")}</span>
+              <span className="text-xs font-medium text-white/35">{t("bura.cardValues")}</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Player Seat, 31-Point Gauge & Prominent 3-Card Hand */}
+      {/* Hero Station: Seat + 31-Point Gauge + Huge 3-Card Hero Hand + Action Dock */}
       {mySeat !== null && view.you && (
-        <div className="grid gap-2.5">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
-            <div className="w-full sm:w-auto sm:min-w-68">
+        <div className="hero-hand-tray" data-my-turn={myTurn ? "true" : "false"}>
+          <div className="flex flex-wrap items-center justify-between gap-2.5">
+            <div className="w-full sm:w-auto sm:min-w-64">
               <SeatTag seat={mySeat} seats={seats} active={myTurn} compact>
-                <span className="text-text-2">{t("bura.pile", { n: view.players[mySeat]!.capturedCount })}</span>
-                <span className="text-gold font-bold tabular-nums">
+                <span className="text-text-2 font-semibold">{t("bura.pile", { n: view.players[mySeat]!.capturedCount })}</span>
+                <span className="text-gold font-extrabold tabular-nums">
                   {view.scores[mySeat]}/{view.targetPoints}
                 </span>
               </SeatTag>
             </div>
             {knownPts !== null && (
-              <div className="rounded-xl bg-bg/75 border border-white/12 px-3 py-1.5 min-w-44">
-                <div className="flex items-center justify-between text-[11px] font-semibold">
+              <div className="rounded-2xl bg-[#0b1522] border border-white/14 px-3.5 py-2 min-w-48 flex-1 sm:flex-none">
+                <div className="flex items-center justify-between text-xs font-bold gap-3">
                   <span className="text-muted">{t("ui.toward31")}</span>
                   <span className={`tabular-nums ${knownPts >= 31 ? "text-gold" : "text-white"}`}>{t("bura.knownPoints", { n: knownPts })}</span>
                 </div>
-                <div className="h-1.5 rounded-full bg-surface-3 overflow-hidden mt-1">
+                <div className="h-2 rounded-full bg-surface-3 overflow-hidden mt-1.5">
                   <div className={`h-full rounded-full transition-all ${knownPts >= 31 ? "bg-gold" : "bg-primary"}`} style={{ width: `${pct31}%` }} />
                 </div>
               </div>
             )}
           </div>
 
-          <div className="flex flex-wrap gap-3 justify-center py-1" role="group" aria-label={t("game.yourHand")}>
+          <div className="flex flex-wrap gap-3 sm:gap-4 justify-center py-1.5" role="group" aria-label={t("game.yourHand")}>
             {hand.map((c) => (
-              <PlayingCard key={c} card={c} size="lg" selected={selected.includes(c)} onClick={myTurn ? () => toggle(c) : undefined} />
+              <PlayingCard
+                key={c}
+                card={c}
+                size="lg"
+                playable={true}
+                selected={selected.includes(c)}
+                onClick={myTurn ? () => toggle(c) : undefined}
+              />
             ))}
           </div>
 
           {myTurn && (
-            <div className="rounded-xl bg-bg/85 border border-primary/40 p-2.5 flex flex-wrap gap-2 justify-center items-center fade-in">
+            <div className="action-dock flex flex-wrap gap-2.5 justify-center items-center fade-in">
               {view.phase === "lead" && (
                 <>
                   <div className="w-full flex flex-wrap items-center justify-center gap-2 text-xs">
-                    <span className="text-text-2">{t("bura.select")}</span>
+                    <span className="text-text-2 font-medium">{t("bura.select")}</span>
                     {selected.length > 0 && sameSuit && (
-                      <span className="chip bg-primary/15 text-primary">
-                        <CheckCircle2 size={11} /> {t("ui.selectedCount", { n: selected.length })}
+                      <span className="chip bg-primary/20 text-primary border border-primary/40 font-bold">
+                        <CheckCircle2 size={12} /> {t("ui.selectedCount", { n: selected.length })}
                       </span>
                     )}
                   </div>
-                  <button className="btn-primary px-6" disabled={!sameSuit || selected.length > 3} onClick={() => submit("lead")}>
+                  <button className="btn-primary btn-lg px-7" disabled={!sameSuit || selected.length > 3} onClick={() => submit("lead")}>
                     {t("bura.lead")}
                   </button>
                 </>
               )}
               {responding && (
                 <>
-                  <span className="text-xs font-medium text-text-2 w-full text-center">
+                  <span className="text-xs font-semibold text-text-2 w-full text-center">
                     {t("bura.selectRespond", { n: need })} ({t("ui.selectedCount", { n: selected.length })})
                   </span>
-                  <button className="btn-primary px-5" disabled={selected.length !== need} onClick={() => submit("beat")}>
+                  <button className="btn-primary btn-lg px-6" disabled={selected.length !== need} onClick={() => submit("beat")}>
                     {t("bura.beat")}
                   </button>
-                  <button className="btn-secondary px-5" disabled={selected.length !== need} onClick={() => submit("discard")}>
+                  <button className="btn-secondary btn-lg px-6" disabled={selected.length !== need} onClick={() => submit("discard")}>
                     {t("bura.discard")}
                   </button>
                 </>
               )}
               {(view.phase === "lead" || view.phase === "final") && (view.players[mySeat]?.tricksWon ?? 0) > 0 && (
-                <button className="btn-gold px-5" onClick={() => onAction({ type: "claim" })}>
-                  <Flame size={15} /> {t("bura.claim")}
+                <button className="btn-gold btn-lg px-6" onClick={() => onAction({ type: "claim" })}>
+                  <Flame size={16} /> {t("bura.claim")}
                 </button>
               )}
               {view.phase === "final" && (
-                <button className="btn-secondary" onClick={() => onAction({ type: "pass" })}>
+                <button className="btn-secondary btn-lg" onClick={() => onAction({ type: "pass" })}>
                   {t("bura.pass")}
                 </button>
               )}

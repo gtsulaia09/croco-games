@@ -14,36 +14,36 @@ const BAR = 34;
 const PW = (W - PAD_L - PAD_R - BAR) / 12;
 
 const DIE_PIPS: Record<number, Array<[number, number]>> = {
-  1: [[17, 17]],
+  1: [[18, 18]],
   2: [
     [10, 10],
-    [24, 24],
+    [26, 26],
   ],
   3: [
     [10, 10],
-    [17, 17],
-    [24, 24],
+    [18, 18],
+    [26, 26],
   ],
   4: [
     [10, 10],
-    [24, 10],
-    [10, 24],
-    [24, 24],
+    [26, 10],
+    [10, 26],
+    [26, 26],
   ],
   5: [
     [10, 10],
-    [24, 10],
-    [17, 17],
-    [10, 24],
-    [24, 24],
+    [26, 10],
+    [18, 18],
+    [10, 26],
+    [26, 26],
   ],
   6: [
     [10, 9],
-    [24, 9],
-    [10, 17],
-    [24, 17],
-    [10, 25],
-    [24, 25],
+    [26, 9],
+    [10, 18],
+    [26, 18],
+    [10, 27],
+    [26, 27],
   ],
 };
 
@@ -51,9 +51,10 @@ function SvgDie({ value, x, y }: { value: number; x: number; y: number }) {
   const pips = DIE_PIPS[value] ?? [];
   return (
     <g transform={`translate(${x} ${y})`}>
-      <rect width={34} height={34} rx={7} fill="url(#bg-ivory)" stroke="#c7bfa8" strokeWidth={1.5} />
+      <rect x={1.5} y={2.5} width={36} height={36} rx={8} fill="rgba(0,0,0,0.45)" />
+      <rect width={36} height={36} rx={8} fill="url(#bg-ivory)" stroke="#cbd5e1" strokeWidth={1.5} />
       {pips.map(([cx, cy], i) => (
-        <circle key={i} cx={cx} cy={cy} r={2.8} fill={value === 1 ? "#b91c1c" : "#161b22"} />
+        <circle key={i} cx={cx} cy={cy} r={3.1} fill={value === 1 ? "#dc2626" : "#0f172a"} />
       ))}
     </g>
   );
@@ -127,11 +128,11 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
   const barX = PAD_L + 6 * PW;
   const trayX = W - PAD_R + 8;
 
-  const cubeY = view.cube.owner === null ? H / 2 - 13 : view.cube.owner === me ? H - 54 : 26;
+  const cubeY = view.cube.owner === null ? H / 2 - 14 : view.cube.owner === me ? H - 56 : 26;
   const shownDice = view.dice.length === 4 ? [view.dice[0]!, view.dice[0]!] : view.dice;
 
   return (
-    <div className="table-arena bg-gradient-to-b from-[#1c130d] to-[#110b08] !border-[#4a3322]">
+    <div className="table-arena bg-gradient-to-b from-[#0e1724] via-[#09111b] to-[#060b11] !border-[#1c2c40]">
       <TurnBar
         toAct={view.toAct}
         mySeat={mySeat}
@@ -139,92 +140,93 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
         seats={seats}
         extra={
           <>
-            <span className="chip bg-bg/80 border border-white/10 text-text-2">{t("backgammon.matchTo", { n: view.matchLength })}</span>
-            <span className="chip bg-gold/15 border border-gold/35 text-gold font-bold tabular-nums">
+            <span className="chip bg-white/8 border border-white/14 text-white">{t("backgammon.matchTo", { n: view.matchLength })}</span>
+            <span className="chip bg-gold/20 border border-gold/45 text-gold font-extrabold tabular-nums">
               {view.scores[0]} – {view.scores[1]}
             </span>
-            <span className="chip bg-bg/80 border border-white/10 text-text-2">
+            <span className="chip bg-white/8 border border-white/14 text-text-2">
               {t("backgammon.cube")}: {view.cube.value}
             </span>
-            {view.crawfordGame && <span className="chip bg-accent/15 border border-accent/35 text-accent">{t("backgammon.crawford")}</span>}
+            {view.crawfordGame && <span className="chip bg-accent/20 border border-accent/45 text-accent font-bold">{t("backgammon.crawford")}</span>}
           </>
         }
       />
 
-      {/* Compact Player Header Plates */}
-      <div className="grid grid-cols-2 gap-2">
+      {/* Compact Player Header Capsules */}
+      <div className="grid grid-cols-2 gap-2.5">
         <SeatTag seat={1 - me} seats={seats} active={view.toAct === 1 - me} compact>
-          <span className="inline-block size-2.5 rounded-full bg-[#1a1f24] border border-gold/70" aria-hidden="true" />
-          <span className="tabular-nums text-text-2">{t("backgammon.pips")}: {view.pips[1 - me]}</span>
-          <span className="tabular-nums text-gold">{t("backgammon.off")}: {view.off[1 - me]}/15</span>
+          <span className="inline-block size-3 rounded-full bg-[#131d2b] border border-accent/80 shadow-sm" aria-hidden="true" />
+          <span className="tabular-nums text-text-2 font-semibold">{t("backgammon.pips")}: {view.pips[1 - me]}</span>
+          <span className="tabular-nums text-gold font-extrabold">{t("backgammon.off")}: {view.off[1 - me]}/15</span>
         </SeatTag>
         <SeatTag seat={me} seats={seats} active={myTurn} compact>
-          <span className="inline-block size-2.5 rounded-full bg-[#f5efe0] border border-[#b8aa8c]" aria-hidden="true" />
-          <span className="tabular-nums text-text-2">{t("backgammon.pips")}: {view.pips[me]}</span>
-          <span className="tabular-nums text-primary font-bold">{t("backgammon.off")}: {preview.off[me]}/15</span>
+          <span className="inline-block size-3 rounded-full bg-[#ffffff] border border-gold shadow-sm" aria-hidden="true" />
+          <span className="tabular-nums text-text-2 font-semibold">{t("backgammon.pips")}: {view.pips[me]}</span>
+          <span className="tabular-nums text-primary font-extrabold">{t("backgammon.off")}: {preview.off[me]}/15</span>
         </SeatTag>
       </div>
 
-      {/* Handcrafted Inlaid Wood Backgammon Board (viewport-constrained so controls stay visible) */}
-      <div className="w-full max-w-[42rem] mx-auto">
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-h-[48dvh] h-auto rounded-2xl select-none" role="img" aria-label="backgammon board">
+      {/* Neo-Tournament Carbon-Slate & Emerald Backgammon Cabinet */}
+      <div className="w-full max-w-[43rem] mx-auto">
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-h-[48dvh] h-auto rounded-2xl select-none shadow-[0_14px_34px_rgba(0,0,0,0.55)]" role="img" aria-label="backgammon board">
           <defs>
-            <linearGradient id="bg-wood" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#483020" />
-              <stop offset="100%" stopColor="#26170f" />
+            <linearGradient id="bg-cabinet" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#1d2b3d" />
+              <stop offset="100%" stopColor="#0f1722" />
             </linearGradient>
             <linearGradient id="bg-felt" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#0e3b2e" />
-              <stop offset="50%" stopColor="#092920" />
-              <stop offset="100%" stopColor="#0e3b2e" />
+              <stop offset="0%" stopColor="#0d4233" />
+              <stop offset="50%" stopColor="#082b21" />
+              <stop offset="100%" stopColor="#0d4233" />
             </linearGradient>
             <linearGradient id="bg-pt-light" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#dec89c" />
-              <stop offset="100%" stopColor="#b89b67" />
+              <stop offset="0%" stopColor="#f5efe2" />
+              <stop offset="100%" stopColor="#d4c5a9" />
             </linearGradient>
             <linearGradient id="bg-pt-dark" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#8c2d2d" />
-              <stop offset="100%" stopColor="#5e1b1b" />
+              <stop offset="0%" stopColor="#be123c" />
+              <stop offset="100%" stopColor="#7f102c" />
             </linearGradient>
             <radialGradient id="bg-chk-white" cx="35%" cy="30%" r="70%">
               <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="65%" stopColor="#ede6d5" />
-              <stop offset="100%" stopColor="#bfb397" />
+              <stop offset="68%" stopColor="#f1ede2" />
+              <stop offset="100%" stopColor="#c7bba4" />
             </radialGradient>
             <radialGradient id="bg-chk-black" cx="35%" cy="30%" r="70%">
-              <stop offset="0%" stopColor="#414b56" />
-              <stop offset="55%" stopColor="#1e242b" />
-              <stop offset="100%" stopColor="#0d1115" />
+              <stop offset="0%" stopColor="#334760" />
+              <stop offset="58%" stopColor="#162231" />
+              <stop offset="100%" stopColor="#090f17" />
             </radialGradient>
             <linearGradient id="bg-ivory" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="100%" stopColor="#e8e0cc" />
+              <stop offset="100%" stopColor="#ece6d8" />
             </linearGradient>
             <linearGradient id="bg-gold" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#fce28f" />
-              <stop offset="100%" stopColor="#c78d1c" />
+              <stop offset="0%" stopColor="#ffe38c" />
+              <stop offset="100%" stopColor="#d49517" />
             </linearGradient>
           </defs>
 
-          <rect x={0} y={0} width={W} height={H} rx={14} fill="url(#bg-wood)" />
-          <rect x={2} y={2} width={W - 4} height={H - 4} rx={12} fill="none" stroke="rgba(243,194,79,0.25)" strokeWidth={1.2} />
+          <rect x={0} y={0} width={W} height={H} rx={16} fill="url(#bg-cabinet)" />
+          <rect x={2} y={2} width={W - 4} height={H - 4} rx={14} fill="none" stroke="rgba(255,200,69,0.3)" strokeWidth={1.3} />
 
-          <rect x={PAD_L - 6} y={14} width={6 * PW + 12} height={H - 28} rx={7} fill="url(#bg-felt)" stroke="#1d120b" strokeWidth={2} />
-          <rect x={barX + BAR - 6} y={14} width={6 * PW + 12} height={H - 28} rx={7} fill="url(#bg-felt)" stroke="#1d120b" strokeWidth={2} />
+          {/* Recessed Left & Right Quadrants */}
+          <rect x={PAD_L - 6} y={15} width={6 * PW + 12} height={H - 30} rx={8} fill="url(#bg-felt)" stroke="#0b121b" strokeWidth={2} />
+          <rect x={barX + BAR - 6} y={15} width={6 * PW + 12} height={H - 30} rx={8} fill="url(#bg-felt)" stroke="#0b121b" strokeWidth={2} />
 
           {/* Center Bar */}
-          <rect x={barX} y={12} width={BAR} height={H - 24} rx={4} fill="#2b1b11" stroke="#4f3523" strokeWidth={1.2} />
-          <rect x={barX + 11} y={40} width={12} height={22} rx={2} fill="url(#bg-gold)" opacity={0.75} />
-          <rect x={barX + 11} y={H - 62} width={12} height={22} rx={2} fill="url(#bg-gold)" opacity={0.75} />
+          <rect x={barX} y={13} width={BAR} height={H - 26} rx={5} fill="#121c29" stroke="#2c3f57" strokeWidth={1.3} />
+          <rect x={barX + 11} y={40} width={12} height={22} rx={2.5} fill="url(#bg-gold)" opacity={0.85} />
+          <rect x={barX + 11} y={H - 62} width={12} height={22} rx={2.5} fill="url(#bg-gold)" opacity={0.85} />
 
           {/* Bear-Off Trays */}
-          <rect x={trayX} y={18} width={38} height={H / 2 - 26} rx={6} fill="#18100a" stroke="#473020" strokeWidth={1.2} />
-          <rect x={trayX} y={H / 2 + 8} width={38} height={H / 2 - 26} rx={6} fill="#18100a" stroke="#473020" strokeWidth={1.2} />
+          <rect x={trayX} y={18} width={38} height={H / 2 - 26} rx={7} fill="#091019" stroke="#283a50" strokeWidth={1.3} />
+          <rect x={trayX} y={H / 2 + 8} width={38} height={H / 2 - 26} rx={7} fill="#091019" stroke="#283a50" strokeWidth={1.3} />
           {Array.from({ length: Math.min(preview.off[1 - me] ?? 0, 15) }, (_, k) => (
-            <rect key={`opp-off-${k}`} x={trayX + 5} y={23 + k * 9.5} width={28} height={7} rx={3} fill="#232a32" stroke="#c89a38" strokeWidth={0.7} />
+            <rect key={`opp-off-${k}`} x={trayX + 5} y={23 + k * 9.5} width={28} height={7} rx={3} fill="#1e2f44" stroke="#38bdf8" strokeWidth={0.8} />
           ))}
           {Array.from({ length: Math.min(preview.off[me] ?? 0, 15) }, (_, k) => (
-            <rect key={`me-off-${k}`} x={trayX + 5} y={H - 28 - k * 9.5} width={28} height={7} rx={3} fill="#f2ead6" stroke="#9e9072" strokeWidth={0.7} />
+            <rect key={`me-off-${k}`} x={trayX + 5} y={H - 28 - k * 9.5} width={28} height={7} rx={3} fill="#f8f4ea" stroke="#d49517" strokeWidth={0.8} />
           ))}
 
           {/* 24 Points + Checkers */}
@@ -239,7 +241,7 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
             const count = Math.abs(n);
             const mine = n * ownSign > 0;
             const cx = x + PW / 2;
-            const radius = PW / 2 - 3.5;
+            const radius = PW / 2 - 3.2;
 
             return (
               <g
@@ -255,15 +257,15 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
                 <polygon
                   points={`${x + 1},${y0} ${x + PW - 1},${y0} ${cx},${y1}`}
                   fill={rel % 2 ? "url(#bg-pt-light)" : "url(#bg-pt-dark)"}
-                  stroke={isTarget ? "#20cc5a" : isSelected ? "#f3c24f" : "rgba(0,0,0,0.28)"}
-                  strokeWidth={isTarget || isSelected ? 2.6 : 0.9}
+                  stroke={isTarget ? "#00d95f" : isSelected ? "#ffc845" : "rgba(0,0,0,0.3)"}
+                  strokeWidth={isTarget || isSelected ? 2.8 : 0.9}
                 />
 
-                {/* Numbered Target Landing Badge (clear non-color-only destination cue) */}
+                {/* Numbered Target Landing Badge */}
                 {isTarget && (
                   <g>
-                    <circle cx={cx} cy={top ? 162 : H - 162} r={9.5} fill="#18b84e" stroke="#ffffff" strokeWidth={1.8} />
-                    <text x={cx} y={(top ? 162 : H - 162) + 3.5} textAnchor="middle" fontSize={9.5} fontWeight={800} fill="#04180b">
+                    <circle cx={cx} cy={top ? 162 : H - 162} r={10} fill="#00d95f" stroke="#ffffff" strokeWidth={2} />
+                    <text x={cx} y={(top ? 162 : H - 162) + 3.5} textAnchor="middle" fontSize={10} fontWeight={900} fill="#031a0b">
                       {from !== null ? from - rel : rel}
                     </text>
                   </g>
@@ -279,12 +281,26 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
                         cy={cy}
                         r={radius}
                         fill={mine ? "url(#bg-chk-white)" : "url(#bg-chk-black)"}
-                        stroke={isSelected && topChecker ? "#f3c24f" : isSource && topChecker ? "#20cc5a" : mine ? "#a39475" : "#4a5562"}
-                        strokeWidth={isSelected && topChecker ? 3 : isSource && topChecker ? 2.6 : 1.2}
+                        stroke={
+                          isSelected && topChecker
+                            ? "#ffc845"
+                            : isSource && topChecker
+                              ? "#00d95f"
+                              : mine
+                                ? "#b5a689"
+                                : "#526f8e"
+                        }
+                        strokeWidth={isSelected && topChecker ? 3.2 : isSource && topChecker ? 2.8 : 1.3}
                       />
-                      {isSource && topChecker && !isSelected && (
-                        <circle cx={cx} cy={cy} r={3.5} fill="#18b84e" />
-                      )}
+                      <circle
+                        cx={cx}
+                        cy={cy}
+                        r={radius * 0.62}
+                        fill="none"
+                        stroke={mine ? "rgba(180,155,110,0.45)" : "rgba(125,211,252,0.28)"}
+                        strokeWidth={1}
+                      />
+                      {isSource && topChecker && !isSelected && <circle cx={cx} cy={cy} r={3.8} fill="#00d95f" />}
                     </g>
                   );
                 })}
@@ -294,15 +310,15 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
                     x={cx}
                     y={(top ? 16 + radius + 2 + 4 * (radius * 1.82) : H - 16 - radius - 2 - 4 * (radius * 1.82)) + 4.5}
                     textAnchor="middle"
-                    fontSize={12}
-                    fontWeight={800}
-                    fill={mine ? "#161b22" : "#f7fafc"}
+                    fontSize={12.5}
+                    fontWeight={900}
+                    fill={mine ? "#0f172a" : "#ffffff"}
                   >
                     {count}
                   </text>
                 )}
 
-                <text x={cx} y={top ? 11 : H - 4} textAnchor="middle" fontSize={9.5} fontWeight={700} fill="#b59d82">
+                <text x={cx} y={top ? 11.5 : H - 4} textAnchor="middle" fontSize={9.5} fontWeight={800} fill="#94a9c0">
                   {rel}
                 </text>
               </g>
@@ -324,12 +340,12 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
                 <circle
                   cx={barX + BAR / 2}
                   cy={p === me ? H / 2 + 34 : H / 2 - 34}
-                  r={14}
+                  r={14.5}
                   fill={p === me ? "url(#bg-chk-white)" : "url(#bg-chk-black)"}
-                  stroke={p === me && sources.has(25) ? "#20cc5a" : "#f3c24f"}
-                  strokeWidth={2.5}
+                  stroke={p === me && sources.has(25) ? "#00d95f" : "#ffc845"}
+                  strokeWidth={2.8}
                 />
-                <text x={barX + BAR / 2} y={p === me ? H / 2 + 39 : H / 2 - 29} textAnchor="middle" fontSize={12} fontWeight={800} fill={p === me ? "#161b22" : "#ffffff"}>
+                <text x={barX + BAR / 2} y={p === me ? H / 2 + 39 : H / 2 - 29} textAnchor="middle" fontSize={12.5} fontWeight={900} fill={p === me ? "#0f172a" : "#ffffff"}>
                   {preview.bar[p]}
                 </text>
               </g>
@@ -339,8 +355,8 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
           {/* Bear-Off Target */}
           {from !== null && targets.has(0) && (
             <g onClick={() => clickPoint(0)} className="cursor-pointer" data-point={0} data-target role="button" aria-label={t("backgammon.off")}>
-              <rect x={trayX} y={H / 2 + 8} width={38} height={H / 2 - 26} rx={6} fill="#18b84e" fillOpacity={0.38} stroke="#20cc5a" strokeWidth={2.5} />
-              <text x={trayX + 19} y={H / 2 + 92} textAnchor="middle" fontSize={10.5} fontWeight={800} fill="#ffffff">
+              <rect x={trayX} y={H / 2 + 8} width={38} height={H / 2 - 26} rx={7} fill="#00d95f" fillOpacity={0.38} stroke="#00d95f" strokeWidth={2.6} />
+              <text x={trayX + 19} y={H / 2 + 92} textAnchor="middle" fontSize={11} fontWeight={900} fill="#ffffff">
                 {t("backgammon.off")}
               </text>
             </g>
@@ -348,12 +364,12 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
 
           {/* Pipped 3D Ivory Dice */}
           {shownDice.map((d, i) => (
-            <SvgDie key={i} value={d} x={barX + BAR + 86 + i * 44} y={H / 2 - 17} />
+            <SvgDie key={i} value={d} x={barX + BAR + 84 + i * 46} y={H / 2 - 18} />
           ))}
           {view.dice.length === 4 && (
-            <g transform={`translate(${barX + BAR + 178} ${H / 2 - 12})`}>
-              <rect width={28} height={24} rx={12} fill="#f3c24f" />
-              <text x={14} y={16} textAnchor="middle" fontSize={12} fontWeight={800} fill="#1d1404">
+            <g transform={`translate(${barX + BAR + 180} ${H / 2 - 12})`}>
+              <rect width={30} height={24} rx={12} fill="#ffc845" />
+              <text x={15} y={16} textAnchor="middle" fontSize={12} fontWeight={900} fill="#1d1404">
                 ×4
               </text>
             </g>
@@ -361,24 +377,24 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
 
           {/* Doubling Cube */}
           <g transform={`translate(7 ${cubeY})`}>
-            <rect width={26} height={26} rx={5} fill="url(#bg-gold)" stroke="#fff4cc" strokeWidth={1.2} />
-            <text x={13} y={18} textAnchor="middle" fontSize={13} fontWeight={800} fill="#1d1404">
+            <rect width={27} height={27} rx={6} fill="url(#bg-gold)" stroke="#ffffff" strokeWidth={1.3} />
+            <text x={13.5} y={18.5} textAnchor="middle" fontSize={13} fontWeight={900} fill="#1d1404">
               {view.cube.value === 1 ? 64 : view.cube.value}
             </text>
           </g>
         </svg>
       </div>
 
-      {/* Contextual Step Guidance + Action Bar */}
+      {/* Contextual Step Guidance + Action Dock */}
       {myTurn && (
-        <div className="rounded-xl bg-bg/85 border border-primary/40 p-2.5 flex flex-wrap gap-2 justify-center items-center fade-in">
+        <div className="action-dock flex flex-wrap gap-2.5 justify-center items-center fade-in">
           {view.phase === "preroll" && (
             <>
-              <button className="btn-primary px-6" onClick={() => onAction({ type: "roll" })}>
-                <Dices size={16} /> {t("backgammon.roll")}
+              <button className="btn-primary btn-lg px-7" onClick={() => onAction({ type: "roll" })}>
+                <Dices size={17} /> {t("backgammon.roll")}
               </button>
               {view.canDouble && (
-                <button className="btn-gold px-5" onClick={() => onAction({ type: "double" })}>
+                <button className="btn-gold btn-lg px-6" onClick={() => onAction({ type: "double" })}>
                   {t("backgammon.double")}
                 </button>
               )}
@@ -386,18 +402,18 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
           )}
           {view.phase === "doubled" && (
             <>
-              <span className="text-sm font-semibold text-gold">{t("backgammon.offered")}</span>
-              <button className="btn-primary px-5" onClick={() => onAction({ type: "take" })}>
+              <span className="text-sm font-extrabold text-gold">{t("backgammon.offered")}</span>
+              <button className="btn-primary btn-lg px-6" onClick={() => onAction({ type: "take" })}>
                 {t("backgammon.take")}
               </button>
-              <button className="btn-danger px-5" onClick={() => onAction({ type: "drop" })}>
+              <button className="btn-danger btn-lg px-6" onClick={() => onAction({ type: "drop" })}>
                 {t("backgammon.drop")}
               </button>
             </>
           )}
           {view.phase === "move" && (
             <>
-              <span className={`text-xs font-medium w-full sm:w-auto text-center ${complete ? "text-primary" : "text-text-2"}`}>
+              <span className={`text-xs font-bold w-full sm:w-auto text-center ${complete ? "text-primary" : "text-text-2"}`}>
                 {complete ? t("ui.movesReady") : from !== null ? t("ui.selectDestination") : t("ui.selectChecker")}
               </span>
               {partial.length > 1 && (
@@ -408,14 +424,14 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
                     setFrom(null);
                   }}
                 >
-                  <Undo2 size={13} /> {t("backgammon.stepBack")}
+                  <Undo2 size={14} /> {t("backgammon.stepBack")}
                 </button>
               )}
               <button className="btn-secondary btn-sm" disabled={partial.length === 0} onClick={() => (setPartial([]), setFrom(null))}>
-                <RotateCcw size={13} /> {t("backgammon.undo")}
+                <RotateCcw size={14} /> {t("backgammon.undo")}
               </button>
               <button
-                className="btn-primary px-5"
+                className="btn-primary btn-lg px-6"
                 disabled={!complete}
                 onClick={() => {
                   onAction({ type: "move", moves: partial });
@@ -423,7 +439,7 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
                   setFrom(null);
                 }}
               >
-                <Check size={15} /> {t("backgammon.confirm")}
+                <Check size={16} /> {t("backgammon.confirm")}
               </button>
             </>
           )}

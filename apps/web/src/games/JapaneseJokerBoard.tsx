@@ -22,28 +22,26 @@ function DuelTableRow({
 }) {
   return (
     <div className="grid gap-1.5 justify-items-center">
-      <span className="text-[11px] font-medium text-text-2/85">{caption}</span>
-      <div className="flex flex-wrap gap-2 sm:gap-3 justify-center" role="group" aria-label={label}>
+      <span className="text-[11px] font-bold uppercase tracking-wider text-text-2/85">{caption}</span>
+      <div className="flex flex-wrap gap-1.5 sm:gap-3 justify-center" role="group" aria-label={label}>
         {piles.map((p, i) => (
-          <div
-            key={i}
-            className="relative w-[2.95rem] h-[4.2rem] sm:w-[3.85rem] sm:h-[5.45rem] rounded-lg border border-white/12 bg-black/20 flex items-center justify-center"
-          >
+          <div key={i} className="relative pcard-slot pcard-slot-sm flex items-center justify-center">
             {p.hasDown && (
-              <span className="absolute inset-0 translate-x-1 translate-y-1 pointer-events-none opacity-90">
+              <span className="absolute inset-0 translate-x-1 translate-y-1 pointer-events-none">
                 <PlayingCard back size="sm" />
               </span>
             )}
             {p.up ? (
-              <span className="absolute inset-0 flex items-center justify-center">
+              <span className="relative z-[1] flex items-center justify-center">
                 <PlayingCard
                   card={p.up}
+                  size="sm"
                   playable={!onPlay || playable.has(p.up)}
                   onClick={onPlay && playable.has(p.up) ? () => onPlay(p.up!) : undefined}
                 />
               </span>
             ) : !p.hasDown ? (
-              <span className="text-[10px] text-white/25">—</span>
+              <span className="text-xs font-bold text-white/25">—</span>
             ) : null}
           </div>
         ))}
@@ -78,24 +76,24 @@ export default function JapaneseJokerBoard({ view, mySeat, seats, deadline, onAc
         seats={seats}
         extra={
           <>
-            <span className="chip bg-bg/75 border border-white/10 text-text-2">{t("game.round", { n: view.round })}</span>
+            <span className="chip bg-white/8 border border-white/14 text-white">{t("game.round", { n: view.round })}</span>
             {view.trumpChosen && <TrumpBadge suit={view.trump} />}
-            <span className="chip bg-gold/15 border border-gold/35 text-gold font-semibold tabular-nums">
+            <span className="chip bg-gold/20 border border-gold/45 text-gold font-extrabold tabular-nums">
               {view.scores[0]} – {view.scores[1]} / {view.targetPoints}
             </span>
           </>
         }
       />
 
-      {/* Opponent Seat & 5 Open/Hidden Stacks */}
-      <div className="grid gap-2">
+      {/* Opponent Capsule & 5 Open/Hidden Duel Stacks */}
+      <div className="grid gap-2.5">
         <div className="max-w-md mx-auto w-full">
           <SeatTag seat={opp} seats={seats} active={view.toAct === opp} compact>
             <MiniCardCount count={view.handCounts[opp] ?? 0} />
-            <span className="text-text-2 font-medium tabular-nums">
+            <span className="text-text-2 font-semibold tabular-nums">
               {t("jj.cardsWon")}: {view.won[opp]}
             </span>
-            <span className="text-gold font-bold tabular-nums">{view.scores[opp]}</span>
+            <span className="text-gold font-extrabold tabular-nums">{view.scores[opp]}</span>
           </SeatTag>
         </div>
 
@@ -109,16 +107,16 @@ export default function JapaneseJokerBoard({ view, mySeat, seats, deadline, onAc
         )}
       </div>
 
-      {/* Central Head-to-Head Clash Tray */}
-      <div className="rounded-2xl border border-white/12 bg-black/22 px-3 py-3 min-h-28 sm:min-h-32 flex flex-col items-center justify-center gap-2">
+      {/* Central Head-to-Head Clash Well — Full-Size Cards */}
+      <div className="table-well min-h-32 sm:min-h-36 flex flex-col items-center justify-center gap-2">
         {view.trick.length > 0 ? (
-          <div className="flex items-center justify-center gap-5 sm:gap-8">
+          <div className="flex items-center justify-center gap-6 sm:gap-10">
             {view.trick.map((p) => (
-              <div key={p.seat} className="flex flex-col items-center gap-1 card-enter">
-                <PlayingCard card={p.card} size="sm" />
-                <span className="text-[11px] font-semibold text-white bg-bg/80 rounded-md px-2 py-0.5">{name(p.seat)}</span>
+              <div key={p.seat} className="flex flex-col items-center gap-1.5 card-enter">
+                <PlayingCard card={p.card} size="md" />
+                <span className="text-[11px] font-bold text-white bg-[#070e17]/90 border border-white/15 rounded-full px-2.5 py-0.5">{name(p.seat)}</span>
                 {p.demand && (
-                  <span className="chip bg-gold/20 text-gold border border-gold/40">
+                  <span className="chip bg-gold/25 text-gold border border-gold/50 font-extrabold">
                     <Sparkles size={11} />
                     {p.demand.kind === "card" ? t("jj.demandCard", { card: cardLabel(p.demand.card) }) : t("jj.demandHighest", { suit: suitSymbol(p.demand.suit) })}
                   </span>
@@ -127,14 +125,14 @@ export default function JapaneseJokerBoard({ view, mySeat, seats, deadline, onAc
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-1 text-center">
-            <Swords size={18} className="text-accent/50" />
+          <div className="flex flex-col items-center gap-1.5 text-center">
+            <Swords size={20} className="text-accent/65" />
             {view.lastRound ? (
-              <span className="chip bg-gold/15 border border-gold/35 text-gold font-semibold">
+              <span className="chip bg-gold/20 border border-gold/45 text-gold font-bold">
                 {name(0)} {view.lastRound.won[0]} – {view.lastRound.won[1]} {name(1)}
               </span>
             ) : (
-              <span className="text-xs text-white/35 font-medium">{t("games.japanese_joker.name")}</span>
+              <span className="text-xs font-extrabold uppercase tracking-wider text-white/40">{t("games.japanese_joker.name")}</span>
             )}
           </div>
         )}
@@ -151,54 +149,56 @@ export default function JapaneseJokerBoard({ view, mySeat, seats, deadline, onAc
         />
       )}
 
-      {/* Your Seat, Trump Selection & Private Hand */}
+      {/* High-Contrast Hero Station & Jumbo Private Hand */}
       {mySeat !== null && view.you && (
-        <div className="grid gap-2">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
+        <div className="hero-hand-tray" data-my-turn={myTurn ? "true" : "false"}>
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="w-full sm:w-auto sm:min-w-68">
               <SeatTag seat={me} seats={seats} active={myTurn} compact>
-                <span className="text-text-2 font-medium tabular-nums">
+                <span className="text-text-2 font-semibold tabular-nums">
                   {t("jj.cardsWon")}: {view.won[me]}
                 </span>
-                <span className="text-gold font-bold tabular-nums">{view.scores[me]}</span>
+                <span className="text-gold font-extrabold tabular-nums">{view.scores[me]}</span>
               </SeatTag>
             </div>
             {myTurn && view.phase === "play" && (
-              <span className="text-xs text-primary font-medium">{t("jj.playHint")}</span>
+              <span className="chip bg-primary/18 text-primary border border-primary/40 font-bold">{t("jj.playHint")}</span>
             )}
           </div>
 
           {myTurn && view.phase === "trump" && (
-            <div className="rounded-xl bg-bg/85 border border-primary/45 p-2.5 flex flex-wrap gap-2 items-center justify-center fade-in" role="group" aria-label={t("joker.chooseTrump")}>
-              <span className="text-xs sm:text-sm font-semibold text-white mr-1">{t("joker.chooseTrump")}:</span>
+            <div className="action-dock flex flex-wrap gap-2.5 items-center justify-center fade-in" role="group" aria-label={t("joker.chooseTrump")}>
+              <span className="text-xs sm:text-sm font-extrabold text-white mr-1">{t("joker.chooseTrump")}:</span>
               {SUITS.map((s) => {
                 const red = s === "H" || s === "D";
                 return (
                   <button
                     key={s}
-                    className={`btn-secondary btn-sm min-w-11 h-10 ${red ? "text-[#ff6b6b]" : "text-white"}`}
+                    type="button"
+                    className={`suit-card-btn ${red ? "text-[#e11d48]" : "text-[#0f172a]"}`}
                     onClick={() => onAction({ type: "trump", suit: s })}
                   >
-                    <SuitIcon suit={s} size={18} />
+                    <SuitIcon suit={s} size={22} />
                     <span className="sr-only">{suitSymbol(s)}</span>
                   </button>
                 );
               })}
-              <button className="btn-gold btn-sm h-10" onClick={() => onAction({ type: "trump", suit: "none" })}>
+              <button type="button" className="btn-gold h-11 px-4" onClick={() => onAction({ type: "trump", suit: "none" })}>
                 {t("game.noTrump")}
               </button>
             </div>
           )}
 
-          <div className="grid gap-1 justify-items-center">
-            <span className="text-[11px] font-medium text-text-2/80">{t("game.yourHand")}</span>
-            <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center pb-0.5" role="group" aria-label={t("game.yourHand")}>
+          <div className="grid gap-1.5 justify-items-center">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-text-2/80">{t("game.yourHand")}</span>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2.5 justify-center pb-0.5" role="group" aria-label={t("game.yourHand")}>
               {view.you.hand.map((c) => {
                 const canPlay = myTurn && view.phase === "play" && playable.has(c);
                 return (
                   <PlayingCard
                     key={c}
                     card={c}
+                    size="md"
                     playable={!myTurn || view.phase !== "play" || playable.has(c)}
                     onClick={canPlay ? () => play(c) : undefined}
                   />
@@ -219,6 +219,7 @@ export default function JapaneseJokerBoard({ view, mySeat, seats, deadline, onAc
                 {oppUp.map((c) => (
                   <button
                     key={c}
+                    type="button"
                     className="btn-secondary btn-sm h-auto py-1.5 px-2.5 gap-2"
                     onClick={() => {
                       onAction({ type: "play", card: joker, demand: { kind: "card", card: c } });
@@ -240,13 +241,15 @@ export default function JapaneseJokerBoard({ view, mySeat, seats, deadline, onAc
                 return (
                   <button
                     key={s}
-                    className={`btn-secondary btn-sm ${red ? "text-[#ff6b6b]" : "text-white"}`}
+                    type="button"
+                    className={`suit-card-btn !h-10 px-3 gap-1.5 text-xs ${red ? "text-[#e11d48]" : "text-[#0f172a]"}`}
                     onClick={() => {
                       onAction({ type: "play", card: joker, demand: { kind: "highest", suit: s } });
                       setJoker(null);
                     }}
                   >
-                    <SuitIcon suit={s} size={14} /> {t("jj.demandHighest", { suit: suitSymbol(s) })}
+                    <SuitIcon suit={s} size={16} />
+                    <span>{t("jj.demandHighest", { suit: suitSymbol(s) })}</span>
                   </button>
                 );
               })}

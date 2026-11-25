@@ -1,57 +1,55 @@
 @import "tailwindcss";
 
 /* ============================================================================
- * CROCO GAMES — MODERN DESIGN SYSTEM
- * Corporate reference: Crocobet ecosystem — dark slate-obsidian canvas,
- * crisp Croco emerald primary actions, balanced contrast, clean surface
- * hierarchy without excessive borders/shadows, and Georgian-tuned typography.
+ * CROCO GAMES — NEO-ARENA DESIGN SYSTEM (2026)
+ * Deep midnight-carbon studio surfaces, electric Croco emerald accents,
+ * sculpted cushioned tabletop rails, and JUMBO-INDEX high-visibility cards.
  * ============================================================================ */
 @theme {
-  /* Core Canvas & Layered Surfaces */
-  --color-bg: #081117;
-  --color-bg-elevated: #0c1820;
-  --color-surface: #11202a;
-  --color-surface-2: #0d1a23;
-  --color-surface-3: #09131a;
-  --color-surface-hover: #162a37;
+  /* Midnight-Carbon Layered Surfaces */
+  --color-bg: #060b11;
+  --color-bg-elevated: #0b131e;
+  --color-surface: #101b29;
+  --color-surface-2: #0c1520;
+  --color-surface-3: #080f18;
+  --color-surface-hover: #172638;
 
-  /* Subtle Hairlines */
-  --color-line: #1a303e;
-  --color-line-strong: #254558;
+  /* Crisp Subtle Hairlines */
+  --color-line: #1d2d40;
+  --color-line-strong: #2b425c;
 
-  /* Crocobet Brand Greens */
-  --color-primary: #18b84e;
-  --color-primary-hover: #20cc5a;
-  --color-primary-active: #149a41;
-  --color-primary-soft: #0d3321;
+  /* Electric Crocobet Emerald */
+  --color-primary: #00d95f;
+  --color-primary-hover: #14eb71;
+  --color-primary-active: #00b850;
+  --color-primary-soft: #072e19;
 
-  /* Secondary / Info */
-  --color-secondary: #164b6b;
-  --color-secondary-hover: #1c5f87;
-  --color-accent: #28b8e5;
+  /* Secondary / Cyber Cyan */
+  --color-secondary: #1b3652;
+  --color-secondary-hover: #24476b;
+  --color-accent: #38bdf8;
 
-  /* Typography Hierarchy */
-  --color-text: #f5f8fa;
-  --color-text-2: #cfdde8;
-  --color-muted: #8aa0b0;
+  /* High-Contrast Typography */
+  --color-text: #f8fafc;
+  --color-text-2: #dce6f2;
+  --color-muted: #8da2b8;
 
-  /* Semantic & Rank Accents */
-  --color-gold: #f3c24f;
+  /* Gaming Semantic Accents */
+  --color-gold: #ffc845;
   --color-silver: #cbd5e1;
-  --color-bronze: #d98a52;
-  --color-danger: #e24c4b;
-  --color-warning: #eab034;
+  --color-bronze: #e08e55;
+  --color-danger: #f43f5e;
+  --color-warning: #f59e0b;
 
-  /* Game Table Felts */
-  --color-felt: #0e4c37;
-  --color-felt-2: #082b20;
+  /* Modern Studio Table Felts */
+  --color-felt: #0c5239;
+  --color-felt-2: #06291d;
 
-  /* Georgian + Latin Balanced Font Stack (zero external requests) */
+  /* Georgian + Modern Geometric Sans Stack */
   --font-sans: "Noto Sans Georgian", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
 
-  /* Consistent Radii */
-  --radius-card: 12px;
-  --radius-panel: 16px;
+  --radius-card: 14px;
+  --radius-panel: 18px;
 }
 
 @layer base {
@@ -62,13 +60,15 @@
   }
 
   html[lang="ka"] {
-    /* Georgian Mkhedruli ascenders/descenders benefit from slightly roomier line-height */
     line-height: 1.54;
   }
 
   body {
     @apply bg-bg text-text font-sans antialiased;
     min-height: 100dvh;
+    background-image:
+      radial-gradient(ellipse 90% 50% at 50% -15%, rgba(0, 217, 95, 0.09), transparent 65%),
+      radial-gradient(ellipse 70% 45% at 50% 110%, rgba(56, 189, 248, 0.05), transparent 65%);
   }
 
   :focus-visible {
@@ -85,40 +85,44 @@
   }
 
   ::selection {
-    background: rgba(24, 184, 78, 0.32);
+    background: rgba(0, 217, 95, 0.32);
     color: #fff;
   }
 }
 
 @layer components {
-  /* ---- Buttons ---- */
+  /* ---- Modern Tactile Gaming Buttons ---- */
   .btn,
   .btn-primary,
   .btn-secondary,
   .btn-ghost,
   .btn-danger,
   .btn-gold {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 h-10 text-sm font-semibold transition-colors duration-150 select-none disabled:opacity-45 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 h-10 text-sm font-bold tracking-[0.01em] transition-all duration-150 select-none disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98];
   }
 
   .btn-primary {
-    @apply bg-primary text-[#04180b] hover:bg-primary-hover;
+    @apply bg-primary text-[#031a0b] hover:bg-primary-hover;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 4px 14px rgba(0, 217, 95, 0.25);
   }
 
   .btn-secondary {
-    @apply bg-surface-hover text-text border border-line-strong hover:bg-[#1c3545];
+    @apply bg-[#18283b] text-white border border-[#2b4360] hover:bg-[#20354d] hover:border-[#3c5c82];
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   .btn-gold {
-    @apply bg-gold text-[#1d1404] hover:bg-[#fad06b];
+    @apply bg-gold text-[#1f1402] hover:bg-[#ffd469];
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 4px 14px rgba(255, 200, 69, 0.25);
   }
 
   .btn-ghost {
-    @apply bg-transparent text-text-2 hover:bg-surface hover:text-white;
+    @apply bg-transparent text-text-2 hover:bg-surface-hover hover:text-white;
   }
 
   .btn-danger {
-    @apply bg-danger text-white hover:bg-[#eb5a59];
+    @apply bg-danger text-white hover:bg-[#fb5673];
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 4px 14px rgba(244, 63, 94, 0.25);
   }
 
   .btn-sm {
@@ -129,13 +133,14 @@
     @apply h-11 px-5 text-sm rounded-xl;
   }
 
-  /* ---- Clean Surfaces (minimal borders, restrained elevation) ---- */
+  /* ---- Modern Panels & Inputs ---- */
   .card {
     @apply bg-surface rounded-[var(--radius-card)] border border-line/80;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.32);
   }
 
   .panel-inset {
-    @apply bg-surface-3 rounded-xl border border-line/60;
+    @apply bg-surface-3 rounded-xl border border-line/70;
   }
 
   .input {
@@ -143,11 +148,11 @@
   }
 
   .label {
-    @apply block text-xs font-medium text-muted mb-1.5;
+    @apply block text-xs font-semibold text-muted mb-1.5;
   }
 
   .chip {
-    @apply inline-flex items-center gap-1 rounded-md px-2 h-6 text-[11px] font-medium whitespace-nowrap;
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 h-6 text-[11px] font-semibold whitespace-nowrap;
   }
 
   .table-row {
@@ -157,255 +162,379 @@
   /* ---- Lobby Game Tiles ---- */
   .game-card {
     @apply relative overflow-hidden rounded-2xl bg-surface border border-line/80 flex flex-col transition-all duration-150;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
   }
 
   .game-card:hover {
-    border-color: rgba(24, 184, 78, 0.55);
-    background-color: #132531;
+    border-color: rgba(0, 217, 95, 0.55);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 217, 95, 0.2);
   }
 
-  /* ---- Dedicated Game Table Arenas ---- */
+  /* ==========================================================================
+   * MODERN SCULPTED GAME ARENA STAGES (GGPoker / Aurora Inspired)
+   * Cushioned carbon-leather outer rail + inner accent rim + studio cloth
+   * ========================================================================== */
   .table-arena {
-    @apply relative rounded-2xl p-2.5 sm:p-3.5 grid gap-2.5 overflow-hidden;
-    border: 1.5px solid rgba(255, 255, 255, 0.1);
-    box-shadow: inset 0 18px 48px rgba(0, 0, 0, 0.28);
+    @apply relative rounded-[26px] p-3 sm:p-4 grid gap-3 overflow-hidden min-w-0;
+    border: 6px solid #141e2b;
+    box-shadow:
+      inset 0 0 0 1.5px rgba(255, 255, 255, 0.1),
+      inset 0 24px 64px rgba(0, 0, 0, 0.48),
+      0 18px 44px rgba(0, 0, 0, 0.55);
+  }
+
+  .table-arena > * {
+    min-width: 0;
+  }
+
+  @media (max-width: 639px) {
+    .table-arena {
+      border-width: 4px;
+      border-radius: 20px;
+      padding: 0.625rem;
+    }
   }
 
   .felt,
   .felt-emerald {
-    background: radial-gradient(ellipse 80% 70% at 50% 45%, #125d43 0%, #0b3e2d 62%, #07261c 100%);
+    background:
+      radial-gradient(ellipse 72% 62% at 50% 46%, #136b4a 0%, #0b4430 56%, #07261c 100%);
   }
 
   .felt-jade {
-    background: radial-gradient(ellipse 80% 70% at 50% 45%, #115358 0%, #0a383e 62%, #062227 100%);
+    background:
+      radial-gradient(ellipse 72% 62% at 50% 46%, #115e6e 0%, #0b3c49 58%, #07222b 100%);
   }
 
   .felt-bura {
-    background: radial-gradient(ellipse 80% 70% at 50% 45%, #165438 0%, #0d3624 62%, #072016 100%);
+    background:
+      radial-gradient(ellipse 72% 62% at 50% 46%, #156347 0%, #0c3d2b 58%, #072218 100%);
   }
 
   .felt-bura5 {
-    background: radial-gradient(ellipse 80% 70% at 50% 45%, #194d46 0%, #0f322e 62%, #081d1b 100%);
+    background:
+      radial-gradient(ellipse 72% 62% at 50% 46%, #165954 0%, #0d3836 58%, #071f1f 100%);
   }
 
   .felt-poker {
-    background: radial-gradient(ellipse 76% 68% at 50% 45%, #11563c 0%, #093726 62%, #051f16 100%);
+    background:
+      radial-gradient(ellipse 70% 60% at 50% 46%, #126647 0%, #0a402c 58%, #062318 100%);
   }
 
   .felt-shortdeck {
-    background: radial-gradient(ellipse 76% 68% at 50% 45%, #3b2028 0%, #241319 64%, #140b0e 100%);
+    background:
+      radial-gradient(ellipse 70% 60% at 50% 46%, #521d30 0%, #30111d 60%, #190910 100%);
   }
 
   .felt-omaha {
-    background: radial-gradient(ellipse 76% 68% at 50% 45%, #133f5b 0%, #0b283b 64%, #061824 100%);
+    background:
+      radial-gradient(ellipse 70% 60% at 50% 46%, #154c73 0%, #0c2f4a 60%, #071b2b 100%);
   }
 
   .felt-omaha-hilo {
-    background: radial-gradient(ellipse 76% 68% at 50% 45%, #203954 0%, #122336 64%, #09131f 100%);
+    background:
+      radial-gradient(ellipse 70% 60% at 50% 46%, #26436b 0%, #152742 60%, #0b1526 100%);
   }
 
   .felt-dominoes {
-    background: radial-gradient(ellipse 82% 72% at 50% 45%, #163f47 0%, #0d2a30 64%, #07181c 100%);
+    background:
+      radial-gradient(ellipse 74% 64% at 50% 46%, #154c59 0%, #0c303a 60%, #071b21 100%);
   }
 
-  /* Poker Table Oval */
+  /* Sculpted Center Felt Well (replaces boxy borders inside tables) */
+  .table-well {
+    @apply relative rounded-3xl px-3 py-3.5 sm:px-6 sm:py-4;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.14) 0%, rgba(0, 0, 0, 0.32) 100%);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 6px 24px rgba(0, 0, 0, 0.32);
+  }
+
+  /* Commercial Oval Poker Table */
   .poker-oval {
     position: relative;
     border-radius: 9999px;
-    border: 6px solid #281b13;
+    border: 8px solid #182230;
+    background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.28) 100%);
     box-shadow:
-      inset 0 0 0 1.5px rgba(243, 194, 79, 0.25),
-      inset 0 10px 26px rgba(0, 0, 0, 0.36);
+      inset 0 0 0 2px rgba(255, 200, 69, 0.28),
+      inset 0 14px 36px rgba(0, 0, 0, 0.42),
+      0 10px 28px rgba(0, 0, 0, 0.38);
   }
 
   @media (max-width: 639px) {
     .poker-oval {
-      border-radius: 22px;
-      border-width: 4px;
+      border-radius: 26px;
+      border-width: 5px;
     }
   }
 
-  /* ---- Readable, Tactile Playing Cards ---- */
+  /* Hero Player Hand Dock (high-contrast dark carbon tray so white cards pop) */
+  .hero-hand-tray {
+    @apply rounded-2xl border border-white/12 px-3 py-2.5 sm:px-4 sm:py-3 grid gap-2.5 transition-colors min-w-0;
+    background: linear-gradient(180deg, rgba(8, 15, 24, 0.72) 0%, rgba(6, 11, 17, 0.92) 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 10px 26px rgba(0, 0, 0, 0.36);
+  }
+
+  .hero-hand-tray > * {
+    min-width: 0;
+  }
+
+  .hero-hand-tray[data-my-turn="true"] {
+    border-color: rgba(0, 217, 95, 0.5);
+    background:
+      radial-gradient(ellipse 70% 80% at 50% 100%, rgba(0, 217, 95, 0.12), transparent 70%),
+      linear-gradient(180deg, rgba(8, 15, 24, 0.78) 0%, rgba(6, 11, 17, 0.95) 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(0, 217, 95, 0.22),
+      0 0 0 1px rgba(0, 217, 95, 0.18),
+      0 12px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  /* Floating Action Dock at Bottom of Game Tables */
+  .action-dock {
+    @apply rounded-2xl bg-[#09111b]/95 border border-white/15 px-3.5 py-2.5 shadow-[0_12px_30px_rgba(0,0,0,0.5)];
+  }
+
+  /* White Card-Stock Suit Picker Button (for Trump / Demand selection) */
+  .suit-card-btn {
+    @apply inline-flex items-center justify-center rounded-xl h-11 min-w-12 px-3 font-black transition-all duration-150 select-none active:scale-95;
+    background: linear-gradient(175deg, #ffffff 0%, #eef2f6 100%);
+    border: 1.5px solid #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 #ffffff;
+  }
+
+  .suit-card-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.5), 0 0 0 2px var(--color-primary);
+  }
+
+  /* ==========================================================================
+   * JUMBO-INDEX HIGH-VISIBILITY PLAYING CARDS (4-Size System)
+   * Pure crisp white card stock, deep contrast shadow, oversized jumbo rank,
+   * vivid suit color coding, unmistakable playability & selection feedback.
+   * ========================================================================== */
   .pcard {
-    --card-w: 3.9rem;
+    --card-w: 4.85rem; /* 78px x 110px default — bold & readable */
     width: var(--card-w);
-    height: calc(var(--card-w) * 1.42);
-    border-radius: 8px;
-    background: #fbfaf6;
-    color: #151a21;
-    border: 1px solid #d0cab9;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    height: calc(var(--card-w) * 1.4);
+    border-radius: 10px;
+    background: linear-gradient(175deg, #ffffff 0%, #f8fafc 78%, #eef2f6 100%);
+    color: #0f172a;
+    border: 1.5px solid #cbd5e1;
+    box-shadow:
+      0 6px 16px rgba(0, 0, 0, 0.48),
+      0 2px 4px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 #ffffff;
     display: inline-flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 4px 5px;
-    font-weight: 800;
+    padding: 5px 7px;
+    font-weight: 900;
     line-height: 1;
     user-select: none;
     position: relative;
-    transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+    overflow: hidden;
+    transition: transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 140ms ease, opacity 140ms ease;
     flex: none;
   }
 
   .pcard-xs {
-    --card-w: 2.15rem;
-    border-radius: 5px;
-    padding: 2px 3px;
-  }
-
-  .pcard-sm {
-    --card-w: 2.9rem;
+    --card-w: 2.55rem; /* 41px x 57px — showdown mini reveal */
     border-radius: 6px;
     padding: 3px 4px;
   }
 
-  .pcard-lg {
-    --card-w: 4.55rem;
+  .pcard-sm {
+    --card-w: 4.15rem; /* 66px x 93px — table / trick cards (clear & readable!) */
     border-radius: 9px;
-    padding: 5px 6px;
+    padding: 4px 6px;
+  }
+
+  .pcard-lg {
+    --card-w: 5.65rem; /* 90px x 126px — hero 3-card / 2-card hands */
+    border-radius: 12px;
+    padding: 6px 8px;
   }
 
   @media (max-width: 639px) {
     .pcard {
-      --card-w: 3.1rem;
+      --card-w: 3.65rem; /* 58px x 82px on mobile */
+      border-radius: 8px;
+      padding: 4px 5px;
     }
     .pcard-lg {
-      --card-w: 3.65rem;
+      --card-w: 4.35rem; /* 70px x 98px on mobile */
+      border-radius: 9px;
+      padding: 5px 6px;
     }
     .pcard-sm {
-      --card-w: 2.45rem;
+      --card-w: 3.25rem; /* 52px x 73px on mobile */
+      border-radius: 7px;
+      padding: 3px 4.5px;
     }
   }
 
   .pcard[data-red="true"] {
-    color: #c8232c;
+    color: #e11d48;
   }
 
   .pcard-joker {
-    background: linear-gradient(160deg, #fff8de 0%, #f4dc8c 100%);
-    color: #5c3700;
-    border-color: #d4a63a;
+    background: linear-gradient(160deg, #fffbeb 0%, #fde68a 58%, #fcd34d 100%);
+    color: #78350f;
+    border-color: #f59e0b;
   }
 
   .pcard-back {
     background:
-      repeating-linear-gradient(45deg, rgba(24, 184, 78, 0.16) 0 4px, transparent 4px 8px),
-      linear-gradient(145deg, #103b4f 0%, #08202d 100%);
-    border-color: #2c6078;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.32), inset 0 0 0 2px rgba(243, 194, 79, 0.3);
+      radial-gradient(circle at 50% 50%, rgba(0, 217, 95, 0.24) 0%, transparent 62%),
+      repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.07) 0 3px, transparent 3px 7px),
+      linear-gradient(155deg, #13293d 0%, #091522 100%);
+    border: 1.5px solid #3b5978;
+    box-shadow:
+      0 5px 14px rgba(0, 0, 0, 0.45),
+      inset 0 0 0 3px #0d1d2e,
+      inset 0 0 0 4px rgba(255, 200, 69, 0.4);
   }
 
   .pcard-slot {
-    --card-w: 3.9rem;
+    --card-w: 4.85rem;
     width: var(--card-w);
-    height: calc(var(--card-w) * 1.42);
-    border-radius: 8px;
-    border: 1.5px dashed rgba(255, 255, 255, 0.16);
-    background: rgba(0, 0, 0, 0.14);
+    height: calc(var(--card-w) * 1.4);
+    border-radius: 10px;
+    border: 1.5px dashed rgba(255, 255, 255, 0.22);
+    background: rgba(6, 11, 17, 0.28);
     flex: none;
+  }
+
+  .pcard-slot-sm {
+    --card-w: 4.15rem;
+    border-radius: 9px;
   }
 
   @media (max-width: 639px) {
     .pcard-slot {
-      --card-w: 3.1rem;
+      --card-w: 3.65rem;
+      border-radius: 8px;
+    }
+    .pcard-slot-sm {
+      --card-w: 3.25rem;
+      border-radius: 7px;
     }
   }
 
-  /* Non-color-only playability cue: subtle top emerald bar + lift on interactive legal cards */
-  button.pcard:not(:disabled)::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 22%;
-    right: 22%;
-    height: 2.5px;
-    border-radius: 0 0 3px 3px;
-    background: var(--color-primary);
+  /* Playable interactive card cue: glowing neon-emerald edge + stepped-up elevation */
+  button.pcard:not(:disabled) {
+    border-color: #ffffff;
+    transform: translateY(-3px);
+    box-shadow:
+      0 10px 22px rgba(0, 0, 0, 0.55),
+      0 0 0 2.5px rgba(0, 217, 95, 0.88),
+      0 0 16px rgba(0, 217, 95, 0.3);
   }
 
   button.pcard:hover:not(:disabled) {
-    transform: translateY(-7px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4), 0 0 0 2px var(--color-primary);
-    z-index: 2;
+    transform: translateY(-11px) scale(1.03);
+    box-shadow:
+      0 16px 28px rgba(0, 0, 0, 0.62),
+      0 0 0 3px var(--color-primary),
+      0 0 22px rgba(0, 217, 95, 0.45);
+    z-index: 4;
   }
 
   .pcard[data-selected="true"] {
-    transform: translateY(-11px);
-    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.44), 0 0 0 2.5px var(--color-primary);
-    z-index: 3;
+    transform: translateY(-14px) scale(1.03);
+    box-shadow:
+      0 16px 28px rgba(0, 0, 0, 0.62),
+      0 0 0 3px var(--color-gold),
+      0 0 22px rgba(255, 200, 69, 0.48);
+    z-index: 5;
   }
 
+  /* Unplayable cards ONLY during an active choice: keep crisp silver-white & 100% legible, gently recessed */
   .pcard[data-playable="false"] {
-    filter: grayscale(0.4) brightness(0.74);
-    opacity: 0.72;
+    background: linear-gradient(175deg, #e2e8f0 0%, #cbd5e1 100%);
+    border-color: #94a3b8;
+    opacity: 0.86;
+    transform: translateY(4px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   }
 
-  /* ---- Domino Ivory Tiles ---- */
+  /* ---- Glossy 3D Ivory Domino Tiles ---- */
   .domino-tile {
-    background: #faf7ee;
-    border: 1.5px solid #c6bca6;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.32), inset 0 -2px 0 rgba(0, 0, 0, 0.08);
+    background: linear-gradient(170deg, #ffffff 0%, #f5f2e8 78%, #e6dfd0 100%);
+    border: 1.5px solid #cbd5e1;
+    box-shadow:
+      0 5px 14px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 #ffffff,
+      inset 0 -3px 0 rgba(15, 23, 42, 0.12);
     position: relative;
-    transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+    transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
   }
 
-  button.domino-tile:not(:disabled)::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 24%;
-    right: 24%;
-    height: 2.5px;
-    border-radius: 0 0 3px 3px;
-    background: var(--color-primary);
+  button.domino-tile:not(:disabled) {
+    box-shadow:
+      0 7px 16px rgba(0, 0, 0, 0.5),
+      0 0 0 2px rgba(0, 217, 95, 0.78);
   }
 
   button.domino-tile:hover:not(:disabled) {
-    transform: translateY(-5px);
-    box-shadow: 0 7px 14px rgba(0, 0, 0, 0.4), 0 0 0 2px var(--color-primary);
+    transform: translateY(-7px) scale(1.03);
+    box-shadow:
+      0 12px 22px rgba(0, 0, 0, 0.56),
+      0 0 0 2.5px var(--color-primary);
   }
 
   .domino-tile[data-active="true"] {
-    transform: translateY(-8px);
-    box-shadow: 0 9px 16px rgba(0, 0, 0, 0.44), 0 0 0 2.5px var(--color-gold);
+    transform: translateY(-10px) scale(1.04);
+    box-shadow:
+      0 14px 24px rgba(0, 0, 0, 0.6),
+      0 0 0 3px var(--color-gold);
   }
 
   .domino-tile[data-playable="false"] {
-    filter: grayscale(0.35) brightness(0.75);
-    opacity: 0.68;
+    opacity: 0.46;
+    transform: translateY(2px);
   }
 
-  /* ---- Dealer & Blind Discs ---- */
+  /* ---- Dealer & Blind Tokens ---- */
   .dealer-disc {
-    @apply inline-flex items-center justify-center size-5 rounded-full text-[10px] font-extrabold select-none shrink-0;
-    background: var(--color-gold);
-    color: #1e1403;
-    border: 1px solid #fff2bf;
+    @apply inline-flex items-center justify-center size-5 rounded-full text-[10px] font-black select-none shrink-0;
+    background: linear-gradient(145deg, #fffbeb 0%, #ffc845 70%, #d99b16 100%);
+    color: #1c1202;
+    border: 1.5px solid #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
   }
 
   .blind-disc {
-    @apply inline-flex items-center justify-center h-5 px-1.5 rounded-md text-[10px] font-bold tracking-tight shrink-0;
+    @apply inline-flex items-center justify-center h-5 px-1.5 rounded-full text-[10px] font-extrabold tracking-tight shrink-0;
   }
 
-  /* ---- Active Player Seat Highlight ---- */
+  /* ---- Floating Capsule Player Pod ---- */
+  .seat-pod {
+    @apply rounded-2xl border border-white/14 bg-[#0b131e]/90 backdrop-blur-none transition-all;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.38);
+  }
+
   .seat-active {
     border-color: var(--color-primary) !important;
-    background: rgba(13, 51, 33, 0.88) !important;
-    box-shadow: 0 0 0 1px rgba(24, 184, 78, 0.35);
+    background: linear-gradient(135deg, rgba(0, 217, 95, 0.2), rgba(11, 19, 30, 0.95)) !important;
+    box-shadow: 0 0 0 1.5px rgba(0, 217, 95, 0.45), 0 8px 22px rgba(0, 0, 0, 0.48);
   }
 }
 
-/* ---- Subtle Purposeful Motion ---- */
 .fade-in {
   animation: fade-in 150ms ease-out;
 }
 
 .card-enter {
-  animation: card-enter 160ms ease-out;
+  animation: card-enter 170ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .turn-dot {
-  animation: turn-pulse 1.8s ease-in-out infinite;
+  animation: turn-pulse 1.6s ease-in-out infinite;
 }
 
 @keyframes fade-in {
@@ -422,7 +551,7 @@
 @keyframes card-enter {
   from {
     opacity: 0;
-    transform: translateY(6px) scale(0.96);
+    transform: translateY(8px) scale(0.95);
   }
   to {
     opacity: 1;
@@ -434,9 +563,11 @@
   0%,
   100% {
     opacity: 1;
+    transform: scale(1);
   }
   50% {
-    opacity: 0.4;
+    opacity: 0.45;
+    transform: scale(0.88);
   }
 }
 

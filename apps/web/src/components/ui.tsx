@@ -4,35 +4,31 @@ import type { PublicUser } from "@croco/shared/client";
 import { ApiError } from "../lib/api";
 import { useT } from "../i18n";
 
-/**
- * 24 crisp geometric/gaming avatar emblems — renders identically across Windows,
- * macOS, Android, and iOS with zero emoji inconsistency or raster downloads.
- */
 const AVATAR_PALETTES = [
-  { bg: "#0e4d2e", fg: "#4ade80", accent: "#f5c451", shape: "crown" },
-  { bg: "#103e5c", fg: "#38bdf8", accent: "#e0f2fe", shape: "spade" },
-  { bg: "#521b29", fg: "#fb7185", accent: "#fde68a", shape: "heart" },
-  { bg: "#3b2c12", fg: "#f5c451", accent: "#fef3c7", shape: "diamond" },
-  { bg: "#12423d", fg: "#2dd4bf", accent: "#ccfbf1", shape: "club" },
-  { bg: "#2e1f4d", fg: "#a78bfa", accent: "#f5c451", shape: "star" },
-  { bg: "#1b3a4b", fg: "#67e8f9", accent: "#18b84e", shape: "shield" },
-  { bg: "#4a2511", fg: "#fb923c", accent: "#fef08a", shape: "bolt" },
-  { bg: "#0c3d35", fg: "#34d399", accent: "#ffffff", shape: "hex" },
-  { bg: "#3d1b3f", fg: "#e879f9", accent: "#fde68a", shape: "gem" },
-  { bg: "#1e3554", fg: "#60a5fa", accent: "#f5c451", shape: "dice" },
-  { bg: "#3d3311", fg: "#facc15", accent: "#fef9c3", shape: "chip" },
-  { bg: "#14472c", fg: "#22c55e", accent: "#dcfce7", shape: "spade" },
-  { bg: "#4d1a1f", fg: "#f87171", accent: "#fee2e2", shape: "crown" },
-  { bg: "#14384c", fg: "#22d3ee", accent: "#cffafe", shape: "star" },
-  { bg: "#2f2447", fg: "#c084fc", accent: "#f3e8ff", shape: "diamond" },
-  { bg: "#382914", fg: "#f59e0b", accent: "#fef3c7", shape: "shield" },
-  { bg: "#0f4238", fg: "#10b981", accent: "#f5c451", shape: "chip" },
-  { bg: "#24344d", fg: "#93c5fd", accent: "#dbeafe", shape: "bolt" },
-  { bg: "#4a1c30", fg: "#f472b6", accent: "#fce7f3", shape: "heart" },
-  { bg: "#163d34", fg: "#5eead4", accent: "#f5c451", shape: "hex" },
-  { bg: "#3b2316", fg: "#fdba74", accent: "#ffedd5", shape: "dice" },
-  { bg: "#1c2d4a", fg: "#818cf8", accent: "#e0e7ff", shape: "gem" },
-  { bg: "#143d24", fg: "#86efac", accent: "#f5c451", shape: "club" },
+  { bg: "#083d23", fg: "#00e676", accent: "#ffc845", shape: "crown" },
+  { bg: "#0e3554", fg: "#38bdf8", accent: "#e0f2fe", shape: "spade" },
+  { bg: "#4c1726", fg: "#fb7185", accent: "#fde68a", shape: "heart" },
+  { bg: "#38280e", fg: "#ffc845", accent: "#fef3c7", shape: "diamond" },
+  { bg: "#0f3d39", fg: "#2dd4bf", accent: "#ccfbf1", shape: "club" },
+  { bg: "#2b1c4a", fg: "#a78bfa", accent: "#ffc845", shape: "star" },
+  { bg: "#163345", fg: "#67e8f9", accent: "#00d95f", shape: "shield" },
+  { bg: "#45210e", fg: "#fb923c", accent: "#fef08a", shape: "bolt" },
+  { bg: "#0a3830", fg: "#34d399", accent: "#ffffff", shape: "hex" },
+  { bg: "#38183b", fg: "#e879f9", accent: "#fde68a", shape: "gem" },
+  { bg: "#19304f", fg: "#60a5fa", accent: "#ffc845", shape: "dice" },
+  { bg: "#382e0e", fg: "#facc15", accent: "#fef9c3", shape: "chip" },
+  { bg: "#114026", fg: "#22c55e", accent: "#dcfce7", shape: "spade" },
+  { bg: "#47171c", fg: "#f87171", accent: "#fee2e2", shape: "crown" },
+  { bg: "#113245", fg: "#22d3ee", accent: "#cffafe", shape: "star" },
+  { bg: "#2a1f42", fg: "#c084fc", accent: "#f3e8ff", shape: "diamond" },
+  { bg: "#332510", fg: "#f59e0b", accent: "#fef3c7", shape: "shield" },
+  { bg: "#0d3b32", fg: "#10b981", accent: "#ffc845", shape: "chip" },
+  { bg: "#1f2e47", fg: "#93c5fd", accent: "#dbeafe", shape: "bolt" },
+  { bg: "#45192b", fg: "#f472b6", accent: "#fce7f3", shape: "heart" },
+  { bg: "#133830", fg: "#5eead4", accent: "#ffc845", shape: "hex" },
+  { bg: "#361f13", fg: "#fdba74", accent: "#ffedd5", shape: "dice" },
+  { bg: "#182845", fg: "#818cf8", accent: "#e0e7ff", shape: "gem" },
+  { bg: "#113820", fg: "#86efac", accent: "#ffc845", shape: "club" },
 ] as const;
 
 function AvatarGlyph({ shape, fg, accent }: { shape: (typeof AVATAR_PALETTES)[number]["shape"]; fg: string; accent: string }) {
@@ -98,16 +94,16 @@ function AvatarGlyph({ shape, fg, accent }: { shape: (typeof AVATAR_PALETTES)[nu
       return (
         <>
           <rect x="5.5" y="5.5" width="13" height="13" rx="3" fill={fg} />
-          <circle cx="9.2" cy="9.2" r="1.4" fill="#071117" />
-          <circle cx="12" cy="12" r="1.4" fill="#071117" />
-          <circle cx="14.8" cy="14.8" r="1.4" fill="#071117" />
+          <circle cx="9.2" cy="9.2" r="1.4" fill="#060b11" />
+          <circle cx="12" cy="12" r="1.4" fill="#060b11" />
+          <circle cx="14.8" cy="14.8" r="1.4" fill="#060b11" />
         </>
       );
     case "chip":
       return (
         <>
           <circle cx="12" cy="12" r="7.5" fill={fg} stroke={accent} strokeWidth="2" strokeDasharray="3 2.5" />
-          <circle cx="12" cy="12" r="3.5" fill="#071117" />
+          <circle cx="12" cy="12" r="3.5" fill="#060b11" />
         </>
       );
   }
@@ -121,7 +117,7 @@ export function Avatar({ id, size = 36, title, ring }: { id: string | undefined;
     <span
       role="img"
       aria-label={title ?? "avatar"}
-      className={`inline-flex items-center justify-center rounded-full shrink-0 border border-white/15 overflow-hidden shadow-sm ${ringCls}`}
+      className={`inline-flex items-center justify-center rounded-full shrink-0 border border-white/20 overflow-hidden shadow-md ${ringCls}`}
       style={{ width: size, height: size, background: p.bg }}
     >
       <svg width={size * 0.78} height={size * 0.78} viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -134,9 +130,9 @@ export function Avatar({ id, size = 36, title, ring }: { id: string | undefined;
 export function StatusDot({ status }: { status: "online" | "in_game" | "away" | "offline" | string }) {
   const cls =
     status === "online"
-      ? "bg-primary shadow-[0_0_6px_rgba(24,184,78,0.8)]"
+      ? "bg-primary shadow-[0_0_8px_rgba(0,217,95,0.9)]"
       : status === "in_game"
-        ? "bg-gold shadow-[0_0_6px_rgba(245,196,81,0.75)]"
+        ? "bg-gold shadow-[0_0_8px_rgba(255,200,69,0.85)]"
         : status === "away"
           ? "bg-warning"
           : "bg-muted/40";
@@ -145,7 +141,7 @@ export function StatusDot({ status }: { status: "online" | "in_game" | "away" | 
 
 export function AdminBadge() {
   return (
-    <span className="chip bg-gold/15 text-gold border border-gold/45 h-5 px-2 text-[10px]">
+    <span className="chip bg-gold/18 text-gold border border-gold/45 h-5 px-2 text-[10px]">
       <Shield size={10} /> Admin
     </span>
   );
@@ -167,7 +163,7 @@ export function UserName({ user, you, className = "" }: { user: PublicUser | und
 export function BotBadge({ difficulty }: { difficulty?: string }) {
   const t = useT();
   return (
-    <span className="chip bg-secondary/35 text-text-2 border border-secondary/50 h-5 px-2 text-[10px]">
+    <span className="chip bg-secondary/45 text-text-2 border border-line-strong h-5 px-2 text-[10px]">
       <Bot size={11} />
       {t("common.bot")}
       {difficulty ? ` · ${t(`difficulty.${difficulty}`)}` : ""}
@@ -193,7 +189,7 @@ export function ErrorText({ error }: { error: unknown }) {
   else if (typeof error === "string") key = error.startsWith("errors.") ? error : `errors.${error}`;
   const text = t(key);
   return (
-    <p role="alert" className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-xl px-3 py-2">
+    <p role="alert" className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-xl px-3.5 py-2">
       {text.startsWith("errors.") ? t("errors.generic") : text}
     </p>
   );
@@ -216,7 +212,7 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
   }, [open, onClose]);
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 p-0 sm:p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 p-0 sm:p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div
         ref={ref}
         role="dialog"
@@ -224,7 +220,7 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
         aria-label={title}
         className={`card w-full ${wide ? "sm:max-w-2xl" : "sm:max-w-md"} max-h-[92dvh] overflow-y-auto rounded-b-none sm:rounded-2xl border-line-strong fade-in`}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-line bg-surface-2/80">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-line bg-surface-2">
           <h2 className="font-bold text-base tracking-tight">{title}</h2>
           <button className="btn-ghost btn-sm size-8 px-0 rounded-full" onClick={onClose} aria-label="close">
             <X size={16} />
@@ -257,34 +253,33 @@ export function cardLabel(card: string): string {
   return `${RANK_LABEL[card[0]!] ?? card[0]}${SUIT_SYMBOL[card[1]!] ?? ""}`;
 }
 
-/** Crisp SVG suit icon for consistent rendering on playing cards & badges across OSes. */
-export function SuitIcon({ suit, size = 14, className = "" }: { suit: string; size?: number; className?: string }) {
+export function SuitIcon({ suit, size = 16, className = "" }: { suit: string; size?: number; className?: string }) {
   switch (suit) {
     case "S":
       return (
         <svg width={size} height={size} viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
-          <path d="M12 2.5C12 2.5 4.2 10.2 4.2 14.3C4.2 16.9 6.2 18.7 8.6 18.7C10 18.7 11.1 18.1 11.9 17.1C11.7 18.6 11 20 9.6 21.2H14.4C13 20 12.3 18.6 12.1 17.1C12.9 18.1 14 18.7 15.4 18.7C17.8 18.7 19.8 16.9 19.8 14.3C19.8 10.2 12 2.5 12 2.5Z" />
+          <path d="M12 2C12 2 3.8 10 3.8 14.4C3.8 17.1 5.9 19 8.5 19C10 19 11.1 18.3 11.9 17.2C11.7 18.8 10.9 20.3 9.4 21.6H14.6C13.1 20.3 12.3 18.8 12.1 17.2C12.9 18.3 14 19 15.5 19C18.1 19 20.2 17.1 20.2 14.4C20.2 10 12 2 12 2Z" />
         </svg>
       );
     case "H":
       return (
         <svg width={size} height={size} viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
-          <path d="M12 21.2C12 21.2 3.5 15.2 3.5 9.2C3.5 6.1 5.9 3.8 8.8 3.8C10.5 3.8 11.4 4.7 12 5.9C12.6 4.7 13.5 3.8 15.2 3.8C18.1 3.8 20.5 6.1 20.5 9.2C20.5 15.2 12 21.2 12 21.2Z" />
+          <path d="M12 21.5C12 21.5 3.2 15.3 3.2 9.1C3.2 5.9 5.7 3.5 8.7 3.5C10.5 3.5 11.4 4.5 12 5.7C12.6 4.5 13.5 3.5 15.3 3.5C18.3 3.5 20.8 5.9 20.8 9.1C20.8 15.3 12 21.5 12 21.5Z" />
         </svg>
       );
     case "D":
       return (
         <svg width={size} height={size} viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
-          <path d="M12 2.5L20 12L12 21.5L4 12L12 2.5Z" />
+          <path d="M12 2L20.5 12L12 22L3.5 12L12 2Z" />
         </svg>
       );
     case "C":
       return (
         <svg width={size} height={size} viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
-          <circle cx="12" cy="7.6" r="4.1" />
-          <circle cx="7.5" cy="13.2" r="4.1" />
-          <circle cx="16.5" cy="13.2" r="4.1" />
-          <path d="M9.6 21.2H14.4L13 15.8H11L9.6 21.2Z" />
+          <circle cx="12" cy="7.4" r="4.3" />
+          <circle cx="7.3" cy="13.3" r="4.3" />
+          <circle cx="16.7" cy="13.3" r="4.3" />
+          <path d="M9.4 21.6H14.6L13.1 16H10.9L9.4 21.6Z" />
         </svg>
       );
     default:
@@ -292,6 +287,39 @@ export function SuitIcon({ suit, size = 14, className = "" }: { suit: string; si
   }
 }
 
+/** Royal emblem for J / Q / K court cards so face cards are unmistakably distinct at a glance. */
+function CourtCrown({ rank, size }: { rank: string; size: number }) {
+  if (rank === "K") {
+    return (
+      <svg width={size} height={size} viewBox="0 0 28 28" fill="currentColor" aria-hidden="true">
+        <path d="M14 4L18 11.5L25 7.5L22 20H6L3 7.5L10 11.5L14 4Z" />
+        <rect x="6" y="21.5" width="16" height="3" rx="1.5" fill="#f59e0b" />
+      </svg>
+    );
+  }
+  if (rank === "Q") {
+    return (
+      <svg width={size} height={size} viewBox="0 0 28 28" fill="currentColor" aria-hidden="true">
+        <path d="M14 4.5L17.2 12L24 9L20.8 20H7.2L4 9L10.8 12L14 4.5Z" />
+        <circle cx="14" cy="3.2" r="2" fill="#f59e0b" />
+        <rect x="7" y="21.5" width="14" height="2.8" rx="1.4" fill="#f59e0b" />
+      </svg>
+    );
+  }
+  return (
+    <svg width={size} height={size} viewBox="0 0 28 28" fill="currentColor" aria-hidden="true">
+      <path d="M14 3.5L22 7.2V14C22 19 18.6 22.6 14 24.5C9.4 22.6 6 19 6 14V7.2L14 3.5Z" />
+      <path d="M14 7.5L18.5 9.6V13.8C18.5 16.8 16.6 19.2 14 20.4V7.5Z" fill="#ffffff" opacity="0.35" />
+    </svg>
+  );
+}
+
+/**
+ * JUMBO-INDEX High-Visibility PlayingCard (GGPoker / Modern Arena style):
+ *  - Large unmistakable top-left rank + vivid suit pip
+ *  - Bold oversized bottom-right / center suit or royal court emblem
+ *  - Crisp pure-white card stock that pops off dark gaming tables
+ */
 export function PlayingCard({
   card,
   onClick,
@@ -320,64 +348,72 @@ export function PlayingCard({
   if (back || !card) {
     return (
       <span className={`pcard pcard-back ${sizeClass} ${animClass} items-center justify-center`} aria-label="hidden card">
-        <span className="size-3.5 rounded-sm border border-gold/45 rotate-45 bg-primary/25" aria-hidden="true" />
+        <span className="size-4 rounded-sm border border-gold/55 rotate-45 bg-primary/30" aria-hidden="true" />
       </span>
     );
   }
 
   const joker = card === "X1" || card === "X2";
+  const isRedJoker = card === "X1";
   const rank = RANK_LABEL[card[0]!] ?? card[0]!;
   const suit = card[1] ?? "";
-  const red = suit === "H" || suit === "D";
-  const isCourt = rank === "J" || rank === "Q" || rank === "K" || rank === "A";
+  const red = joker ? isRedJoker : suit === "H" || suit === "D";
+  const isFace = rank === "J" || rank === "Q" || rank === "K";
 
-  const cornerText = resolvedSize === "xs" ? "text-[10px]" : resolvedSize === "sm" ? "text-[11px]" : resolvedSize === "lg" ? "text-sm" : "text-xs";
-  const cornerPip = resolvedSize === "xs" ? 8 : resolvedSize === "sm" ? 9 : resolvedSize === "lg" ? 11 : 10;
-  const centerPip = resolvedSize === "xs" ? 13 : resolvedSize === "sm" ? 18 : resolvedSize === "lg" ? 28 : 22;
+  const rankFont =
+    resolvedSize === "xs"
+      ? "text-[13px]"
+      : resolvedSize === "sm"
+        ? "text-[18px] sm:text-[21px]"
+        : resolvedSize === "lg"
+          ? "text-[24px] sm:text-[29px]"
+          : "text-[21px] sm:text-[25px]";
+
+  const tenTight = rank === "10" ? "tracking-[-0.09em]" : "tracking-tighter";
+  const cornerPip = resolvedSize === "xs" ? 10 : resolvedSize === "sm" ? 14 : resolvedSize === "lg" ? 18 : 16;
+  const bigArt = resolvedSize === "xs" ? 15 : resolvedSize === "sm" ? 27 : resolvedSize === "lg" ? 40 : 34;
 
   const content = joker ? (
     <>
-      <span className={`flex flex-col items-start leading-none font-black ${cornerText}`}>
-        <span>JK</span>
+      <span className="flex items-center justify-between w-full leading-none">
+        <span className={`font-black tracking-tighter ${resolvedSize === "xs" ? "text-[11px]" : "text-xs sm:text-sm"} ${isRedJoker ? "text-[#b91c1c]" : "text-[#1e293b]"}`}>
+          JOKER
+        </span>
       </span>
-      <span className="self-center my-auto">
-        <svg width={centerPip + 2} height={centerPip + 2} viewBox="0 0 28 28" fill="none" aria-hidden="true">
-          <path d="M14 4L17.5 12L25 8.5L21.5 19.5H6.5L3 8.5L10.5 12L14 4Z" fill="#6b4000" />
-          <circle cx="14" cy="3" r="2" fill="#c9252d" />
-          <circle cx="3" cy="7.5" r="1.8" fill="#18b84e" />
-          <circle cx="25" cy="7.5" r="1.8" fill="#18b84e" />
-          <rect x="6.5" y="21" width="15" height="2.8" rx="1.4" fill="#6b4000" />
+      <span className="self-end mt-auto">
+        <svg width={bigArt + 4} height={bigArt + 4} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <path d="M16 5L20 14L28 10L24 23H8L4 10L12 14L16 5Z" fill={isRedJoker ? "#dc2626" : "#0f172a"} />
+          <circle cx="16" cy="3.8" r="2.3" fill="#d97706" />
+          <circle cx="4" cy="8.5" r="2" fill="#00d95f" />
+          <circle cx="28" cy="8.5" r="2" fill="#00d95f" />
+          <rect x="8" y="24.8" width="16" height="3.2" rx="1.6" fill="#92400e" />
         </svg>
       </span>
-      <span className={`self-end rotate-180 leading-none font-black ${cornerText}`}>JK</span>
     </>
   ) : (
     <>
-      <span className={`flex flex-col items-center self-start leading-none tracking-tighter ${cornerText}`}>
-        <span>{rank}</span>
-        {resolvedSize !== "xs" && <SuitIcon suit={suit} size={cornerPip} className="mt-0.5" />}
+      {isFace && resolvedSize !== "xs" && (
+        <span className="pointer-events-none absolute inset-[3px] rounded-[7px] border border-amber-500/35 bg-amber-50/25" aria-hidden="true" />
+      )}
+      {/* Jumbo Top-Left Index: Rank + Vivid Mini Suit */}
+      <span className="relative z-[1] flex items-start justify-between w-full leading-none">
+        <span className={`font-black leading-[0.9] ${tenTight} ${rankFont}`}>{rank}</span>
+        {resolvedSize !== "xs" && <SuitIcon suit={suit} size={cornerPip} className="mt-0.5 shrink-0" />}
       </span>
-      <span className="self-center my-auto flex items-center justify-center">
-        {isCourt && resolvedSize !== "xs" ? (
-          <span className="relative flex items-center justify-center">
-            <SuitIcon suit={suit} size={centerPip} className={rank === "A" ? "opacity-100" : "opacity-85"} />
-            {rank !== "A" && (
-              <span className="absolute text-[9px] font-black text-white/95 drop-shadow-[0_1px_1px_rgba(0,0,0,0.65)]">{rank}</span>
-            )}
-          </span>
+
+      {/* Bold Oversized Lower-Right / Center Suit or Royal Emblem */}
+      <span className="relative z-[1] self-end mt-auto flex items-end justify-end leading-none">
+        {isFace && resolvedSize !== "xs" ? (
+          <CourtCrown rank={rank} size={bigArt} />
         ) : (
-          <SuitIcon suit={suit} size={centerPip} />
+          <SuitIcon suit={suit} size={rank === "A" && resolvedSize !== "xs" ? bigArt + 3 : bigArt} />
         )}
-      </span>
-      <span className={`flex flex-col items-center self-end rotate-180 leading-none tracking-tighter ${cornerText}`}>
-        <span>{rank}</span>
-        {resolvedSize !== "xs" && <SuitIcon suit={suit} size={cornerPip} className="mt-0.5" />}
       </span>
     </>
   );
 
   const common = {
-    className: `pcard ${sizeClass} ${animClass} ${joker ? "pcard-joker" : isCourt ? "pcard-court" : ""}`,
+    className: `pcard ${sizeClass} ${animClass} ${joker ? "pcard-joker" : ""}`,
     "data-red": red,
     "data-selected": selected ? "true" : "false",
     "data-playable": playable ? "true" : "false",
@@ -418,7 +454,7 @@ export function Countdown({ deadline }: { deadline: number | null }) {
   if (s === null) return null;
   const urgent = s <= 5;
   return (
-    <span className={`chip tabular-nums ${urgent ? "bg-danger/20 text-danger border border-danger/45" : "bg-surface-3 text-text-2 border border-line"}`}>
+    <span className={`chip tabular-nums ${urgent ? "bg-danger/25 text-danger border border-danger/50" : "bg-surface-3 text-text-2 border border-line"}`}>
       <Clock size={11} /> {t("game.seconds", { s })}
     </span>
   );
@@ -429,7 +465,7 @@ export function Section({ title, subtitle, action, icon, children }: { title: st
     <section className="card p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4 gap-2">
         <div className="flex items-center gap-2.5 min-w-0">
-          {icon && <span className="size-8 rounded-lg bg-primary/12 border border-primary/25 text-primary flex items-center justify-center shrink-0">{icon}</span>}
+          {icon && <span className="size-8 rounded-lg bg-primary/14 border border-primary/30 text-primary flex items-center justify-center shrink-0">{icon}</span>}
           <div className="min-w-0">
             <h2 className="font-bold text-sm sm:text-base text-white tracking-tight truncate">{title}</h2>
             {subtitle && <p className="text-xs text-muted truncate">{subtitle}</p>}
