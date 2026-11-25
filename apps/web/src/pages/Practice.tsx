@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useParams, useSearchParams } from "react-router";
 import { ArrowLeft, Dumbbell, Info, Play, RotateCcw, Trophy, Users } from "lucide-react";
 import { GAME_CATALOG, GAME_TYPES, isGameType, type GameType, type SeatInfo } from "@croco/shared/client";
 import type { GameEngine } from "@croco/game-engine";
@@ -21,7 +21,9 @@ const PRACTICE_PLAYERS: Record<GameType, number> = {
   backgammon: 2,
 };
 
-function useLocalGame(gameType: GameType, version: number) {
+type JokerRuleset = "standard" | "nines";
+
+function useLocalGame(gameType: GameType, version: number, ruleset: JokerRuleset) {
   const [engine, setEngine] = useState<GameEngine | null>(null);
   const [state, setState] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +40,15 @@ function useLocalGame(gameType: GameType, version: number) {
       rngRef.current = cryptoRng();
       // Shorter matches for practice; the rules themselves are the defaults.
       const config = e.configSchema.parse(
-        gameType === "bura3" || gameType === "bura5" ? { targetPoints: 6 } : gameType === "japanese_joker" ? { targetPoints: 7 } : gameType === "backgammon" ? { matchLength: 1 } : {},
+        gameType === "joker"
+          ? { ruleset }
+          : gameType === "bura3" || gameType === "bura5"
+            ? { targetPoints: 6 }
+            : gameType === "japanese_joker"
+              ? { targetPoints: 7 }
+              : gameType === "backgammon"
+                ? { matchLength: 1 }
+                : {},
       );
       setEngine(e);
       setState(e.create(config, PRACTICE_PLAYERS[gameType], { rng: rngRef.current, now: Date.now() }));
@@ -47,7 +57,7 @@ function useLocalGame(gameType: GameType, version: number) {
     return () => {
       cancelled = true;
     };
-  }, [gameType, version]);
+  }, [gameType, version, ruleset]);
 
   const humanOut = Boolean(engine && state !== null && (engine.view(state, 0) as { players?: Array<{ busted?: boolean }> }).players?.[0]?.busted);
 
@@ -133,6 +143,11 @@ export default function Practice() {
                     </span>
                   </div>
                 </Link>
+                {g === "joker" && (
+                  <Link to="/practice/joker?ruleset=nines" className="btn-secondary btn-sm mx-3.5 mb-3.5 -mt-1.5">
+                    <Play size={13} className="fill-current" /> {t("practice.playNines")}
+                  </Link>
+                )}
               </li>
             );
           })}
@@ -146,7 +161,9 @@ export default function Practice() {
 function PracticeGame({ gameType }: { gameType: GameType }) {
   const t = useT();
   const [version, setVersion] = useState(0);
-  const { engine, state, act, error, humanOut } = useLocalGame(gameType, version);
+  const [params, setParams] = useSearchParams();
+  const ruleset: JokerRuleset = gameType === "joker" && params.get("ruleset") === "nines" ? "nines" : "standard";
+  const { engine, state, act, error, humanOut } = useLocalGame(gameType, version, ruleset);
   const players = PRACTICE_PLAYERS[gameType];
   const seats: SeatInfo[] = Array.from({ length: players }, (_, i) =>
     i === 0
@@ -166,6 +183,22 @@ function PracticeGame({ gameType }: { gameType: GameType }) {
           <h1 className="font-extrabold text-sm sm:text-base text-white truncate">{t(`games.${gameType}.name`)}</h1>
           <span className={`chip hidden md:inline-flex ${GAME_THEMES[gameType].badgeClass}`}>{t(`games.${gameType}.tag`)}</span>
         </div>
+        {gameType === "joker" && (
+          <div className="inline-flex rounded-full bg-surface-3 border border-line p-0.5" role="radiogroup" aria-label={t("opt.ruleset")}>
+            {(["standard", "nines"] as const).map((r) => (
+              <button
+                key={r}
+                type="button"
+                role="radio"
+                aria-checked={ruleset === r}
+                className={`h-7 px-3 rounded-full text-xs font-bold transition-colors ${ruleset === r ? "bg-[#168a3d] text-white" : "text-text-2 hover:text-white"}`}
+                onClick={() => setParams(r === "nines" ? { ruleset: "nines" } : {})}
+              >
+                {t(`joker.rulesets.${r}`)}
+              </button>
+            ))}
+          </div>
+        )}
         <button className="btn-secondary btn-sm ml-auto xl:order-last" onClick={() => setVersion((v) => v + 1)}>
           <RotateCcw size={13} /> {t("practice.newGame")}
         </button>

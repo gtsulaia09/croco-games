@@ -158,9 +158,18 @@ describe("full Joker matches", () => {
         },
       });
       expect(finished).toBe(true);
-      expect(state.history).toHaveLength(ruleset === "standard" ? 24 : 8);
+      expect(state.history).toHaveLength(ruleset === "standard" ? 24 : 16);
+      if (ruleset === "nines") expect(state.history.every((h) => h.cards === 9)).toBe(true);
       for (const h of state.history) expect(h.tricks.reduce((a, b) => a + b, 0)).toBe(h.cards);
     }
+  });
+
+  it("plays the nines game as four sets of four nine-card deals", () => {
+    expect(jokerSchedule("nines")).toEqual([[9, 9, 9, 9], [9, 9, 9, 9], [9, 9, 9, 9], [9, 9, 9, 9]]);
+    const s = jokerEngine.create(cfg({ ruleset: "nines" }), 4, testCtx(3));
+    expect(s.totalHands).toBe(16);
+    expect(s.cards).toBe(9);
+    expect(jokerEngine.view(s, 0).ruleset).toBe("nines");
   });
 
   it("never shows other players' hands", () => {

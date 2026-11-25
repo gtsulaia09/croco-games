@@ -234,6 +234,8 @@ export const en = {
     total: "Total",
     sheet: "Score sheet",
     playHint: "Tap a raised card to play it",
+    rulesets: { standard: "Standard · 24 deals", nines: "Nines · 16 deals" },
+    ninesShort: "Nines",
   },
   jj: {
     myTable: "My table cards",
@@ -486,6 +488,7 @@ export const en = {
     choose: "Choose a game to practise against bots",
     start: "Play vs bots",
     newGame: "New game",
+    playNines: "Play nines",
   },
   ui: {
     catAll: "All games",
@@ -564,7 +567,7 @@ export const en = {
     shortDeckBlinds: "Forced bets",
     values: {
       standard: "Standard (24 hands)",
-      nines: "Nines only (16 hands)",
+      nines: "Nines (16 nine-card deals)",
       classic: "Khishti −200 / −500",
       none: "None",
       simple: "Bonus best hand",

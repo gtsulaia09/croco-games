@@ -108,6 +108,7 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
         seats={seats}
         extra={
           <>
+            {view.ruleset === "nines" && <HudChip tone="brand">{t("joker.ninesShort")}</HudChip>}
             <HudChip>{t("game.hand", { n: `${view.handNumber}/${view.totalHands}` })}</HudChip>
             <HudChip>{t("joker.set", { n: view.set })}</HudChip>
             <TrumpBadge card={view.trumpCard} suit={view.trump} />

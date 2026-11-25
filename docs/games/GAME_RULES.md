@@ -9,13 +9,15 @@ All ten game modes run as independent, server-authoritative engines inside `pack
 ## 1. Joker (`joker`) — ჯოკერი
 
 - **Players**: 4, no partners · **Deck**: 36 cards (6–A), the black sixes `6S`, `6C` replaced by jokers `X1`, `X2`.
-- **24 deals in four sets**: 1→8 cards, four 9-card deals, 8→1 cards, four 9-card deals. (House variant `nines`: two sets of four 9-card deals.)
+- **Two games** (`ruleset`):
+  - **Standard** — 24 deals in four sets: 1→8 cards, four 9-card deals, 8→1 cards, four 9-card deals.
+  - **ცხრიანები (nines)** — 16 deals in four sets of four, every deal nine cards. Same bidding, play and scoring; the set bonus is applied per set of four. Selectable at room creation and in practice (`#/practice/joker?ruleset=nines`).
 - **Trump**: in 1–8-card deals the next card of the pack is turned; a turned joker means no trump ("ბეზი"). In 9-card deals the dealer's last card shows trump (house variant `nineTrump: "choose"`).
 - **Bidding (თქმა)**: from the dealer's left; the dealer bids last and may not make the bids add up to the number of cards (`dealer_bid_forbidden`).
 - **Trick play (ვაზი)**: follow the led suit; without it you must trump; otherwise any card. A joker may always be played. The trick goes to the highest trump, else the highest card of the led suit.
 - **Joker**: played "high" or "low". A leading joker also names the suit the others must follow (high: their highest card of it). A high joker wins unless a later high joker is played (the later one wins) or — when it led a non-trump suit — a player without that suit trumps it (`ledJokerTrumped: "trumpWins"`). A low joker loses, except a led low joker wins when nobody played the suit, a trump or a high joker.
 - **Scoring**: exact bid `k` → `50 × k + 50`; bid 0 and took 0 → `50`; bid and took every trick → `100 × cards`; missed bid → `10 × tricks taken`. **Set bonus**: a player who makes every bid of a set adds their best single deal of that set.
-- **House variant "ხიშტი" (`hist: "classic"`)**: bid ≥ 1 and took no trick scores −200 (sets 1/3) / −500 (sets 2/4). **Off by default** — the handbook says it is not universal.
+- **House variant "ხიშტი" (`hist: "classic"`)**: bid ≥ 1 and took no trick scores −200 in deals of 1–8 cards and −500 in nine-card deals. **Off by default** — the handbook says it is not universal.
 
 ---
 

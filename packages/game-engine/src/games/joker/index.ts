@@ -2,7 +2,8 @@
  * Joker (ჯოკერი) — Georgian trick-taking game for four players. Default ruleset follows the
  * pagat.com description (A. Tvaladze): 36-card pack with jokers instead of the black sixes,
  * 24 hands in four sets (1→8, 4×9, 8→1, 4×9), exact bidding with the dealer restriction,
- * high/low jokers, hist penalty and set bonus. Variations are configurable.
+ * high/low jokers, hist penalty and set bonus. The "nines" game (ცხრიანები) plays four sets of
+ * four nine-card deals (16 deals). Variations are configurable.
  */
 import { z } from "zod";
 import { DECK_36_JOKERS, isJoker, rankValue, suitOf, SUITS, type Card, type Suit } from "../../core/cards";
@@ -12,6 +13,7 @@ import { pick, shuffle } from "../../core/rng";
 const PLAYERS = 4;
 
 export const jokerConfigSchema = z.strictObject({
+  /** "standard": 24 deals (1→8, 4×9, 8→1, 4×9); "nines": 16 nine-card deals in four sets of four. */
   ruleset: z.enum(["standard", "nines"]).default("standard"),
   /** House variant "khishti": a player who bids ≥1 and takes no tricks loses 200 (sets 1/3) / 500 (sets 2/4). Off in the base rules. */
   hist: z.enum(["classic", "none"]).default("none"),
@@ -78,6 +80,7 @@ export interface JokerState {
 }
 
 export interface JokerView {
+  ruleset: JokerConfig["ruleset"];
   phase: JokerState["phase"];
   handNumber: number;
   totalHands: number;
@@ -100,7 +103,7 @@ export interface JokerView {
 }
 
 export function jokerSchedule(ruleset: JokerConfig["ruleset"]): number[][] {
-  if (ruleset === "nines") return [[9, 9, 9, 9], [9, 9, 9, 9]];
+  if (ruleset === "nines") return [[9, 9, 9, 9], [9, 9, 9, 9], [9, 9, 9, 9], [9, 9, 9, 9]];
   return [[1, 2, 3, 4, 5, 6, 7, 8], [9, 9, 9, 9], [8, 7, 6, 5, 4, 3, 2, 1], [9, 9, 9, 9]];
 }
 
@@ -144,7 +147,7 @@ export function forbiddenDealerBid(state: Pick<JokerState, "bids" | "cards" | "d
   return forbidden >= 0 && forbidden <= state.cards ? forbidden : null;
 }
 
-function handScore(bid: number, tricks: number, cards: number, setIndex: number, hist: JokerConfig["hist"]): number {
+function handScore(bid: number, tricks: number, cards: number, hist: JokerConfig["hist"]): number {
   if (bid === tricks) {
     if (bid === cards) return 100 * cards;
     if (bid === 0) return 50;
@@ -152,8 +155,8 @@ function handScore(bid: number, tricks: number, cards: number, setIndex: number,
   }
   if (bid >= 1 && tricks === 0) {
     if (hist === "none") return 0;
-    const nineSet = setIndex % 2 === 1;
-    return nineSet ? -500 : -200;
+    // Khishti costs more in nine-card deals.
+    return cards === 9 ? -500 : -200;
   }
   return 10 * tricks;
 }
@@ -232,7 +235,7 @@ function applySetBonus(state: JokerState, events: PublicEvent[]): void {
 }
 
 function finishHand(state: JokerState, ctx: EngineContext, events: PublicEvent[]): void {
-  const scores = [0, 1, 2, 3].map((s) => handScore(state.bids[s]!, state.tricks[s]!, state.cards, state.setIndex, state.config.hist));
+  const scores = [0, 1, 2, 3].map((s) => handScore(state.bids[s]!, state.tricks[s]!, state.cards, state.config.hist));
   for (let s = 0; s < PLAYERS; s++) state.totals[s]! += scores[s]!;
   state.history.push({
     hand: state.handNumber,
@@ -383,6 +386,7 @@ export const jokerEngine: GameEngine<JokerState, JokerAction, JokerConfig, Joker
 
   view(state, seat) {
     return {
+      ruleset: state.config.ruleset,
       phase: state.phase,
       handNumber: state.handNumber,
       totalHands: state.totalHands,

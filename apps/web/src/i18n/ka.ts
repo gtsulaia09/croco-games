@@ -245,6 +245,8 @@ export const ka: Dictionary = {
     total: "ჯამი",
     sheet: "ქულების ცხრილი",
     playHint: "სათამაშოდ დააჭირე ამოწეულ კარტს",
+    rulesets: { standard: "სტანდარტული · 24 დარიგება", nines: "ცხრიანები · 16 დარიგება" },
+    ninesShort: "ცხრიანები",
   },
   jj: {
     myTable: "ჩემი მაგიდის კარტები",
@@ -497,6 +499,7 @@ export const ka: Dictionary = {
     choose: "აირჩიე თამაში ბოტებთან სავარჯიშოდ",
     start: "ბოტებთან თამაში",
     newGame: "ახალი თამაში",
+    playNines: "ცხრიანებით თამაში",
   },
   ui: {
     catAll: "ყველა",
@@ -575,7 +578,7 @@ export const ka: Dictionary = {
     shortDeckBlinds: "სავალდებულო ფსონები",
     values: {
       standard: "სტანდარტული (24 დარიგება)",
-      nines: "მხოლოდ ცხრიანები (16 დარიგება)",
+      nines: "ცხრიანები (16 დარიგება 9 კარტით)",
       classic: "ხიშტი −200 / −500",
       none: "გარეშე",
       simple: "საუკეთესო ხელის პრემია",
