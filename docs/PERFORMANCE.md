@@ -25,10 +25,10 @@ Measured by `node scripts/bundle-budget.mjs` (gzip level 9) against the Cloudfla
 
 | Asset Category | Budget | Before Redesign | After Redesign (gzip) | Status |
 |---|---|---|---|---|
-| Initial JavaScript (entry + modulepreloads) | <= 200.0 KB | 120.0 KB | **127.0 KB** | Pass |
-| Initial CSS | <= 100.0 KB | 6.7 KB | **13.5 KB** | Pass |
-| Per-route / per-game lazy chunks (excl. Firebase SDK) | <= 60.0 KB | 0.2 – 20.2 KB | **0.2 – 20.2 KB** (game boards 2.19–3.84 KB, game engines 2.0–4.3 KB) | Pass |
-| Total lazy chunks | — | 41 chunks | **55 chunks** | Code-split |
+| Initial JavaScript (entry + modulepreloads) | <= 200.0 KB | 120.0 KB | **129.0 KB** | Pass |
+| Initial CSS | <= 100.0 KB | 6.7 KB | **12.4 KB** | Pass |
+| Per-route / per-game lazy chunks (excl. Firebase SDK) | <= 60.0 KB | 0.2 – 20.2 KB | **0.2 – 20.2 KB** (game boards 2.12–3.94 KB, game engines 2.0–4.3 KB) | Pass |
+| Total lazy chunks | — | 41 chunks | **56 chunks** | Code-split |
 
 ### Lazy-Loaded Game Engine Isolation
 
@@ -50,11 +50,11 @@ Executed via Playwright (`apps/web/e2e/performance.spec.ts`) in Chromium with **
 
 | Metric | Target / Gate | Before Redesign | After Redesign (Cold 4x CPU) | Status |
 |---|---|---|---|---|
-| Cold initial load to interactive practice catalog (`/#/practice`) | < 10,000 ms (4x CPU) | 3,078 ms | **1,624 ms** | Pass |
-| `DOMContentLoaded` (4x CPU) | — | 1,342 ms | **247 ms** | Pass |
-| Active table frame rate (1 s `requestAnimationFrame` window, 4x CPU) | >= 20 FPS (aim >= 30 FPS) | 61.7 FPS | **56.5 FPS** | Pass |
-| Active DOM node count on 4-player Joker table | < 1,500 nodes | 200 nodes | **470 nodes** | Pass |
-| Chromium `JSHeapUsedSize` (CDP `Performance.getMetrics`) | < 120 MB | 5.7 MB | **6.5 MB** | Pass |
+| Cold initial load to interactive practice catalog (`/#/practice`) | < 10,000 ms (4x CPU) | 3,078 ms | **1,536 ms** | Pass |
+| `DOMContentLoaded` (4x CPU) | — | 1,342 ms | **371 ms** | Pass |
+| Active table frame rate (1 s `requestAnimationFrame` window, 4x CPU) | >= 20 FPS (aim >= 30 FPS) | 61.7 FPS | **54.4 FPS** | Pass |
+| Active DOM node count on 4-player Joker table | < 1,500 nodes | 200 nodes | **485 nodes** | Pass |
+| Chromium `JSHeapUsedSize` (CDP `Performance.getMetrics`) | < 120 MB | 5.7 MB | **5.7 MB** | Pass |
 | Lazy chunk isolation assertion (opening Joker excludes Poker, Backgammon, Dominoes, Bura) | Strictly isolated | Verified | Verified via network response inspection | Pass |
 
 ---

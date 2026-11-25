@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router";
-import { ArrowRight, Crown, Dumbbell, Gamepad2, Play, PlayCircle, Sparkles, Trophy, Users } from "lucide-react";
+import { ArrowRight, Crown, Dumbbell, Info, Play, PlayCircle, Trophy, Users } from "lucide-react";
 import { GAME_CATALOG, GAME_TYPES, type FriendDto, type GameLeaderDto, type GameType, type MatchHistoryDto, type PresenceStatus, type PublicUser } from "@croco/shared/client";
 import { get } from "../lib/api";
 import { useSession } from "../store/session";
@@ -9,16 +9,6 @@ import { AdminBadge, Avatar, Section, StatusDot, UserName } from "../components/
 import { GAME_THEMES, GameArtwork, GameBadgeIcon } from "../components/GameArt";
 
 type Category = "all" | "cards" | "poker" | "board";
-
-function DemoBanner() {
-  const t = useT();
-  return (
-    <div className="rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-xs sm:text-sm text-text-2 flex items-start gap-2.5">
-      <Sparkles size={16} className="text-warning shrink-0 mt-0.5" />
-      <span>{t("demo.notConfigured")}</span>
-    </div>
-  );
-}
 
 export default function Dashboard() {
   const t = useT();
@@ -63,75 +53,75 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="grid gap-5 fade-in">
-      {status === "unconfigured" && <DemoBanner />}
-
-      {/* Hero Arena Header */}
-      <section className="relative overflow-hidden rounded-2xl border border-line bg-gradient-to-br from-[#0e3226] via-surface to-surface-2 p-5 sm:p-6 shadow-[0_12px_32px_rgba(0,0,0,0.34)]">
-        <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5 min-w-0">
-            {ready && me?.profile ? (
-              <Avatar id={me.profile.avatar} size={52} ring={me.profile.badges.admin ? "gold" : "primary"} />
-            ) : (
-              <span className="size-12 rounded-2xl bg-primary/15 border border-primary/35 flex items-center justify-center text-primary shrink-0">
-                <Gamepad2 size={24} />
-              </span>
-            )}
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-                  {ready && me?.profile ? t("dashboard.hello", { name: me.profile.username }) : t("app.name")}
-                </h1>
-                {ready && me?.profile?.badges.admin && <AdminBadge />}
-                {ready && !me?.profile?.badges.admin && me?.profile?.badges.moderator && (
-                  <span className="chip bg-accent/15 text-accent border border-accent/35">{t("common.moderator")}</span>
-                )}
-              </div>
-              <p className="text-sm text-text-2/85 mt-0.5">{ready ? t("app.tagline") : t("ui.arenaHero")}</p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2.5">
-            {ready && (
-              <span className="chip bg-bg/70 border border-primary/35 text-text-2 h-9 px-3.5 text-xs">
-                <StatusDot status="online" />
-                <span className="font-bold text-white tabular-nums">{online.length}</span>
-                <span>{t("common.online")}</span>
-              </span>
-            )}
-            {ready && me?.activeRoomId ? (
-              <Link to={`/room/${me.activeRoomId}`} className="btn-gold">
-                <PlayCircle size={16} /> {t("dashboard.returnToGame")}
-              </Link>
-            ) : (
-              <Link to="/practice" className="btn-primary">
-                <Dumbbell size={16} /> {t("ui.quickPractice")}
-              </Link>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {ready && me?.activeRoomId && (
-        <div className="card p-4 flex flex-wrap items-center justify-between gap-3 border-primary/50 bg-primary/10">
-          <div className="flex items-center gap-2.5 text-sm font-medium">
-            <span className="size-2.5 rounded-full bg-primary turn-dot" />
-            <span>{t("dashboard.activeGame")}</span>
-          </div>
-          <Link to={`/room/${me.activeRoomId}`} className="btn-primary btn-sm">
-            <PlayCircle size={15} /> {t("dashboard.returnToGame")}
+    <div className="grid gap-4 fade-in">
+      {/* Compact honest demo notice when unconfigured — single clean bar, no double banner */}
+      {status === "unconfigured" && (
+        <div className="rounded-xl border border-warning/35 bg-warning/8 px-3.5 py-2.5 text-xs sm:text-sm text-text-2 flex flex-wrap items-center justify-between gap-3">
+          <span className="flex items-center gap-2 min-w-0">
+            <Info size={15} className="text-warning shrink-0" />
+            <span>{t("demo.notConfigured")}</span>
+          </span>
+          <Link to="/practice" className="btn-primary btn-sm shrink-0">
+            <Dumbbell size={13} /> {t("ui.quickPractice")}
           </Link>
         </div>
       )}
 
-      <div className={`grid gap-5 ${ready ? "lg:grid-cols-[1fr_310px]" : ""}`}>
-        {/* Main Game Arena Catalog */}
-        <div className="grid gap-4 content-start">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-extrabold tracking-tight text-white flex items-center gap-2">
-              <Gamepad2 size={18} className="text-primary" /> {t("dashboard.games")}
-              <span className="chip bg-surface-2 border border-line text-muted">{filteredGames.length}</span>
-            </h2>
+      {/* Authenticated Player Welcome Bar */}
+      {ready && me?.profile && (
+        <section className="card p-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <Avatar id={me.profile.avatar} size={44} ring={me.profile.badges.admin ? "gold" : "primary"} />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-lg sm:text-xl font-bold text-white">{t("dashboard.hello", { name: me.profile.username })}</h1>
+                {me.profile.badges.admin && <AdminBadge />}
+                {!me.profile.badges.admin && me.profile.badges.moderator && (
+                  <span className="chip bg-accent/15 text-accent border border-accent/35">{t("common.moderator")}</span>
+                )}
+              </div>
+              <p className="text-xs sm:text-sm text-muted">{t("app.tagline")}</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="chip bg-surface-2 border border-line text-text-2 h-8 px-3">
+              <StatusDot status="online" />
+              <span className="font-bold text-white tabular-nums">{online.length}</span>
+              <span>{t("common.online")}</span>
+            </span>
+            {me.activeRoomId ? (
+              <Link to={`/room/${me.activeRoomId}`} className="btn-gold btn-sm">
+                <PlayCircle size={14} /> {t("dashboard.returnToGame")}
+              </Link>
+            ) : (
+              <Link to="/practice" className="btn-secondary btn-sm">
+                <Dumbbell size={14} /> {t("ui.quickPractice")}
+              </Link>
+            )}
+          </div>
+        </section>
+      )}
+
+      {ready && me?.activeRoomId && (
+        <div className="rounded-xl border border-primary/45 bg-primary/10 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-sm">
+          <span className="flex items-center gap-2 font-medium text-white">
+            <span className="size-2 rounded-full bg-primary turn-dot" />
+            {t("dashboard.activeGame")}
+          </span>
+          <Link to={`/room/${me.activeRoomId}`} className="btn-primary btn-sm">
+            <PlayCircle size={14} /> {t("dashboard.returnToGame")}
+          </Link>
+        </div>
+      )}
+
+      <div className={`grid gap-5 ${ready ? "lg:grid-cols-[1fr_296px]" : ""}`}>
+        {/* Game Lobby Grid */}
+        <div className="grid gap-3.5 content-start">
+          <div className="flex flex-wrap items-center justify-between gap-2.5">
+            <div>
+              <h2 className="text-lg font-bold text-white">{t("dashboard.games")}</h2>
+              {!ready && <p className="text-xs text-muted">{t("ui.arenaHero")}</p>}
+            </div>
             <div className="flex flex-wrap gap-1.5" role="tablist" aria-label={t("dashboard.games")}>
               {categories.map((c) => (
                 <button
@@ -139,10 +129,8 @@ export default function Dashboard() {
                   role="tab"
                   aria-selected={category === c.id}
                   onClick={() => setCategory(c.id)}
-                  className={`h-8 px-3 rounded-full text-xs font-semibold transition-all ${
-                    category === c.id
-                      ? "bg-primary text-[#04180b]"
-                      : "bg-surface border border-line text-text-2 hover:border-line-strong hover:text-white"
+                  className={`h-8 px-3 rounded-lg text-xs font-semibold transition-colors ${
+                    category === c.id ? "bg-primary text-[#04180b]" : "bg-surface border border-line text-text-2 hover:text-white"
                   }`}
                 >
                   {c.label}
@@ -151,7 +139,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <ul className={`grid gap-4 ${ready ? "sm:grid-cols-2 xl:grid-cols-3" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
+          <ul className={`grid gap-3.5 ${ready ? "sm:grid-cols-2 xl:grid-cols-3" : "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"}`}>
             {filteredGames.map((g) => (
               <GameCard key={g} game={g} leader={leaders[g]} ready={ready} />
             ))}
@@ -173,8 +161,8 @@ export default function Dashboard() {
               {friends.length ? (
                 <ul className="grid gap-2">
                   {friends.map((f) => (
-                    <li key={f.user.id} className="flex items-center gap-2.5 rounded-xl bg-surface-2 border border-line/70 px-2.5 py-2 text-sm">
-                      <Avatar id={f.user.avatar} size={30} />
+                    <li key={f.user.id} className="flex items-center gap-2.5 rounded-xl bg-surface-2 px-2.5 py-2 text-sm">
+                      <Avatar id={f.user.avatar} size={28} />
                       <div className="min-w-0 flex-1">
                         <UserName user={f.user} className="font-semibold text-xs" />
                         <div className="flex items-center gap-1.5 text-[11px] text-muted mt-0.5">
@@ -196,10 +184,10 @@ export default function Dashboard() {
             <Section
               title={t("dashboard.online")}
               icon={<StatusDot status="online" />}
-              action={<span className="chip bg-surface-3 border border-line text-text-2 tabular-nums">{online.length}</span>}
+              action={<span className="chip bg-surface-3 text-text-2 tabular-nums">{online.length}</span>}
             >
               {online.length ? (
-                <ul className="grid gap-1.5 max-h-60 overflow-y-auto pr-1">
+                <ul className="grid gap-1 max-h-56 overflow-y-auto pr-1">
                   {online.map((o) => (
                     <li key={o.user.id} className="flex items-center gap-2 text-xs py-1 px-2 rounded-lg hover:bg-surface-2">
                       <StatusDot status={o.status} />
@@ -219,24 +207,20 @@ export default function Dashboard() {
                 icon={<Trophy size={15} />}
                 action={
                   <Link to="/settings" className="text-xs font-semibold text-primary hover:underline">
-                    {t("settings.profile")}
+                    {t("nav.settings")}
                   </Link>
                 }
               >
-                <ul className="grid gap-2">
+                <ul className="grid gap-1.5">
                   {recentMatches.map((m) => (
-                    <li key={m.matchId} className="flex items-center justify-between gap-2 rounded-xl bg-surface-2 border border-line/70 px-2.5 py-2 text-xs">
+                    <li key={m.matchId} className="flex items-center justify-between gap-2 rounded-lg bg-surface-2 px-2.5 py-2 text-xs">
                       <div className="flex items-center gap-2 min-w-0">
-                        <GameBadgeIcon game={m.gameType as GameType} size={16} />
-                        <div className="min-w-0">
-                          <div className="font-semibold text-text-2 truncate">{t(`games.${m.gameType}.name`)}</div>
-                          <div className="text-[11px] text-muted">
-                            #{m.placement}/{m.players}
-                          </div>
-                        </div>
+                        <GameBadgeIcon game={m.gameType as GameType} size={15} />
+                        <span className="font-medium text-text-2 truncate">{t(`games.${m.gameType}.name`)}</span>
+                        <span className="text-muted">#{m.placement}/{m.players}</span>
                       </div>
                       <span
-                        className={`font-bold tabular-nums ${
+                        className={`font-semibold tabular-nums ${
                           m.ratingDelta && m.ratingDelta > 0 ? "text-primary" : m.ratingDelta && m.ratingDelta < 0 ? "text-danger" : "text-muted"
                         }`}
                       >
@@ -264,70 +248,63 @@ function GameCard({ game, leader, ready }: { game: GameType; leader?: GameLeader
       : t("ui.playersRange", { min: info.minPlayers, max: info.maxPlayers });
 
   return (
-    <li className="game-card group">
-      {/* Bespoke Game Artwork Header */}
-      <div className={`relative h-28 bg-gradient-to-br ${theme.headerBg} border-b border-line/80 overflow-hidden`}>
+    <li className="game-card">
+      {/* Compact Game Artwork Header */}
+      <div className={`relative h-24 bg-gradient-to-br ${theme.headerBg} border-b border-line/60 overflow-hidden`}>
         <GameArtwork game={game} className="w-full h-full object-cover" />
-        <div className="absolute top-2.5 left-3 flex items-center gap-1.5">
-          <span className={`chip ${theme.badgeClass}`}>{theme.badgeText}</span>
-        </div>
-        <div className="absolute bottom-2.5 left-3">
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-text-2 bg-bg/75 border border-white/10 rounded-full px-2.5 py-0.5">
-            <Users size={11} className="text-muted" /> {playerLabel}
-          </span>
-        </div>
+        <span className={`chip absolute top-2.5 left-2.5 ${theme.badgeClass}`}>{t(`games.${game}.tag`)}</span>
+        <span className="absolute bottom-2 left-2.5 inline-flex items-center gap-1 text-[11px] font-medium text-text-2 bg-bg/80 rounded-md px-2 py-0.5">
+          <Users size={11} className="text-muted" /> {playerLabel}
+        </span>
       </div>
 
       {/* Card Body */}
-      <div className="p-4 flex flex-col gap-3 flex-1">
+      <div className="p-3.5 flex flex-col gap-2.5 flex-1">
         <div>
           <div className="flex items-center gap-2">
-            <GameBadgeIcon game={game} size={18} />
-            <h3 className="font-extrabold text-base text-white tracking-tight truncate">{t(`games.${game}.name`)}</h3>
+            <GameBadgeIcon game={game} size={17} />
+            <h3 className="font-bold text-[15px] text-white leading-snug">{t(`games.${game}.name`)}</h3>
           </div>
-          <p className="text-xs text-muted mt-1 leading-relaxed line-clamp-2">{t(`games.${game}.desc`)}</p>
+          <p className="text-xs text-muted mt-1 leading-relaxed">{t(`games.${game}.desc`)}</p>
         </div>
 
         {/* Dedicated Leader Spotlight */}
         {ready && (
-          <div className="rounded-xl bg-surface-3 border border-line/80 px-3 py-2 text-xs">
+          <div className="rounded-lg bg-surface-2 px-2.5 py-2 text-xs">
             {leader?.leader ? (
               <>
                 <div className="flex items-center gap-1.5">
-                  <Crown size={13} className="text-gold shrink-0" />
+                  <Crown size={12} className="text-gold shrink-0" />
                   <span className="font-bold text-gold">#1</span>
                   <UserName user={leader.leader.user} className="font-semibold text-white" />
-                  <span className="ml-auto font-extrabold text-white tabular-nums">{leader.leader.rating.toLocaleString()}</span>
+                  <span className="ml-auto font-bold text-white tabular-nums">{leader.leader.rating.toLocaleString()}</span>
                 </div>
-                <div className="flex items-center justify-between text-[11px] text-muted mt-1">
-                  <span className="text-primary/90 font-semibold">
+                <div className="flex items-center justify-between text-[11px] text-muted mt-0.5">
+                  <span className="text-primary font-medium">
                     {leader.leader.leadOverSecond !== null ? t("dashboard.lead", { points: leader.leader.leadOverSecond }) : t("dashboard.leader")}
                   </span>
                   {leader.youLead ? (
-                    <span className="text-gold font-bold">{t("dashboard.youLead")}</span>
+                    <span className="text-gold font-semibold">{t("dashboard.youLead")}</span>
                   ) : leader.yourRank ? (
                     <span>{t("dashboard.yourRank", { rank: leader.yourRank })}</span>
                   ) : null}
                 </div>
               </>
             ) : (
-              <div className="flex items-center gap-1.5 text-muted">
-                <Crown size={12} className="opacity-50" />
-                <span>{t("dashboard.noLeader")}</span>
-              </div>
+              <span className="text-muted">{t("dashboard.noLeader")}</span>
             )}
           </div>
         )}
 
         {/* Primary Play / Practice CTAs */}
-        <div className="flex items-center gap-2 mt-auto pt-1">
+        <div className="flex items-center gap-2 mt-auto pt-0.5">
           {ready ? (
             <>
               <Link to={`/games/${game}`} className="btn-primary btn-sm flex-1">
                 <Play size={13} className="fill-current" /> {t("dashboard.playNow")}
               </Link>
               <Link to={`/practice/${game}`} className="btn-secondary btn-sm px-2.5" title={t("dashboard.practice")} aria-label={t("dashboard.practice")}>
-                <Dumbbell size={14} />
+                <Dumbbell size={13} />
               </Link>
             </>
           ) : (

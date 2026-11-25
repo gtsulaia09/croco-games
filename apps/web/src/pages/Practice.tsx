@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
-import { ArrowLeft, Dumbbell, Play, RotateCcw, Sparkles, Trophy, Users } from "lucide-react";
+import { ArrowLeft, Dumbbell, Info, Play, RotateCcw, Trophy, Users } from "lucide-react";
 import { GAME_CATALOG, GAME_TYPES, isGameType, type GameType, type SeatInfo } from "@croco/shared/client";
 import type { GameEngine } from "@croco/game-engine";
 import { useT } from "../i18n";
@@ -21,10 +21,6 @@ const PRACTICE_PLAYERS: Record<GameType, number> = {
   backgammon: 2,
 };
 
-/**
- * Local practice: the engine runs in this browser against bots. Clearly labelled, nothing is
- * persisted and nothing reaches the server or the leaderboards.
- */
 function useLocalGame(gameType: GameType, version: number) {
   const [engine, setEngine] = useState<GameEngine | null>(null);
   const [state, setState] = useState<unknown>(null);
@@ -50,10 +46,8 @@ function useLocalGame(gameType: GameType, version: number) {
     };
   }, [gameType, version]);
 
-  // Poker: once the human is out of chips the practice match is over for them.
   const humanOut = Boolean(engine && state !== null && (engine.view(state, 0) as { players?: Array<{ busted?: boolean }> }).players?.[0]?.busted);
 
-  // Bots move with a short delay so the human can follow the table.
   useEffect(() => {
     if (!engine || state === null || engine.isOver(state) || humanOut) return;
     const actor = engine.actors(state)[0];
@@ -89,42 +83,46 @@ export default function Practice() {
   const t = useT();
   if (!isGameType(gameType)) {
     return (
-      <div className="grid gap-5 fade-in">
-        <div className="rounded-2xl border border-line bg-gradient-to-r from-[#0e3226] via-surface to-surface-2 p-5 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="size-11 rounded-xl bg-primary/15 border border-primary/35 text-primary flex items-center justify-center shrink-0">
-              <Dumbbell size={22} />
+      <div className="grid gap-4 fade-in">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <span className="size-9 rounded-xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
+              <Dumbbell size={18} />
             </span>
             <div>
-              <h1 className="text-xl font-black tracking-tight text-white">{t("practice.title")}</h1>
-              <p className="text-sm text-muted">{t("practice.choose")}</p>
+              <h1 className="text-lg sm:text-xl font-bold text-white">{t("practice.title")}</h1>
+              <p className="text-xs sm:text-sm text-muted">{t("practice.choose")}</p>
             </div>
           </div>
-          <span className="chip bg-warning/15 text-warning border border-warning/35 h-7 px-3">
-            <Sparkles size={12} /> {t("ui.quickPractice")}
-          </span>
         </div>
 
-        <p className="rounded-xl border border-warning/35 bg-warning/10 px-4 py-2.5 text-xs sm:text-sm text-text-2">{t("demo.practiceBanner")}</p>
+        <p className="rounded-xl border border-warning/30 bg-warning/8 px-3.5 py-2 text-xs sm:text-sm text-text-2 flex items-center gap-2">
+          <Info size={14} className="text-warning shrink-0" />
+          <span>{t("demo.practiceBanner")}</span>
+        </p>
 
-        <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <ul className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
           {GAME_TYPES.map((g) => {
             const theme = GAME_THEMES[g];
             const info = GAME_CATALOG[g];
+            const playerLabel =
+              info.minPlayers === info.maxPlayers
+                ? t("ui.playersExact", { n: info.minPlayers })
+                : t("ui.playersRange", { min: info.minPlayers, max: info.maxPlayers });
             return (
               <li key={g} className="game-card">
                 <Link to={`/practice/${g}`} className="flex flex-col flex-1">
-                  <div className={`relative h-24 bg-gradient-to-br ${theme.headerBg} border-b border-line/80 overflow-hidden`}>
+                  <div className={`relative h-24 bg-gradient-to-br ${theme.headerBg} border-b border-line/60 overflow-hidden`}>
                     <GameArtwork game={g} className="w-full h-full" />
-                    <span className={`chip absolute top-2.5 left-3 ${theme.badgeClass}`}>{theme.badgeText}</span>
-                    <span className="absolute bottom-2 left-3 inline-flex items-center gap-1 text-[11px] font-semibold text-text-2 bg-bg/75 border border-white/10 rounded-full px-2 py-0.5">
-                      <Users size={11} className="text-muted" /> {info.minPlayers === info.maxPlayers ? info.minPlayers : `${info.minPlayers}–${info.maxPlayers}`}
+                    <span className={`chip absolute top-2.5 left-2.5 ${theme.badgeClass}`}>{t(`games.${g}.tag`)}</span>
+                    <span className="absolute bottom-2 left-2.5 inline-flex items-center gap-1 text-[11px] font-medium text-text-2 bg-bg/80 rounded-md px-2 py-0.5">
+                      <Users size={11} className="text-muted" /> {playerLabel}
                     </span>
                   </div>
-                  <div className="p-4 flex flex-col gap-2 flex-1">
+                  <div className="p-3.5 flex flex-col gap-2 flex-1">
                     <div className="flex items-center gap-2">
-                      <GameBadgeIcon game={g} size={18} />
-                      <span className="font-extrabold text-white">{t(`games.${g}.name`)}</span>
+                      <GameBadgeIcon game={g} size={17} />
+                      <span className="font-bold text-[15px] text-white">{t(`games.${g}.name`)}</span>
                     </div>
                     <span className="text-xs text-muted leading-relaxed">{t(`games.${g}.desc`)}</span>
                     <span className="btn-primary btn-sm mt-auto w-full">
@@ -154,24 +152,22 @@ function PracticeGame({ gameType }: { gameType: GameType }) {
   );
 
   return (
-    <div className="grid gap-3 fade-in">
-      <div className="card px-3.5 py-2.5 flex flex-wrap items-center gap-2.5">
-        <Link to="/practice" className="btn-ghost btn-sm px-2.5">
+    <div className="grid gap-2 fade-in">
+      {/* Compact Single-Row Game Header (maximizes vertical space for the board) */}
+      <div className="flex flex-wrap items-center gap-2 px-1">
+        <Link to="/practice" className="btn-ghost btn-sm px-2">
           <ArrowLeft size={14} /> {t("common.back")}
         </Link>
         <div className="flex items-center gap-2 min-w-0">
-          <GameBadgeIcon game={gameType} size={20} />
-          <h1 className="font-extrabold text-sm sm:text-base text-white truncate">
-            {t("practice.title")}: {t(`games.${gameType}.name`)}
-          </h1>
-          <span className={`chip hidden sm:inline-flex ${GAME_THEMES[gameType].badgeClass}`}>{GAME_THEMES[gameType].badgeText}</span>
+          <GameBadgeIcon game={gameType} size={18} />
+          <h1 className="font-bold text-sm sm:text-base text-white truncate">{t(`games.${gameType}.name`)}</h1>
+          <span className={`chip hidden md:inline-flex ${GAME_THEMES[gameType].badgeClass}`}>{t(`games.${gameType}.tag`)}</span>
         </div>
         <button className="btn-secondary btn-sm ml-auto" onClick={() => setVersion((v) => v + 1)}>
           <RotateCcw size={13} /> {t("practice.newGame")}
         </button>
       </div>
-
-      <p className="rounded-xl border border-warning/30 bg-warning/8 px-3.5 py-2 text-xs text-warning">{t("demo.practiceBanner")}</p>
+      <p className="text-[11px] text-warning/90 px-1 leading-snug">{t("demo.practiceBanner")}</p>
 
       {error && <ErrorText error={error} />}
 
@@ -180,7 +176,7 @@ function PracticeGame({ gameType }: { gameType: GameType }) {
       ) : (
         <>
           {humanOut && !engine.isOver(state) && (
-            <div className="card p-4 border-danger/45 bg-danger/10 text-sm flex flex-wrap items-center gap-3">
+            <div className="card p-3 border-danger/45 bg-danger/10 text-sm flex flex-wrap items-center gap-3">
               <span className="font-semibold text-white">{t("practice.busted")}</span>
               <button className="btn-primary btn-sm ml-auto" onClick={() => setVersion((v) => v + 1)}>
                 <RotateCcw size={13} /> {t("practice.newGame")}
@@ -188,8 +184,8 @@ function PracticeGame({ gameType }: { gameType: GameType }) {
             </div>
           )}
           {engine.isOver(state) && (
-            <div className="card p-4 border-gold/50 bg-gold/10 text-sm flex flex-wrap items-center gap-3">
-              <Trophy size={18} className="text-gold shrink-0" />
+            <div className="card p-3 border-gold/50 bg-gold/10 text-sm flex flex-wrap items-center gap-3">
+              <Trophy size={16} className="text-gold shrink-0" />
               <span className="font-bold text-white">
                 {t("game.finished")} — {t("game.placement")}: #{engine.outcome(state).placements[0]} / {players}
               </span>

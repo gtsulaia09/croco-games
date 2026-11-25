@@ -74,28 +74,27 @@ export function AppShell() {
   ];
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-2 px-3.5 h-9 rounded-full text-sm font-semibold transition-all ${
+    `flex items-center gap-1.5 px-3 h-9 rounded-full text-xs xl:text-sm font-semibold whitespace-nowrap transition-all ${
       isActive
-        ? "bg-primary/15 text-white border border-primary/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+        ? "bg-primary/15 text-white border border-primary/40"
         : "text-muted hover:text-white hover:bg-surface/70 border border-transparent"
     }`;
 
   return (
     <div className="min-h-dvh flex flex-col">
-      <header className="sticky top-0 z-30 bg-bg-elevated/95 border-b border-line shadow-[0_6px_20px_rgba(0,0,0,0.3)]">
-        <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-primary/70 to-transparent" />
-        <div className="max-w-7xl mx-auto flex items-center gap-3 px-3 sm:px-5 h-15">
+      <header className="sticky top-0 z-30 bg-bg-elevated border-b border-line">
+        <div className="max-w-7xl mx-auto flex items-center gap-2.5 px-3 sm:px-5 h-14">
           <button className="flex items-center gap-2.5 text-left group shrink-0" onClick={() => navigate("/")}>
-            <BrandMark size={32} />
+            <BrandMark size={30} />
             <span className="hidden sm:flex flex-col leading-none whitespace-nowrap">
-              <span className="font-black text-[15px] tracking-tight text-white">
+              <span className="font-extrabold text-[15px] tracking-tight text-white">
                 CROCO <span className="text-primary">GAMES</span>
               </span>
-              <span className="text-[10px] font-medium text-muted tracking-wide mt-0.5">MULTIPLAYER ARENA</span>
+              <span className="text-[10px] font-medium text-muted mt-0.5">{t("app.badge")}</span>
             </span>
           </button>
 
-          <nav className="hidden md:flex items-center gap-1.5 ml-4" aria-label="main">
+          <nav className="hidden lg:flex items-center gap-1 ml-3 min-w-0" aria-label="main">
             {links.map((l) => (
               <NavLink key={l.to} to={l.to} end={l.end} className={linkClass}>
                 <l.icon size={15} className="shrink-0" /> {l.label}
@@ -154,7 +153,7 @@ export function AppShell() {
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-5 py-4 sm:py-5 pb-24 md:pb-8">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-5 py-3.5 sm:py-5 pb-20 lg:pb-8">
         {maintenance && (
           <div role="status" className="card p-3.5 mb-4 border-warning/50 bg-warning/10 text-sm text-text-2 flex items-center gap-2.5">
             <AlertTriangle size={16} className="text-warning shrink-0" />
@@ -164,14 +163,14 @@ export function AppShell() {
         <Outlet />
       </main>
 
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-bg-elevated/95 border-t border-line grid grid-cols-5 shadow-[0_-6px_20px_rgba(0,0,0,0.4)]" aria-label="mobile">
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-bg-elevated border-t border-line grid grid-cols-5" aria-label="mobile">
         {[...links, isStaff ? { to: "/admin", icon: Shield, label: t("nav.admin") } : { to: "/settings", icon: Settings, label: t("nav.settings") }].map((l) => (
           <NavLink
             key={l.to}
             to={l.to}
             end={"end" in l ? l.end : false}
             className={({ isActive }) =>
-              `relative flex flex-col items-center justify-center h-16 text-[11px] font-semibold gap-1 transition-colors ${
+              `relative min-w-0 flex flex-col items-center justify-center h-15 text-[11px] font-semibold gap-1 transition-colors ${
                 isActive ? "text-primary" : "text-muted"
               }`
             }

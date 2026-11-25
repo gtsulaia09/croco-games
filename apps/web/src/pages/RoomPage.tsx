@@ -26,6 +26,7 @@ export default function RoomPage() {
   const refresh = useSession((s) => s.refresh);
   const conn = useRoom(roomId, me?.profile?.id);
   const [chatOpen, setChatOpen] = useState(false);
+  const [desktopChat, setDesktopChat] = useState(true);
   const [inviteOpen, setInviteOpen] = useState(false);
 
   useEffect(() => {
@@ -93,6 +94,9 @@ export default function RoomPage() {
           <button className="btn-secondary btn-sm lg:hidden" onClick={() => setChatOpen((v) => !v)} aria-expanded={chatOpen} aria-label={t("chat.title")}>
             <MessageSquare size={14} />
           </button>
+          <button className="btn-secondary btn-sm hidden lg:inline-flex" onClick={() => setDesktopChat((v) => !v)} aria-expanded={desktopChat} title={desktopChat ? t("room.hideChat") : t("room.showChat")}>
+            <MessageSquare size={14} /> <span>{desktopChat ? t("room.hideChat") : t("room.showChat")}</span>
+          </button>
           <button className="btn-danger btn-sm" onClick={() => void leave()}>
             <LogOut size={14} /> <span className="hidden sm:inline">{t("room.leave")}</span>
           </button>
@@ -102,7 +106,7 @@ export default function RoomPage() {
       {conn.status === "reconnecting" && <div className="card p-2.5 text-xs font-semibold text-warning border-warning/40 bg-warning/10 text-center">{t("room.reconnecting")}</div>}
       {conn.lastError && <ErrorText error={conn.lastError} />}
 
-      <div className="grid lg:grid-cols-[1fr_320px] gap-3 items-start">
+      <div className={`grid gap-3 items-start ${desktopChat ? "lg:grid-cols-[1fr_300px]" : ""}`}>
         <div className="min-w-0">
           {playing ? (
             <GameBoard gameType={room.gameType} view={conn.game!.view} deadline={conn.game!.deadline} mySeat={you.spectator ? null : you.seat} seats={room.seats} onAction={conn.act} />
@@ -110,7 +114,7 @@ export default function RoomPage() {
             <Lobby room={room} you={you} send={conn.send} result={conn.result} />
           )}
         </div>
-        <div className={`${chatOpen ? "block" : "hidden"} lg:block lg:sticky lg:top-20 h-[60dvh] lg:h-[calc(100dvh-6.5rem)]`}>
+        <div className={`${chatOpen ? "block" : "hidden"} ${desktopChat ? "lg:block" : "lg:hidden"} lg:sticky lg:top-18 h-[56dvh] lg:h-[calc(100dvh-5.5rem)]`}>
           <ChatPanel
             messages={conn.chat}
             enabled={room.settings.chatEnabled}

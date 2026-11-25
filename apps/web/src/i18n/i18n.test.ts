@@ -18,6 +18,8 @@ const walk = (dir: string) => {
 };
 walk(join(import.meta.dirname, ".."));
 
+const ALLOWED_NON_GEORGIAN_KEYS = new Set(["app.name", "common.admin", "leaderboard.rank", "ui.sb", "ui.bb", "opt.values.classic", "opt.values.none"]);
+
 describe("translations", () => {
   const enKeys = new Map(flat(en as unknown as Tree));
   const kaKeys = new Map(flat(ka as unknown as Tree));
@@ -34,6 +36,15 @@ describe("translations", () => {
     for (const [key, value] of [...enKeys, ...kaKeys]) {
       expect(value.trim(), key).not.toBe("");
       expect(value, key).not.toMatch(/<[a-z]/i);
+    }
+  });
+
+  it("Georgian dictionary uses Georgian script and avoids broken {name}-suffix morphology", () => {
+    for (const [key, value] of kaKeys) {
+      if (!ALLOWED_NON_GEORGIAN_KEYS.has(key)) {
+        expect(value, `${key} should contain Georgian script`).toMatch(/[\u10D0-\u10FF]/);
+      }
+      expect(value, `${key} must not attach raw case suffixes to {name}`).not.toMatch(/\{name\}-(მა|ის|ს)\b/);
     }
   });
 

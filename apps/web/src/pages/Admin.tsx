@@ -64,7 +64,7 @@ export default function Admin() {
           </div>
         </div>
         <span className="chip bg-primary/15 text-primary border border-primary/35">
-          <Lock size={11} /> MFA Verified
+          <Lock size={11} /> {t("admin.mfaVerified")}
         </span>
       </div>
 
@@ -337,7 +337,7 @@ function Users({ guard, isAdmin }: { guard: Guard; isAdmin: boolean }) {
             <thead className="text-[11px] uppercase tracking-wider text-muted bg-surface-2 border-b border-line">
               <tr>
                 <th className="p-3 text-left">{t("leaderboard.player")}</th>
-                {isAdmin && <th className="p-3 text-left hidden md:table-cell">Email</th>}
+                {isAdmin && <th className="p-3 text-left hidden md:table-cell">{t("admin.email")}</th>}
                 <th className="p-3 text-left">{t("admin.status")}</th>
                 <th className="p-3 text-left hidden sm:table-cell">{t("common.lastSeen")}</th>
                 <th className="p-3" />
@@ -350,7 +350,7 @@ function Users({ guard, isAdmin }: { guard: Guard; isAdmin: boolean }) {
                   <tr key={u.id} className="table-row hover:bg-surface-hover/50">
                     <td className="p-3 font-semibold text-white">
                       {u.username ?? <span className="text-muted">({u.id})</span>} {target && <AdminBadge />}
-                      {u.roles.includes("moderator") && <span className="chip bg-accent/15 text-accent border border-accent/35 ml-1">Mod</span>}
+                      {u.roles.includes("moderator") && <span className="chip bg-accent/15 text-accent border border-accent/35 ml-1">{t("common.moderator")}</span>}
                     </td>
                     {isAdmin && <td className="p-3 hidden md:table-cell text-xs text-muted">{u.email ?? "—"}</td>}
                     <td className="p-3 text-xs">
@@ -586,11 +586,12 @@ function Audit({ guard }: { guard: Guard }) {
 }
 
 function SecurityEvents({ guard }: { guard: Guard }) {
+  const t = useT();
   const [kind, setKind] = useState("");
   const { data, error } = useLoad<{ items: Array<{ id: number; ts: number; kind: string; user_id: string | null; country: string | null; details: unknown }> }>(guard, `/api/admin/security-events${kind ? `?kind=${encodeURIComponent(kind)}` : ""}`);
   return (
     <div className="grid gap-3">
-      <input className="input max-w-xs" placeholder="kind, e.g. login.failed" value={kind} onChange={(e) => setKind(e.target.value.replace(/[^a-z_.]/g, ""))} maxLength={40} aria-label="kind" />
+      <input className="input max-w-xs" placeholder={t("admin.kindPlaceholder")} value={kind} onChange={(e) => setKind(e.target.value.replace(/[^a-z_.]/g, ""))} maxLength={40} aria-label="kind" />
       <ErrorText error={error} />
       <div className="card overflow-x-auto">
         {!data ? (
@@ -656,7 +657,7 @@ function SettingsTab({ guard }: { guard: Guard }) {
       <ErrorText error={error} />
       <div className="flex items-center gap-3">
         <button className="btn-primary">{t("common.save")}</button>
-        {saved && <span className="chip bg-primary/15 text-primary">Saved</span>}
+        {saved && <span className="chip bg-primary/15 text-primary">{t("admin.saved")}</span>}
       </div>
     </form>
   );

@@ -1,17 +1,16 @@
 import { expect, test } from "./fixtures";
 
 /**
- * Low-end office PC & responsive performance checks:
+ * Low-end office PC, multi-viewport responsive, zoom, and Georgian localization layout checks:
  *  - Reference profile: 1366x768, 4x CPU throttling via CDP.
  *  - Verifies lazy game-engine loading (opening Joker does not download Poker/Backgammon).
- *  - Measures initial load timing, JS heap memory, frame pacing, long tasks, and zero
- *    horizontal overflow across desktop (1366x768), tablet (768x1024), and mobile (390x844).
+ *  - Verifies zero horizontal overflow across 1920x1080, 1366x768, 1024x768, 768x1024,
+ *    390x844, 360x800, 844x390, and 125% zoom in both Georgian (ka) and English (en).
  */
 test.describe("performance and responsiveness", () => {
   test.use({ serviceWorkers: "block" });
 
   test("lazy-loads only the selected game engine and stays responsive under 4x CPU throttle", async ({ guarded: page, context }, testInfo) => {
-    // Only run CDP throttling on desktop project to avoid double-running heavy profiling.
     test.skip(testInfo.project.name !== "desktop", "Desktop reference profile benchmark");
     await page.setViewportSize({ width: 1366, height: 768 });
     await page.addInitScript(() => localStorage.setItem("croco.locale", "en"));
@@ -30,19 +29,16 @@ test.describe("performance and responsiveness", () => {
     await expect(page.getByText("Choose a game to practise against bots")).toBeVisible();
     const initialLoadMs = Date.now() - t0;
 
-    // Initial page must NOT download any game engine or Firebase SDK chunk.
     expect(loadedScripts.some((s) => /^(poker|joker|bura3|bura5|dominoes|backgammon|japanese_joker|esm)-/.test(s))).toBe(false);
 
-    // Navigate to Joker: only the Joker engine + JokerBoard chunks should load (not Poker/Backgammon/Dominoes).
     const beforeJoker = loadedScripts.length;
     await page.goto("./#/practice/joker");
-    await expect(page.getByText("Your turn").or(page.getByText(/Waiting for/))).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText("Your turn", { exact: true }).or(page.getByText(/Waiting for/))).toBeVisible({ timeout: 20_000 });
     const afterJoker = loadedScripts.slice(beforeJoker);
     expect(afterJoker.some((s) => /^joker-/.test(s))).toBe(true);
     expect(afterJoker.some((s) => /^JokerBoard-/.test(s))).toBe(true);
     expect(afterJoker.some((s) => /^(poker|backgammon|dominoes|bura3|bura5)-/.test(s))).toBe(false);
 
-    // Measure frame rate over ~1 second under 4x CPU throttle while bots/UI are active.
     const perf = await page.evaluate(async () => {
       const deltas: number[] = [];
       await new Promise<void>((resolve) => {
@@ -81,25 +77,63 @@ test.describe("performance and responsiveness", () => {
     expect(perf.domNodes).toBeLessThan(1500);
   });
 
-  test("has no horizontal overflow on desktop, tablet, and mobile viewports", async ({ guarded: page }) => {
-    await page.addInitScript(() => localStorage.setItem("croco.locale", "en"));
+  test("has no horizontal overflow across desktop, tablet, and small mobile viewports in Georgian and English", async ({ guarded: page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop", "Viewport matrix runs once across all target dimensions");
+    test.setTimeout(90_000);
+
+    // 1. Verify Georgian (ka, default) has native Georgian text, zero English tag leaks, and zero overflow across all 7 viewports.
+    await page.goto("./#/");
+    await expect(page.locator("html")).toHaveAttribute("lang", "ka");
+    await expect(page.getByText("ტექსას ჰოლდემი")).toBeVisible();
+    await expect(page.getByText("MULTIPLAYER ARENA")).toHaveCount(0);
+    await expect(page.getByText("4P · Trick")).toHaveCount(0);
+
     const viewports = [
+      { name: "fhd-desktop", width: 1920, height: 1080 },
       { name: "office-laptop", width: 1366, height: 768 },
-      { name: "tablet", width: 768, height: 1024 },
-      { name: "mobile-portrait", width: 390, height: 844 },
+      { name: "compact-monitor", width: 1024, height: 768 },
+      { name: "tablet-portrait", width: 768, height: 1024 },
+      { name: "mobile-390", width: 390, height: 844 },
+      { name: "mobile-small-360", width: 360, height: 800 },
       { name: "mobile-landscape", width: 844, height: 390 },
     ];
+
+    const routes = [
+      "./#/",
+      "./#/practice",
+      "./#/practice/joker",
+      "./#/practice/japanese_joker",
+      "./#/practice/bura3",
+      "./#/practice/bura5",
+      "./#/practice/holdem",
+      "./#/practice/omaha_hilo",
+      "./#/practice/dominoes",
+      "./#/practice/backgammon",
+    ];
+
     for (const vp of viewports) {
       await page.setViewportSize({ width: vp.width, height: vp.height });
-      for (const route of ["./#/practice", "./#/practice/joker", "./#/practice/holdem", "./#/practice/backgammon"]) {
+      const sampleRoutes = vp.name === "office-laptop" || vp.name === "mobile-small-360" ? routes : ["./#/", "./#/practice/joker", "./#/practice/holdem", "./#/practice/dominoes", "./#/practice/backgammon"];
+      for (const route of sampleRoutes) {
         await page.goto(route);
         await expect(page.locator("main")).toBeVisible();
-        if (route !== "./#/practice") {
-          await expect(page.getByText("Your turn", { exact: true }).or(page.getByText(/Waiting for/))).toBeVisible({ timeout: 20_000 });
+        if (route.startsWith("./#/practice/")) {
+          await expect(page.getByText("შენი სვლაა", { exact: true }).or(page.getByText(/სვლაზეა:/))).toBeVisible({ timeout: 20_000 });
         }
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-        expect(overflow, `${vp.name} ${route} overflow`).toBeLessThanOrEqual(1);
+        expect(overflow, `ka ${vp.name} ${route} overflow`).toBeLessThanOrEqual(1);
       }
     }
+
+    // 2. Test 125% zoom on 1366x768 office laptop in English.
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await page.goto("./#/practice/holdem");
+    await page.getByRole("button", { name: "language" }).click();
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await page.evaluate(() => {
+      document.documentElement.style.zoom = "1.25";
+    });
+    const zoomOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(zoomOverflow, "en 1366x768 125% zoom overflow").toBeLessThanOrEqual(1);
   });
 });

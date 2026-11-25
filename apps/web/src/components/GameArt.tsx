@@ -7,7 +7,6 @@ import type { GameType } from "@croco/shared/client";
 
 export interface GameVisualTheme {
   accentClass: string;
-  badgeText: string;
   badgeClass: string;
   headerBg: string;
   category: "cards" | "poker" | "board";
@@ -16,72 +15,62 @@ export interface GameVisualTheme {
 export const GAME_THEMES: Record<GameType, GameVisualTheme> = {
   joker: {
     accentClass: "text-primary",
-    badgeText: "4P · Trick",
     badgeClass: "bg-primary/15 text-primary border border-primary/30",
-    headerBg: "from-[#0e4230] via-[#0b2b24] to-surface",
+    headerBg: "from-[#0e3f2d] to-surface",
     category: "cards",
   },
   japanese_joker: {
     accentClass: "text-accent",
-    badgeText: "2P · Duel",
     badgeClass: "bg-accent/15 text-accent border border-accent/30",
-    headerBg: "from-[#0e3f4a] via-[#0a2730] to-surface",
+    headerBg: "from-[#0e3a45] to-surface",
     category: "cards",
   },
   bura3: {
     accentClass: "text-gold",
-    badgeText: "31 pts · 3C",
     badgeClass: "bg-gold/15 text-gold border border-gold/30",
-    headerBg: "from-[#352c13] via-[#1b2217] to-surface",
+    headerBg: "from-[#302813] to-surface",
     category: "cards",
   },
   bura5: {
     accentClass: "text-[#5eead4]",
-    badgeText: "5 Cards",
     badgeClass: "bg-[#14b8a6]/15 text-[#5eead4] border border-[#14b8a6]/30",
-    headerBg: "from-[#123d38] via-[#0b2526] to-surface",
+    headerBg: "from-[#123a35] to-surface",
     category: "cards",
   },
   holdem: {
     accentClass: "text-primary",
-    badgeText: "No-Limit",
     badgeClass: "bg-primary/15 text-primary border border-primary/30",
-    headerBg: "from-[#0d422d] via-[#09261d] to-surface",
+    headerBg: "from-[#0d3e2a] to-surface",
     category: "poker",
   },
   shortdeck: {
     accentClass: "text-[#fb7185]",
-    badgeText: "6+ · 36C",
     badgeClass: "bg-[#e11d48]/15 text-[#fb7185] border border-[#e11d48]/30",
-    headerBg: "from-[#451726] via-[#24131c] to-surface",
+    headerBg: "from-[#3e1624] to-surface",
     category: "poker",
   },
   omaha: {
     accentClass: "text-accent",
-    badgeText: "4 Hole · PLO",
     badgeClass: "bg-accent/15 text-accent border border-accent/30",
-    headerBg: "from-[#0f3452] via-[#0b2135] to-surface",
+    headerBg: "from-[#0f314c] to-surface",
     category: "poker",
   },
   omaha_hilo: {
     accentClass: "text-gold",
-    badgeText: "Hi / Lo Split",
     badgeClass: "bg-gold/15 text-gold border border-gold/30",
-    headerBg: "from-[#1e3252] via-[#142236] to-surface",
+    headerBg: "from-[#1c2f4c] to-surface",
     category: "poker",
   },
   dominoes: {
     accentClass: "text-[#f8fafc]",
-    badgeText: "Double-6",
     badgeClass: "bg-white/10 text-text-2 border border-white/15",
-    headerBg: "from-[#173a42] via-[#0d2229] to-surface",
+    headerBg: "from-[#16363e] to-surface",
     category: "board",
   },
   backgammon: {
     accentClass: "text-[#f5b971]",
-    badgeText: "Nardy · Cube",
     badgeClass: "bg-[#d97706]/15 text-[#f5b971] border border-[#d97706]/30",
-    headerBg: "from-[#422817] via-[#241812] to-surface",
+    headerBg: "from-[#3b2415] to-surface",
     category: "board",
   },
 };

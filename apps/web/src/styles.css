@@ -1,58 +1,55 @@
 @import "tailwindcss";
 
 /* ============================================================================
- * CROCO GAMES — DESIGN SYSTEM TOKENS
- * Inspired by the Crocobet corporate identity: deep obsidian-teal arenas,
- * vivid Croco emerald primary CTAs, luxury gold hierarchy accents, and crisp
- * Georgian/Latin typography engineered for long sessions and weak hardware.
+ * CROCO GAMES — MODERN DESIGN SYSTEM
+ * Corporate reference: Crocobet ecosystem — dark slate-obsidian canvas,
+ * crisp Croco emerald primary actions, balanced contrast, clean surface
+ * hierarchy without excessive borders/shadows, and Georgian-tuned typography.
  * ============================================================================ */
 @theme {
   /* Core Canvas & Layered Surfaces */
-  --color-bg: #071117;
-  --color-bg-elevated: #0b1820;
-  --color-surface: #10212b;
-  --color-surface-2: #0c1a22;
-  --color-surface-3: #08131a;
-  --color-surface-hover: #152b38;
+  --color-bg: #081117;
+  --color-bg-elevated: #0c1820;
+  --color-surface: #11202a;
+  --color-surface-2: #0d1a23;
+  --color-surface-3: #09131a;
+  --color-surface-hover: #162a37;
 
-  /* Borders & Dividers */
-  --color-line: #1a3544;
-  --color-line-strong: #264c60;
+  /* Subtle Hairlines */
+  --color-line: #1a303e;
+  --color-line-strong: #254558;
 
   /* Crocobet Brand Greens */
   --color-primary: #18b84e;
-  --color-primary-hover: #1fd15b;
+  --color-primary-hover: #20cc5a;
   --color-primary-active: #149a41;
-  --color-primary-soft: #0c3522;
+  --color-primary-soft: #0d3321;
 
-  /* Secondary / Info / Accent */
-  --color-secondary: #154d6e;
-  --color-secondary-hover: #1b628c;
-  --color-accent: #22b8e6;
+  /* Secondary / Info */
+  --color-secondary: #164b6b;
+  --color-secondary-hover: #1c5f87;
+  --color-accent: #28b8e5;
 
   /* Typography Hierarchy */
-  --color-text: #f7fafc;
-  --color-text-2: #d2e0ea;
-  --color-muted: #8ea5b5;
+  --color-text: #f5f8fa;
+  --color-text-2: #cfdde8;
+  --color-muted: #8aa0b0;
 
-  /* Semantic & Gaming Accents */
-  --color-gold: #f5c451;
-  --color-gold-deep: #b8841c;
+  /* Semantic & Rank Accents */
+  --color-gold: #f3c24f;
   --color-silver: #cbd5e1;
   --color-bronze: #d98a52;
   --color-danger: #e24c4b;
   --color-warning: #eab034;
 
   /* Game Table Felts */
-  --color-felt: #0d4a36;
-  --color-felt-2: #07291f;
-  --color-felt-rail: #1f1712;
-  --color-felt-rim: #3a2a1e;
+  --color-felt: #0e4c37;
+  --color-felt-2: #082b20;
 
-  /* Typography Stack (Georgian + Latin native, zero external CDN requests) */
-  --font-sans: "Segoe UI", "Noto Sans Georgian", "Sylfaen", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Georgian + Latin Balanced Font Stack (zero external requests) */
+  --font-sans: "Noto Sans Georgian", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
 
-  /* Radii */
+  /* Consistent Radii */
   --radius-card: 12px;
   --radius-panel: 16px;
 }
@@ -61,15 +58,17 @@
   html {
     color-scheme: dark;
     -webkit-text-size-adjust: 100%;
+    line-height: 1.48;
+  }
+
+  html[lang="ka"] {
+    /* Georgian Mkhedruli ascenders/descenders benefit from slightly roomier line-height */
+    line-height: 1.54;
   }
 
   body {
     @apply bg-bg text-text font-sans antialiased;
     min-height: 100dvh;
-    background-image:
-      radial-gradient(ellipse 80% 45% at 50% -10%, rgba(24, 184, 78, 0.11), transparent 65%),
-      radial-gradient(ellipse 60% 35% at 90% 10%, rgba(34, 184, 230, 0.06), transparent 60%);
-    background-attachment: scroll;
   }
 
   :focus-visible {
@@ -86,7 +85,7 @@
   }
 
   ::selection {
-    background: rgba(24, 184, 78, 0.35);
+    background: rgba(24, 184, 78, 0.32);
     color: #fff;
   }
 }
@@ -99,26 +98,19 @@
   .btn-ghost,
   .btn-danger,
   .btn-gold {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-4 h-10 text-sm font-semibold tracking-[0.01em] transition-all duration-150 select-none disabled:opacity-45 disabled:pointer-events-none active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 h-10 text-sm font-semibold transition-colors duration-150 select-none disabled:opacity-45 disabled:pointer-events-none;
   }
 
   .btn-primary {
     @apply bg-primary text-[#04180b] hover:bg-primary-hover;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 4px 12px rgba(24, 184, 78, 0.24);
-  }
-
-  .btn-primary:hover:not(:disabled) {
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 16px rgba(31, 209, 91, 0.32);
   }
 
   .btn-secondary {
-    @apply bg-surface-hover text-text border border-line-strong hover:bg-[#1b3646] hover:border-accent/50;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    @apply bg-surface-hover text-text border border-line-strong hover:bg-[#1c3545];
   }
 
   .btn-gold {
-    @apply bg-gold text-[#1d1404] hover:bg-[#fbd16b];
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 12px rgba(245, 196, 81, 0.22);
+    @apply bg-gold text-[#1d1404] hover:bg-[#fad06b];
   }
 
   .btn-ghost {
@@ -126,152 +118,123 @@
   }
 
   .btn-danger {
-    @apply bg-danger/90 text-white hover:bg-danger;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 4px 12px rgba(226, 76, 75, 0.22);
+    @apply bg-danger text-white hover:bg-[#eb5a59];
   }
 
   .btn-sm {
-    @apply h-8 px-3 text-xs;
+    @apply h-8 px-3 text-xs rounded-lg;
   }
 
   .btn-lg {
-    @apply h-11 px-5 text-sm;
+    @apply h-11 px-5 text-sm rounded-xl;
   }
 
-  /* ---- Panels & Surfaces ---- */
+  /* ---- Clean Surfaces (minimal borders, restrained elevation) ---- */
   .card {
-    @apply bg-surface rounded-[var(--radius-card)] border border-line;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    @apply bg-surface rounded-[var(--radius-card)] border border-line/80;
   }
 
   .panel-inset {
-    @apply bg-surface-3 rounded-xl border border-line/80;
-    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.32);
+    @apply bg-surface-3 rounded-xl border border-line/60;
   }
 
   .input {
-    @apply w-full h-10 rounded-xl bg-surface-3 border border-line px-3.5 text-sm text-text placeholder:text-muted/65 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-colors;
+    @apply w-full h-10 rounded-xl bg-surface-3 border border-line px-3.5 text-sm text-text placeholder:text-muted/65 focus:border-primary outline-none transition-colors;
   }
 
   .label {
-    @apply block text-xs font-semibold text-muted mb-1.5 tracking-wide;
+    @apply block text-xs font-medium text-muted mb-1.5;
   }
 
   .chip {
-    @apply inline-flex items-center gap-1 rounded-full px-2.5 h-6 text-[11px] font-semibold tracking-wide whitespace-nowrap;
+    @apply inline-flex items-center gap-1 rounded-md px-2 h-6 text-[11px] font-medium whitespace-nowrap;
   }
 
   .table-row {
-    @apply border-b border-line/60 last:border-0 transition-colors;
+    @apply border-b border-line/55 last:border-0 transition-colors;
   }
 
-  /* ---- Branded Game Cards on Dashboard ---- */
+  /* ---- Lobby Game Tiles ---- */
   .game-card {
-    @apply relative overflow-hidden rounded-2xl bg-surface border border-line flex flex-col transition-all duration-200;
-    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    @apply relative overflow-hidden rounded-2xl bg-surface border border-line/80 flex flex-col transition-all duration-150;
   }
 
   .game-card:hover {
     border-color: rgba(24, 184, 78, 0.55);
-    transform: translateY(-2px);
-    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.36), 0 0 0 1px rgba(24, 184, 78, 0.18);
+    background-color: #132531;
   }
 
-  /* ---- Casino Tabletop Arenas ---- */
+  /* ---- Dedicated Game Table Arenas ---- */
   .table-arena {
-    @apply relative rounded-2xl p-2.5 sm:p-4 grid gap-3 overflow-hidden;
-    border: 2px solid #22443a;
-    box-shadow:
-      inset 0 0 0 1px rgba(255, 255, 255, 0.06),
-      inset 0 24px 60px rgba(0, 0, 0, 0.32),
-      0 14px 36px rgba(0, 0, 0, 0.42);
+    @apply relative rounded-2xl p-2.5 sm:p-3.5 grid gap-2.5 overflow-hidden;
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 18px 48px rgba(0, 0, 0, 0.28);
   }
 
   .felt,
   .felt-emerald {
-    background:
-      radial-gradient(ellipse 75% 65% at 50% 42%, #136146 0%, #0b4130 58%, #06251c 100%);
+    background: radial-gradient(ellipse 80% 70% at 50% 45%, #125d43 0%, #0b3e2d 62%, #07261c 100%);
   }
 
   .felt-jade {
-    background:
-      radial-gradient(ellipse 78% 66% at 50% 45%, #11585c 0%, #0a3c42 58%, #062328 100%);
-    border-color: #1f4f56;
+    background: radial-gradient(ellipse 80% 70% at 50% 45%, #115358 0%, #0a383e 62%, #062227 100%);
   }
 
   .felt-bura {
-    background:
-      radial-gradient(ellipse 78% 66% at 50% 44%, #18573a 0%, #0e3826 60%, #072016 100%);
-    border-color: #3b3022;
+    background: radial-gradient(ellipse 80% 70% at 50% 45%, #165438 0%, #0d3624 62%, #072016 100%);
   }
 
   .felt-bura5 {
-    background:
-      radial-gradient(ellipse 78% 66% at 50% 44%, #1d4e47 0%, #103330 60%, #081e1c 100%);
-    border-color: #2f4a45;
+    background: radial-gradient(ellipse 80% 70% at 50% 45%, #194d46 0%, #0f322e 62%, #081d1b 100%);
   }
 
   .felt-poker {
-    background:
-      radial-gradient(ellipse 72% 65% at 50% 45%, #11563c 0%, #0a3827 60%, #051e16 100%);
-    border-color: #3e2c1e;
+    background: radial-gradient(ellipse 76% 68% at 50% 45%, #11563c 0%, #093726 62%, #051f16 100%);
   }
 
   .felt-shortdeck {
-    background:
-      radial-gradient(ellipse 72% 65% at 50% 45%, #3d2129 0%, #241319 62%, #140b0e 100%);
-    border-color: #54323c;
+    background: radial-gradient(ellipse 76% 68% at 50% 45%, #3b2028 0%, #241319 64%, #140b0e 100%);
   }
 
   .felt-omaha {
-    background:
-      radial-gradient(ellipse 72% 65% at 50% 45%, #143f5c 0%, #0b293d 62%, #061824 100%);
-    border-color: #224c68;
+    background: radial-gradient(ellipse 76% 68% at 50% 45%, #133f5b 0%, #0b283b 64%, #061824 100%);
   }
 
   .felt-omaha-hilo {
-    background:
-      radial-gradient(ellipse 72% 65% at 50% 45%, #233c59 0%, #122439 62%, #091421 100%);
-    border-color: #3c4d66;
+    background: radial-gradient(ellipse 76% 68% at 50% 45%, #203954 0%, #122336 64%, #09131f 100%);
   }
 
   .felt-dominoes {
-    background:
-      radial-gradient(ellipse 80% 70% at 50% 45%, #18424a 0%, #0e2c33 62%, #07191e 100%);
-    border-color: #264c54;
+    background: radial-gradient(ellipse 82% 72% at 50% 45%, #163f47 0%, #0d2a30 64%, #07181c 100%);
   }
 
-  /* Poker Oval Rail */
+  /* Poker Table Oval */
   .poker-oval {
     position: relative;
     border-radius: 9999px;
-    border: 8px solid #2b1d14;
+    border: 6px solid #281b13;
     box-shadow:
-      inset 0 0 0 2px rgba(245, 196, 81, 0.24),
-      inset 0 12px 32px rgba(0, 0, 0, 0.45),
-      0 10px 28px rgba(0, 0, 0, 0.45);
+      inset 0 0 0 1.5px rgba(243, 194, 79, 0.25),
+      inset 0 10px 26px rgba(0, 0, 0, 0.36);
   }
 
   @media (max-width: 639px) {
     .poker-oval {
-      border-radius: 28px;
-      border-width: 5px;
+      border-radius: 22px;
+      border-width: 4px;
     }
   }
 
-  /* ---- Casino-Grade Playing Cards (Pure CSS + SVG, zero raster) ---- */
+  /* ---- Readable, Tactile Playing Cards ---- */
   .pcard {
-    --card-w: 3.85rem;
+    --card-w: 3.9rem;
     width: var(--card-w);
     height: calc(var(--card-w) * 1.42);
     border-radius: 8px;
-    background: linear-gradient(165deg, #ffffff 0%, #f6f4ec 75%, #ece8da 100%);
-    color: #161b22;
-    border: 1px solid #d4cfc0;
-    box-shadow:
-      0 3px 8px rgba(0, 0, 0, 0.34),
-      0 1px 2px rgba(0, 0, 0, 0.24),
-      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    background: #fbfaf6;
+    color: #151a21;
+    border: 1px solid #d0cab9;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     display: inline-flex;
     flex-direction: column;
     justify-content: space-between;
@@ -280,7 +243,7 @@
     line-height: 1;
     user-select: none;
     position: relative;
-    transition: transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 140ms ease, filter 140ms ease;
+    transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
     flex: none;
   }
 
@@ -291,169 +254,154 @@
   }
 
   .pcard-sm {
-    --card-w: 2.85rem;
+    --card-w: 2.9rem;
     border-radius: 6px;
     padding: 3px 4px;
   }
 
   .pcard-lg {
     --card-w: 4.55rem;
-    border-radius: 10px;
+    border-radius: 9px;
     padding: 5px 6px;
   }
 
   @media (max-width: 639px) {
     .pcard {
-      --card-w: 3.15rem;
+      --card-w: 3.1rem;
     }
     .pcard-lg {
-      --card-w: 3.75rem;
+      --card-w: 3.65rem;
     }
     .pcard-sm {
       --card-w: 2.45rem;
     }
   }
 
-  .pcard::after {
-    content: "";
-    position: absolute;
-    inset: 2px;
-    border-radius: 6px;
-    border: 1px solid rgba(22, 27, 34, 0.06);
-    pointer-events: none;
-  }
-
   .pcard[data-red="true"] {
-    color: #c9252d;
-  }
-
-  .pcard-court {
-    background: linear-gradient(165deg, #fffdf7 0%, #f5efe0 100%);
+    color: #c8232c;
   }
 
   .pcard-joker {
-    background: linear-gradient(160deg, #fff8dc 0%, #f6e09a 55%, #ebd075 100%);
+    background: linear-gradient(160deg, #fff8de 0%, #f4dc8c 100%);
     color: #5c3700;
-    border-color: #d6aa3e;
-  }
-
-  .pcard-joker::after {
-    border-color: rgba(145, 92, 0, 0.24);
+    border-color: #d4a63a;
   }
 
   .pcard-back {
     background:
-      repeating-linear-gradient(45deg, rgba(24, 184, 78, 0.18) 0 4px, transparent 4px 8px),
-      repeating-linear-gradient(-45deg, rgba(245, 196, 81, 0.14) 0 4px, transparent 4px 8px),
-      linear-gradient(145deg, #0e384b 0%, #071e2b 100%);
-    border-color: #295c73;
-    box-shadow:
-      0 3px 8px rgba(0, 0, 0, 0.36),
-      inset 0 0 0 2px rgba(245, 196, 81, 0.35);
-  }
-
-  .pcard-back::after {
-    inset: 4px;
-    border-radius: 4px;
-    border: 1px solid rgba(245, 196, 81, 0.28);
+      repeating-linear-gradient(45deg, rgba(24, 184, 78, 0.16) 0 4px, transparent 4px 8px),
+      linear-gradient(145deg, #103b4f 0%, #08202d 100%);
+    border-color: #2c6078;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.32), inset 0 0 0 2px rgba(243, 194, 79, 0.3);
   }
 
   .pcard-slot {
-    --card-w: 3.85rem;
+    --card-w: 3.9rem;
     width: var(--card-w);
     height: calc(var(--card-w) * 1.42);
     border-radius: 8px;
     border: 1.5px dashed rgba(255, 255, 255, 0.16);
-    background: rgba(0, 0, 0, 0.16);
+    background: rgba(0, 0, 0, 0.14);
     flex: none;
   }
 
   @media (max-width: 639px) {
     .pcard-slot {
-      --card-w: 3.15rem;
+      --card-w: 3.1rem;
     }
   }
 
+  /* Non-color-only playability cue: subtle top emerald bar + lift on interactive legal cards */
+  button.pcard:not(:disabled)::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 22%;
+    right: 22%;
+    height: 2.5px;
+    border-radius: 0 0 3px 3px;
+    background: var(--color-primary);
+  }
+
   button.pcard:hover:not(:disabled) {
-    transform: translateY(-8px);
-    box-shadow:
-      0 10px 18px rgba(0, 0, 0, 0.44),
-      0 0 0 2px rgba(24, 184, 78, 0.65);
+    transform: translateY(-7px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4), 0 0 0 2px var(--color-primary);
     z-index: 2;
   }
 
   .pcard[data-selected="true"] {
-    transform: translateY(-12px);
-    box-shadow:
-      0 12px 20px rgba(0, 0, 0, 0.48),
-      0 0 0 2.5px var(--color-primary),
-      0 0 12px rgba(24, 184, 78, 0.4);
+    transform: translateY(-11px);
+    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.44), 0 0 0 2.5px var(--color-primary);
     z-index: 3;
   }
 
   .pcard[data-playable="false"] {
-    filter: grayscale(0.45) brightness(0.72);
-    opacity: 0.78;
+    filter: grayscale(0.4) brightness(0.74);
+    opacity: 0.72;
   }
 
   /* ---- Domino Ivory Tiles ---- */
   .domino-tile {
-    background: linear-gradient(160deg, #fcfaf2 0%, #f0eadb 75%, #e2dac6 100%);
-    border: 1.5px solid #c9bfaa;
-    box-shadow:
-      0 3px 7px rgba(0, 0, 0, 0.36),
-      inset 0 1px 0 rgba(255, 255, 255, 0.92),
-      inset 0 -2px 0 rgba(0, 0, 0, 0.08);
-    transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
+    background: #faf7ee;
+    border: 1.5px solid #c6bca6;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.32), inset 0 -2px 0 rgba(0, 0, 0, 0.08);
+    position: relative;
+    transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+  }
+
+  button.domino-tile:not(:disabled)::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 24%;
+    right: 24%;
+    height: 2.5px;
+    border-radius: 0 0 3px 3px;
+    background: var(--color-primary);
   }
 
   button.domino-tile:hover:not(:disabled) {
-    transform: translateY(-6px);
-    box-shadow:
-      0 8px 16px rgba(0, 0, 0, 0.44),
-      0 0 0 2px var(--color-primary);
+    transform: translateY(-5px);
+    box-shadow: 0 7px 14px rgba(0, 0, 0, 0.4), 0 0 0 2px var(--color-primary);
   }
 
   .domino-tile[data-active="true"] {
     transform: translateY(-8px);
-    box-shadow:
-      0 10px 18px rgba(0, 0, 0, 0.48),
-      0 0 0 2.5px var(--color-gold);
+    box-shadow: 0 9px 16px rgba(0, 0, 0, 0.44), 0 0 0 2.5px var(--color-gold);
   }
 
   .domino-tile[data-playable="false"] {
-    filter: grayscale(0.35) brightness(0.76);
-    opacity: 0.75;
+    filter: grayscale(0.35) brightness(0.75);
+    opacity: 0.68;
   }
 
   /* ---- Dealer & Blind Discs ---- */
   .dealer-disc {
-    @apply inline-flex items-center justify-center size-5 rounded-full text-[10px] font-black select-none shrink-0;
-    background: linear-gradient(145deg, #fff7d6 0%, #f5c451 65%, #c78d1c 100%);
-    color: #211503;
-    border: 1px solid #fff3bd;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.45);
+    @apply inline-flex items-center justify-center size-5 rounded-full text-[10px] font-extrabold select-none shrink-0;
+    background: var(--color-gold);
+    color: #1e1403;
+    border: 1px solid #fff2bf;
   }
 
   .blind-disc {
-    @apply inline-flex items-center justify-center h-5 px-1.5 rounded-full text-[10px] font-extrabold tracking-tight shrink-0;
+    @apply inline-flex items-center justify-center h-5 px-1.5 rounded-md text-[10px] font-bold tracking-tight shrink-0;
   }
 
-  /* ---- Active Turn Subtle Ring ---- */
+  /* ---- Active Player Seat Highlight ---- */
   .seat-active {
     border-color: var(--color-primary) !important;
-    background: linear-gradient(135deg, rgba(24, 184, 78, 0.18), rgba(12, 26, 34, 0.92)) !important;
-    box-shadow: 0 0 0 1px rgba(24, 184, 78, 0.35), 0 6px 16px rgba(0, 0, 0, 0.3);
+    background: rgba(13, 51, 33, 0.88) !important;
+    box-shadow: 0 0 0 1px rgba(24, 184, 78, 0.35);
   }
 }
 
-/* ---- Purposeful Micro-Animations ---- */
+/* ---- Subtle Purposeful Motion ---- */
 .fade-in {
-  animation: fade-in 180ms ease-out;
+  animation: fade-in 150ms ease-out;
 }
 
 .card-enter {
-  animation: card-enter 190ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: card-enter 160ms ease-out;
 }
 
 .turn-dot {
@@ -463,7 +411,7 @@
 @keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(5px);
+    transform: translateY(3px);
   }
   to {
     opacity: 1;
@@ -474,7 +422,7 @@
 @keyframes card-enter {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.95);
+    transform: translateY(6px) scale(0.96);
   }
   to {
     opacity: 1;
@@ -486,11 +434,9 @@
   0%,
   100% {
     opacity: 1;
-    transform: scale(1);
   }
   50% {
-    opacity: 0.45;
-    transform: scale(0.86);
+    opacity: 0.4;
   }
 }
 
