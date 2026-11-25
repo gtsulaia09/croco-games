@@ -6,7 +6,8 @@
  *  - a player's first card of a deal comes from the hand; afterwards hand or open table cards;
  *    when an open table card is played the card beneath is turned face up;
  *  - following suit is compulsory, then trumping; a joker beats everything (a joker played on a
- *    joker wins);
+ *    joker wins); with the `jokerLow` option (owner's request, on by default) a following joker may
+ *    instead be played low ("დაბალი") and gives the trick away;
  *  - a led joker demands the highest card of a named suit; without that (non-trump) suit the
  *    opponent must trump, and the trump beats the joker;
  *  - 18 tricks per deal; the player with more tricks scores the difference (11:7 gives 4, 9:9 is a
@@ -24,6 +25,8 @@ export const japaneseJokerConfigSchema = z.strictObject({
   revealMode: z.enum(["flip", "toHand"]).default("flip"),
   /** House variant: when only one complete pile is left on a player's table, both cards go to the hand. */
   lastPileToHand: z.boolean().default(false),
+  /** A following joker may be played "high" (takes the trick, "მოჯოკვრა") or "low" (gives it away). */
+  jokerLow: z.boolean().default(true),
 });
 export type JapaneseJokerConfig = z.infer<typeof japaneseJokerConfigSchema>;
 
@@ -33,7 +36,13 @@ const cardSchema = z.enum(DECK_36_JOKERS as [string, ...string[]]);
 const demandSchema = z.strictObject({ kind: z.literal("highest"), suit: suitSchema });
 export const japaneseJokerActionSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("trump"), suit: z.union([suitSchema, z.literal("none")]) }),
-  z.strictObject({ type: z.literal("play"), card: cardSchema, demand: demandSchema.optional() }),
+  z.strictObject({
+    type: z.literal("play"),
+    card: cardSchema,
+    demand: demandSchema.optional(),
+    /** Following joker only: "high" takes the trick (default), "low" gives it away. */
+    joker: z.strictObject({ mode: z.enum(["high", "low"]) }).optional(),
+  }),
 ]);
 export type JapaneseJokerAction = z.infer<typeof japaneseJokerActionSchema>;
 type Demand = z.infer<typeof demandSchema>;
@@ -48,6 +57,7 @@ interface Play {
   card: Card;
   from: "hand" | "table";
   demand?: Demand;
+  joker?: { mode: "high" | "low" };
 }
 
 export interface JapaneseJokerState {
@@ -86,6 +96,8 @@ export interface JapaneseJokerView {
   won: number[];
   scores: number[];
   targetPoints: number;
+  /** A following joker may be played low. */
+  jokerLow: boolean;
   table: Array<Array<{ up: Card | null; hasDown: boolean }>>;
   handCounts: number[];
   you: { seat: number; hand: Card[]; playable: Card[]; firstFromHand: boolean } | null;
@@ -150,7 +162,7 @@ function playable(state: Pick<JapaneseJokerState, "hands" | "table" | "trick" | 
 
 export function japaneseTrickWinner(trick: Play[], trump: Suit | null): number {
   const [lead, follow] = trick as [Play, Play];
-  if (isJoker(follow.card)) return follow.seat; // a joker played on a joker wins
+  if (isJoker(follow.card)) return follow.joker?.mode === "low" ? lead.seat : follow.seat; // a joker played on a joker wins, unless played low
   if (isJoker(lead.card)) {
     const demanded = lead.demand?.suit ?? null;
     if (trump && demanded !== trump && suitOf(follow.card) === trump) return follow.seat;
@@ -217,6 +229,8 @@ function legal(state: JapaneseJokerState, seat: number): JapaneseJokerAction[] {
   for (const card of playable(state, seat)) {
     if (isJoker(card) && leading) {
       for (const suit of SUITS) out.push({ type: "play", card, demand: { kind: "highest", suit } });
+    } else if (isJoker(card) && state.config.jokerLow) {
+      out.push({ type: "play", card, joker: { mode: "high" } }, { type: "play", card, joker: { mode: "low" } });
     } else {
       out.push({ type: "play", card });
     }
@@ -288,12 +302,21 @@ export const japaneseJokerEngine: GameEngine<JapaneseJokerState, JapaneseJokerAc
     const leading = next.trick.length === 0;
     if (isJoker(action.card) && leading) {
       if (!action.demand) return fail("demand_required");
+      if (action.joker) return fail("joker_mode_not_allowed");
     } else if (action.demand) {
       return fail("demand_not_allowed");
     }
+    if (action.joker && (!isJoker(action.card) || leading)) return fail("joker_mode_not_allowed");
+    if (action.joker?.mode === "low" && !next.config.jokerLow) return fail("joker_low_disabled");
     const from = removeCard(next, seat, action.card)!;
     next.playedThisDeal[seat] = true;
-    const play: Play = { seat, card: action.card, from, ...(action.demand ? { demand: deepClone(action.demand) } : {}) };
+    const play: Play = {
+      seat,
+      card: action.card,
+      from,
+      ...(action.demand ? { demand: deepClone(action.demand) } : {}),
+      ...(isJoker(action.card) && !leading ? { joker: { mode: action.joker?.mode ?? "high" } } : {}),
+    };
     next.trick.push(play);
     events.push({ type: "play", ...play });
     if (next.trick.length < 2) {
@@ -327,6 +350,7 @@ export const japaneseJokerEngine: GameEngine<JapaneseJokerState, JapaneseJokerAc
       won: [...state.won],
       scores: [...state.scores],
       targetPoints: state.config.targetPoints,
+      jokerLow: state.config.jokerLow,
       table: [tableFor(0), tableFor(1)],
       handCounts: state.hands.map((h) => h.length),
       you:
@@ -373,12 +397,15 @@ export const japaneseJokerEngine: GameEngine<JapaneseJokerState, JapaneseJokerAc
       return plays[0]!;
     }
     const lead = view.trick[0]!;
-    const winners = plays.filter((p) => japaneseTrickWinner([lead, { seat: you.seat, card: p.card, from: "hand" }], trump) === you.seat);
+    const asPlay = (p: (typeof plays)[number]): Play => ({ seat: you.seat, card: p.card, from: "hand", ...(p.joker ? { joker: p.joker } : {}) });
+    const winners = plays.filter((p) => japaneseTrickWinner([lead, asPlay(p)], trump) === you.seat);
     if (winners.length) {
       const cheap = winners.filter((p) => !isJoker(p.card));
       return (cheap.length ? cheap : winners).sort((a, b) => value(a.card) - value(b.card))[0]!;
     }
-    return plays.sort((a, b) => value(a.card) - value(b.card))[0]!;
+    // Losing anyway: throw the cheapest card; never waste a joker played high.
+    const losers = plays.filter((p) => !isJoker(p.card) || p.joker?.mode === "low");
+    return (losers.length ? losers : plays).sort((a, b) => value(a.card) - value(b.card))[0]!;
   },
 
   stage: (state) => (state.phase === "over" ? "finished" : `round ${state.round}`),

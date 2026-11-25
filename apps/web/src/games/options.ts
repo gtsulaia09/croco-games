@@ -32,6 +32,7 @@ export const GAME_OPTIONS: Record<GameType, OptionSpec[]> = {
     { key: "targetPoints", kind: "select", options: [1, 3, 7, 11, 21], default: 11 },
     { key: "revealMode", kind: "select", options: ["flip", "toHand"], default: "flip" },
     { key: "lastPileToHand", kind: "boolean", default: false },
+    { key: "jokerLow", kind: "boolean", default: true },
   ],
   bura3: [
     { key: "targetPoints", kind: "select", options: [6, 11, 21], default: 11 },

@@ -38,6 +38,10 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
   const playable = new Set(view.you?.playable ?? []);
   const leading = view.trick.length === 0;
 
+  /** Georgian table terms: a led joker is "high" or "let it take"; a following joker "jokers it" or goes low. */
+  const jokerLabel = (mode: "high" | "low", lead: boolean) =>
+    lead ? t(mode === "high" ? "joker.high" : "joker.take") : t(mode === "high" ? "joker.jokerIt" : "joker.low");
+
   function play(card: string) {
     if (card.startsWith("X")) setJokerCard(card);
     else onAction({ type: "play", card });
@@ -134,14 +138,14 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
           <div data-area="c" className="grid place-items-center min-h-[150px] w-full">
             {view.trick.length > 0 ? (
               <div className="trick-cross" style={{ "--cw": "clamp(48px, 4.2vw + 20px, 72px)" } as CSSProperties}>
-                {view.trick.map((p) => {
+                {view.trick.map((p, i) => {
                   const pos = posOf[p.seat] ?? "s";
                   return (
                     <div key={`${p.seat}-${p.card}`} className="trick-card" data-pos={pos}>
                       <PlayingCard card={p.card} size="sm" animate="play" style={{ ...FROM[pos], "--tilt": tiltFor(p.card) } as CSSProperties} />
                       {p.joker ? (
                         <span className="trick-tag" data-tone="gold">
-                          {t(`joker.${p.joker.mode}`)} {p.joker.suit ? suitSymbol(p.joker.suit) : ""}
+                          {jokerLabel(p.joker.mode, i === 0)} {p.joker.suit ? suitSymbol(p.joker.suit) : ""}
                         </span>
                       ) : null}
                     </div>
@@ -194,45 +198,56 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
         </div>
       )}
 
-      {/* Joker: high or low (and the suit when leading) */}
+      {/* Joker: lead "high" or "let it take" (with a suit); follow "joker it" or low */}
       <Modal open={jokerCard !== null} onClose={() => setJokerCard(null)} title={leading ? t("joker.jokerLead") : t("joker.jokerFollow")}>
-        <div className="grid gap-3">
-          {(["high", "low"] as const).map((mode) => (
-            <div key={mode} className="panel-inset p-3.5 flex flex-wrap items-center gap-2.5">
-              <span className="w-24 text-sm font-extrabold text-[#e2c27a] flex items-center gap-1.5">
-                <Sparkles size={15} /> {t(`joker.${mode}`)}
-              </span>
-              {leading ? (
-                SUITS.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    className="suit-tile !h-11 !min-w-11"
-                    data-red={isRedSuit(s) ? "true" : "false"}
-                    onClick={() => {
-                      onAction({ type: "play", card: jokerCard, joker: { mode, suit: s } });
-                      setJokerCard(null);
-                    }}
-                  >
-                    <SuitIcon suit={s} size={20} />
-                    <span className="sr-only">{suitSymbol(s)}</span>
-                  </button>
-                ))
-              ) : (
-                <button
-                  type="button"
-                  className="btn-primary btn-sm"
-                  onClick={() => {
-                    onAction({ type: "play", card: jokerCard, joker: { mode } });
-                    setJokerCard(null);
-                  }}
-                >
-                  {t(`joker.${mode}`)}
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
+        {leading ? (
+          <div className="grid gap-3">
+            {(["high", "low"] as const).map((mode) => (
+              <div key={mode} className="panel-inset p-3.5 grid gap-2.5">
+                <div>
+                  <div className="text-sm font-extrabold text-[#e2c27a] flex items-center gap-1.5">
+                    <Sparkles size={15} /> {jokerLabel(mode, true)}
+                  </div>
+                  <p className="text-xs text-muted mt-0.5">{t(mode === "high" ? "joker.highHint" : "joker.takeHint")}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {SUITS.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      className="suit-tile !h-11 !min-w-11"
+                      data-red={isRedSuit(s) ? "true" : "false"}
+                      aria-label={`${jokerLabel(mode, true)} ${suitSymbol(s)}`}
+                      onClick={() => {
+                        onAction({ type: "play", card: jokerCard, joker: { mode, suit: s } });
+                        setJokerCard(null);
+                      }}
+                    >
+                      <SuitIcon suit={s} size={20} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 gap-2.5">
+            {(["high", "low"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                className={`${mode === "high" ? "btn-primary" : "btn-secondary"} !h-auto !rounded-2xl !flex-col !gap-0.5 py-3 text-center`}
+                onClick={() => {
+                  onAction({ type: "play", card: jokerCard, joker: { mode } });
+                  setJokerCard(null);
+                }}
+              >
+                <span className="text-[15px]">{jokerLabel(mode, false)}</span>
+                <span className="text-[11px] font-medium opacity-85 whitespace-normal">{t(mode === "high" ? "joker.jokerItHint" : "joker.lowHint")}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </Modal>
 
       {/* Score sheet */}

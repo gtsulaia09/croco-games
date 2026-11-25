@@ -38,6 +38,9 @@ Terms follow the owner's rules handbook (*„თამაშების წე�
 | Undertrick penalty | Khishti | ხიშტი | House variant, off by default |
 | Score sheet | Score sheet | ქულების ცხრილი | |
 | Joker genitive / instrumental | Joker's / with Joker | ჯოკრის / ჯოკრით | Syncopated stem (*ჯოკრის*, not *ჯოკერის*) |
+| Lead with the joker | Lead with the joker | ჯოკრით წაყვანა | Joker lead dialog title |
+| Joker lead: high / let it take | High / Let it take | მაღალი / წაიყვანოს | Each with a suit; never "დაბალი" for a lead |
+| Joker follow: take / low | Joker it / Low | მოჯოკვრა / დაბალი | A following joker |
 | Joker demand | Joker demands | ჯოკერი ითხოვს | Japanese Joker: the led joker names a suit |
 
 ---

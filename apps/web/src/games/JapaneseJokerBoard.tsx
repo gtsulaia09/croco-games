@@ -53,6 +53,8 @@ export default function JapaneseJokerBoard({ view, mySeat, seats, deadline, onAc
   const t = useT();
   const name = useSeatName(seats);
   const [joker, setJoker] = useState<string | null>(null);
+  /** A joker played on the opponent's card: take the trick (მოჯოკვრა) or go low. */
+  const [followJoker, setFollowJoker] = useState<string | null>(null);
   const me = mySeat ?? 0;
   const opp = 1 - me;
   const myTurn = view.toAct !== null && view.toAct === mySeat;
@@ -61,6 +63,7 @@ export default function JapaneseJokerBoard({ view, mySeat, seats, deadline, onAc
 
   function play(card: string) {
     if (card.startsWith("X") && leading) setJoker(card);
+    else if (card.startsWith("X") && view.jokerLow) setFollowJoker(card);
     else onAction({ type: "play", card });
   }
 
@@ -110,6 +113,11 @@ export default function JapaneseJokerBoard({ view, mySeat, seats, deadline, onAc
                     {p.demand && (
                       <span className="trick-tag" data-tone="gold">
                         {t("jj.demandHighest", { suit: suitSymbol(p.demand.suit) })}
+                      </span>
+                    )}
+                    {p.joker && (
+                      <span className="trick-tag" data-tone="gold">
+                        {t(p.joker.mode === "low" ? "joker.low" : "joker.jokerIt")}
                       </span>
                     )}
                   </div>
@@ -164,6 +172,26 @@ export default function JapaneseJokerBoard({ view, mySeat, seats, deadline, onAc
           />
         </div>
       )}
+
+      {/* Joker on the opponent's card: take the trick or go low */}
+      <Modal open={followJoker !== null} onClose={() => setFollowJoker(null)} title={t("joker.jokerFollow")}>
+        <div className="grid sm:grid-cols-2 gap-2.5">
+          {(["high", "low"] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              className={`${mode === "high" ? "btn-primary" : "btn-secondary"} !h-auto !rounded-2xl !flex-col !gap-0.5 py-3 text-center`}
+              onClick={() => {
+                onAction({ type: "play", card: followJoker, joker: { mode } });
+                setFollowJoker(null);
+              }}
+            >
+              <span className="text-[15px]">{t(mode === "high" ? "joker.jokerIt" : "joker.low")}</span>
+              <span className="text-[11px] font-medium opacity-85 whitespace-normal">{t(mode === "high" ? "joker.jokerItHint" : "joker.lowHint")}</span>
+            </button>
+          ))}
+        </div>
+      </Modal>
 
       {/* Joker demand */}
       <Modal open={joker !== null} onClose={() => setJoker(null)} title={t("jj.demand")}>

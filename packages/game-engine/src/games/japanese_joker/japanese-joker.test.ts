@@ -142,6 +142,54 @@ describe("Japanese Joker play", () => {
     expect(r.state.won[follower]).toBe(1);
   });
 
+  it("lets a following joker take the trick (მოჯოკვრა) or go low (დაბალი)", () => {
+    const s = started(9);
+    const leader = s.toAct;
+    const follower = 1 - leader;
+    s.trump = "S";
+    s.hands[leader] = ["AH", "7D"];
+    s.table[leader] = [{ up: null, down: null }];
+    s.hands[follower] = ["X2", "8C"];
+    s.table[follower] = [{ up: null, down: null }];
+    s.playedThisDeal = [true, true];
+    const led = japaneseJokerEngine.apply(s, leader, { type: "play", card: "AH" }, testCtx());
+    if (!led.ok) throw new Error(led.error);
+    expect(japaneseJokerEngine.legalActions(led.state, follower)).toEqual(
+      expect.arrayContaining([
+        { type: "play", card: "X2", joker: { mode: "high" } },
+        { type: "play", card: "X2", joker: { mode: "low" } },
+      ]),
+    );
+    const winnerOf = (action: Record<string, unknown>) => {
+      const r = japaneseJokerEngine.apply(led.state, follower, action as never, testCtx());
+      if (!r.ok) throw new Error(r.error);
+      return r.state.lastTrick!.winner;
+    };
+    expect(winnerOf({ type: "play", card: "X2", joker: { mode: "high" } })).toBe(follower);
+    expect(winnerOf({ type: "play", card: "X2", joker: { mode: "low" } })).toBe(leader);
+    expect(winnerOf({ type: "play", card: "X2" })).toBe(follower); // no choice sent = takes
+
+    // A joker played low on a led joker leaves the trick to the leader.
+    const p = (seat: number, card: string) => ({ seat, card, from: "hand" as const });
+    expect(japaneseTrickWinner([{ ...p(0, "X1"), demand: { kind: "highest", suit: "H" } }, { ...p(1, "X2"), joker: { mode: "low" } }], "S")).toBe(0);
+
+    // The option can be switched off for a room.
+    const off = started(9, { jokerLow: false });
+    off.trump = "S";
+    off.hands[off.toAct] = ["AH"];
+    off.table[off.toAct] = [{ up: null, down: null }];
+    off.hands[1 - off.toAct] = ["X2"];
+    off.table[1 - off.toAct] = [{ up: null, down: null }];
+    off.playedThisDeal = [true, true];
+    const r = japaneseJokerEngine.apply(off, off.toAct, { type: "play", card: "AH" }, testCtx());
+    if (!r.ok) throw new Error(r.error);
+    expect(japaneseJokerEngine.legalActions(r.state, 1 - off.toAct)).toEqual([{ type: "play", card: "X2" }]);
+    expect(japaneseJokerEngine.apply(r.state, 1 - off.toAct, { type: "play", card: "X2", joker: { mode: "low" } }, testCtx())).toEqual({
+      ok: false,
+      error: "joker_low_disabled",
+    });
+  });
+
   it("decides tricks: jokers beat everything, second joker beats the first", () => {
     const p = (seat: number, card: string) => ({ seat, card, from: "hand" as const });
     expect(japaneseTrickWinner([p(0, "AH"), p(1, "7S")], "S")).toBe(1);
@@ -159,7 +207,7 @@ describe("Japanese Joker play", () => {
 
 describe("Japanese Joker matches", () => {
   it("uses the handbook defaults: target 11, covered cards flip face up", () => {
-    expect(cfg()).toEqual({ targetPoints: 11, revealMode: "flip", lastPileToHand: false });
+    expect(cfg()).toEqual({ targetPoints: 11, revealMode: "flip", lastPileToHand: false, jokerLow: true });
     expect(japaneseJokerConfigSchema.safeParse({ targetPoints: 8 }).success).toBe(false);
   });
 
