@@ -95,3 +95,13 @@ describe("safeInternalPath (open redirect protection)", () => {
     expect(safeInternalPath(input)).toBe(expected);
   });
 });
+
+describe("client-side username pre-check", () => {
+  it("agrees with the server schema", async () => {
+    const { checkUsername } = await import("./username");
+    const { usernameSchema } = await import("./validation");
+    for (const name of ["gio_main", "ab", "x".repeat(21), "ადმინი", "Adm1n", "giorgi", "bad name", "botmaster", "abbott", "გიორგი_99", "a\u202Eb"]) {
+      expect(checkUsername(name).ok, name).toBe(usernameSchema.safeParse(name).success);
+    }
+  });
+});

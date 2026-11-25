@@ -1,0 +1,38 @@
+{
+  "name": "@croco/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json && vite build",
+    "build:pages": "tsc -p tsconfig.json && VITE_DEPLOYMENT=github-pages vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@croco/game-engine": "workspace:*",
+    "@croco/shared": "workspace:*",
+    "@firebase/app": "0.16.2",
+    "@firebase/auth": "1.13.6",
+    "lucide-react": "1.80.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-router": "7.18.7",
+    "zustand": "5.1.0"
+  },
+  "devDependencies": {
+    "@croco/security": "workspace:*",
+    "@playwright/test": "1.65.1",
+    "@tailwindcss/vite": "4.3.5",
+    "@types/react": "19.3.2",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.3.0",
+    "tailwindcss": "4.3.5",
+    "typescript": "6.0.3",
+    "vite": "8.3.8",
+    "vitest": "4.1.12"
+  }
+}

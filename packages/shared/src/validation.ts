@@ -2,69 +2,12 @@ import { z } from "zod";
 import { BOT_DIFFICULTIES, GAME_TYPES } from "./games";
 import { LIMITS } from "./limits";
 
-/** Remove C0/C1 control characters, bidi overrides and zero-width characters. */
-// eslint-disable-next-line no-control-regex
-const CONTROL_CHARS = /[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF]/g;
+import { isReservedUsername, sanitizeText, USERNAME_PATTERN } from "./username";
+import { AVATAR_IDS } from "./constants";
+import type { PlatformSettingsDto } from "./api";
 
-export function sanitizeText(input: string): string {
-  return input.normalize("NFC").replace(CONTROL_CHARS, "").replace(/\s+/g, " ").trim();
-}
-
-/** Latin letters, digits, underscore and Georgian Mkhedruli letters (no punctuation from the block). */
-export const USERNAME_PATTERN = /^[A-Za-z0-9_ა-ჺჽ-ჿ]+$/;
-
-const RESERVED_SKELETONS = [
-  "admin",
-  "administrator",
-  "moderator",
-  "moder",
-  "system",
-  "croco",
-  "support",
-  "official",
-  "staff",
-  "owner",
-  "root",
-  "bot",
-  "ადმინ",
-  "მოდერატორ",
-  "სისტემა",
-  "ბოტი",
-  "კროკო",
-];
-
-const LOOKALIKES: Record<string, string> = {
-  "0": "o",
-  "1": "i",
-  l: "i",
-  "3": "e",
-  "4": "a",
-  "5": "s",
-  "7": "t",
-  "8": "b",
-  "9": "g",
-};
-
-/** Skeleton used to detect impersonation such as "Adm1n" or "a_d_m_i_n". */
-export function usernameSkeleton(username: string): string {
-  return username
-    .normalize("NFC")
-    .toLowerCase()
-    .replace(/_/g, "")
-    .split("")
-    .map((ch) => LOOKALIKES[ch] ?? ch)
-    .join("");
-}
-
-export function isReservedUsername(username: string): boolean {
-  const skeleton = usernameSkeleton(username);
-  return RESERVED_SKELETONS.some((reserved) => {
-    const reservedSkeleton = usernameSkeleton(reserved);
-    // "bot" is only reserved as a prefix/suffix so that names like "abbott" remain possible.
-    if (reservedSkeleton === "bot") return skeleton.startsWith("bot") || skeleton.endsWith("bot");
-    return skeleton.includes(reservedSkeleton);
-  });
-}
+export * from "./username";
+export { AVATAR_IDS } from "./constants";
 
 export const usernameSchema = z
   .string()
@@ -113,7 +56,6 @@ export const paginationSchema = z.strictObject({
   cursor: z.string().max(LIMITS.pagination.maxCursorLength).optional(),
 });
 
-export const AVATAR_IDS = Array.from({ length: 24 }, (_, i) => `a${String(i + 1).padStart(2, "0")}`);
 export const avatarSchema = z.enum(AVATAR_IDS as [string, ...string[]]);
 export const localeSchema = z.enum(["ka", "en"]);
 
@@ -242,3 +184,7 @@ export function safeInternalPath(candidate: unknown, fallback = "/"): string {
   if (candidate.startsWith("//")) return fallback;
   return candidate;
 }
+
+// Compile-time check that the zod-free DTO stays in sync with the schema.
+type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
+export const PLATFORM_SETTINGS_DTO_IN_SYNC: Same<PlatformSettings, PlatformSettingsDto> = true;

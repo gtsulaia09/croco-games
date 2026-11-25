@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+/* Design tokens derived from the Crocobet visual language (deep teal-navy surfaces, Croco
+ * green primary actions, pill buttons, 8px cards). No proprietary fonts or assets are used. */
+@theme {
+  --color-bg: #00141e;
+  --color-surface: #072c38;
+  --color-surface-2: #062531;
+  --color-surface-3: #031e27;
+  --color-line: #0f3a47;
+  --color-primary: #189541;
+  --color-primary-hover: #1caf4b;
+  --color-primary-soft: #0f3f2a;
+  --color-secondary: #0e5276;
+  --color-secondary-hover: #136892;
+  --color-accent: #0092c0;
+  --color-text: #ffffff;
+  --color-text-2: #d9e3ef;
+  --color-muted: #a3acb7;
+  --color-gold: #f2df8b;
+  --color-danger: #d14343;
+  --color-warning: #e0a531;
+  --color-felt: #0b3b35;
+  --color-felt-2: #0a332e;
+  --font-sans: "Segoe UI", system-ui, -apple-system, "Noto Sans Georgian", "Noto Sans", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --radius-card: 8px;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-bg text-text font-sans antialiased;
+    min-height: 100dvh;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+@layer components {
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost,
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-4 h-10 text-sm font-medium transition-colors select-none disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary-hover;
+  }
+  .btn-secondary {
+    @apply bg-secondary text-white hover:bg-secondary-hover;
+  }
+  .btn-ghost {
+    @apply bg-transparent text-text-2 hover:bg-surface;
+  }
+  .btn-danger {
+    @apply bg-danger/90 text-white hover:bg-danger;
+  }
+  .btn-sm {
+    @apply h-8 px-3 text-xs;
+  }
+  .card {
+    @apply bg-surface rounded-[var(--radius-card)] border border-line;
+  }
+  .input {
+    @apply w-full h-10 rounded-lg bg-surface-3 border border-line px-3 text-sm text-text placeholder:text-muted/70 focus:border-accent outline-none;
+  }
+  .label {
+    @apply block text-xs font-medium text-muted mb-1;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2 h-6 text-[11px] font-medium;
+  }
+  .table-row {
+    @apply border-b border-line/60 last:border-0;
+  }
+}
+
+/* Playing cards — pure CSS, no images. */
+.pcard {
+  width: var(--card-w, 3.25rem);
+  height: calc(var(--card-w, 3.25rem) * 1.4);
+  border-radius: 6px;
+  background: #fbfbf8;
+  color: #1a1e23;
+  border: 1px solid #d5d8dc;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3px 4px;
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+  flex: none;
+}
+.pcard[data-red="true"] {
+  color: #c62828;
+}
+.pcard-back {
+  background: repeating-linear-gradient(45deg, #0e5276 0 6px, #0b4663 6px 12px);
+  border-color: #0b4663;
+}
+.pcard-joker {
+  background: #fff7d6;
+  color: #7a4b00;
+}
+button.pcard:hover:not(:disabled) {
+  transform: translateY(-6px);
+}
+.pcard[data-selected="true"] {
+  transform: translateY(-10px);
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+.pcard[data-playable="false"] {
+  filter: grayscale(0.6) brightness(0.8);
+}
+
+.felt {
+  background: radial-gradient(ellipse at center, var(--color-felt) 0%, var(--color-felt-2) 75%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.fade-in {
+  animation: fade-in 160ms ease-out;
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

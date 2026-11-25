@@ -168,3 +168,11 @@ export interface SessionDto {
   current: boolean;
   revoked: boolean;
 }
+
+/** Same shape as `PlatformSettings` (validation.ts), declared without zod for the browser bundle. */
+export interface PlatformSettingsDto {
+  registrationOpen: boolean;
+  roomCreationOpen: boolean;
+  maintenanceMessage: string;
+  maxRoomsPerUser: number;
+}

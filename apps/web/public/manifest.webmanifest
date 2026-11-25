@@ -1,0 +1,10 @@
+{
+  "name": "Croco Games",
+  "short_name": "Croco Games",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#00141e",
+  "theme_color": "#00141e",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

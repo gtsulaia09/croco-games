@@ -8,7 +8,8 @@
     ".": "./src/index.ts",
     "./registry": "./src/registry.ts",
     "./games/*": "./src/games/*/index.ts",
-    "./testing": "./src/testing/index.ts"
+    "./testing": "./src/testing/index.ts",
+    "./rng": "./src/core/rng.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
