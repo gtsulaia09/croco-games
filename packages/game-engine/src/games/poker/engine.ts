@@ -33,8 +33,13 @@ export const pokerConfigSchema = z.strictObject({
   maxHands: z.number().int().min(5).max(500).default(100),
   /** 0 = blinds never increase; otherwise blinds and ante double every N hands. */
   blindLevelHands: z.number().int().min(0).max(100).default(0),
-  /** Short Deck only. */
-  tripsBeatStraight: z.boolean().default(true),
+  /** Short Deck only: the rules handbook keeps a straight above three of a kind. */
+  tripsBeatStraight: z.boolean().default(false),
+  /**
+   * Short Deck only. "button": every player pays the ante (the small-blind amount when no ante is
+   * set) and the button pays the button blind (the big-blind amount); "blinds": classic SB/BB.
+   */
+  shortDeckBlinds: z.enum(["button", "blinds"]).default("button"),
 });
 export type PokerConfig = z.infer<typeof pokerConfigSchema>;
 
@@ -104,6 +109,8 @@ export interface PokerView {
   currentBet: number;
   pot: number;
   blinds: PokerState["blinds"];
+  /** "button": ante + button blind (6+); "blinds": small and big blind. */
+  blindMode: "blinds" | "button";
   structure: BettingStructure;
   players: Array<{
     seat: number;
@@ -128,6 +135,16 @@ const DEFAULT_STRUCTURE: Record<PokerVariant, BettingStructure> = {
   omaha_hilo: "pot_limit",
 };
 const FIXED_LIMIT_CAP = 4;
+
+function buttonBlinds(state: PokerState): boolean {
+  return state.variant === "shortdeck" && state.config.shortDeckBlinds === "button";
+}
+
+/** Ante actually charged per player this hand. */
+function anteAmount(state: PokerState): number {
+  if (buttonBlinds(state)) return state.blinds.ante > 0 ? state.blinds.ante : state.blinds.small;
+  return state.blinds.ante;
+}
 
 function rules(state: PokerState): RankingRules {
   return { shortDeck: state.variant === "shortdeck", tripsBeatStraight: state.config.tripsBeatStraight };
@@ -228,25 +245,35 @@ function startHand(state: PokerState, ctx: EngineContext, events: PublicEvent[])
   }
 
   // Antes (dead money, not part of the street bet).
-  if (state.blinds.ante > 0) {
+  const ante = anteAmount(state);
+  if (ante > 0) {
     for (const i of active) {
       const p = state.players[i]!;
-      const a = Math.min(state.blinds.ante, p.chips);
+      const a = Math.min(ante, p.chips);
       p.chips -= a;
       p.total += a;
       if (p.chips === 0) p.allIn = true;
     }
   }
 
-  const headsUp = active.length === 2;
-  const sb = headsUp ? state.dealer : nextActive(state, state.dealer, (p) => !p.busted)!;
-  const bb = nextActive(state, sb, (p) => !p.busted)!;
   state.phase = "preflop";
   state.currentBet = 0;
   state.raisesThisStreet = 0;
-  const sbPaid = commit(state.players[sb]!, state.blinds.small);
-  const bbPaid = commit(state.players[bb]!, state.blinds.big);
-  state.currentBet = Math.max(sbPaid, bbPaid, state.blinds.big);
+  let sb: number | null = null;
+  let bb: number;
+  if (buttonBlinds(state)) {
+    // 6+ Hold'em: only the button posts a blind; action starts on the button's left.
+    bb = state.dealer;
+    const paid = commit(state.players[bb]!, state.blinds.big);
+    state.currentBet = Math.max(paid, state.blinds.big);
+  } else {
+    const headsUp = active.length === 2;
+    sb = headsUp ? state.dealer : nextActive(state, state.dealer, (p) => !p.busted)!;
+    bb = nextActive(state, sb, (p) => !p.busted)!;
+    const sbPaid = commit(state.players[sb]!, state.blinds.small);
+    const bbPaid = commit(state.players[bb]!, state.blinds.big);
+    state.currentBet = Math.max(sbPaid, bbPaid, state.blinds.big);
+  }
   state.minRaise = state.blinds.big;
   if (state.config.bettingStructure === "fixed_limit") state.raisesThisStreet = 1;
 
@@ -492,7 +519,7 @@ function makeEngine(type: GameType & PokerVariant): GameEngine<PokerState, Poker
     type,
     configSchema: pokerConfigSchema as unknown as z.ZodType<PokerConfig>,
     actionSchema: pokerActionSchema,
-    seatLimits: () => (type === "shortdeck" ? { min: 2, max: 6 } : { min: 2, max: 9 }),
+    seatLimits: () => (type === "shortdeck" ? { min: 2, max: 6 } : { min: 2, max: 10 }),
 
     create(config, players, ctx) {
       if (config.smallBlind > config.bigBlind) throw new Error("small blind must not exceed big blind");
@@ -583,7 +610,8 @@ function makeEngine(type: GameType & PokerVariant): GameEngine<PokerState, Poker
         toAct: state.toAct,
         currentBet: state.currentBet,
         pot: potTotal(state),
-        blinds: { ...state.blinds },
+        blinds: buttonBlinds(state) ? { small: 0, big: state.blinds.big, ante: anteAmount(state) } : { ...state.blinds },
+        blindMode: buttonBlinds(state) ? "button" : "blinds",
         structure: state.config.bettingStructure,
         players: state.players.map((p, i) => ({
           seat: i,

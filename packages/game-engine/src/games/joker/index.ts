@@ -13,8 +13,8 @@ const PLAYERS = 4;
 
 export const jokerConfigSchema = z.strictObject({
   ruleset: z.enum(["standard", "nines"]).default("standard"),
-  /** Penalty when a player bids ≥1 and takes no tricks: classic −200 (sets 1/3) / −500 (sets 2/4). */
-  hist: z.enum(["classic", "none"]).default("classic"),
+  /** House variant "khishti": a player who bids ≥1 and takes no tricks loses 200 (sets 1/3) / 500 (sets 2/4). Off in the base rules. */
+  hist: z.enum(["classic", "none"]).default("none"),
   setBonus: z.enum(["simple", "double", "none"]).default("simple"),
   /** Nine-card hands: dealer's last card shows trump, or the player left of the dealer chooses after three cards. */
   nineTrump: z.enum(["lastCard", "choose"]).default("lastCard"),

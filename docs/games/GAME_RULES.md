@@ -2,76 +2,57 @@
 
 All ten game modes run as independent, server-authoritative engines inside `packages/game-engine/src/games/`. Every rule variation documented here is configurable at room creation and validated strictly on the server.
 
+**Source of the rules (2026-11-25):** the owner's handbook *„თამაშების წესები და ტერმინების ლექსიკონი"* (10 games, rules and glossary), which cites pagat.com (Joker), mygame.ge (Japanese Joker), parabura.ge (Bura), nardeon.com (long nardi), tamashebi.cc (dominoes) and PokerStars (poker). Where the handbook leaves a detail open, the choice made here is marked **Interpretation**. House variants stay available as room options but are off by default.
+
 ---
 
-## 1. Joker (`joker`) — Georgian Classic (ჯოკერი)
+## 1. Joker (`joker`) — ჯოკერი
 
-- **Players**: 4 · **Deck**: 36 cards (6–A, with the two black sixes `6S`, `6C` replaced by two Jokers `X1`, `X2`).
-- **Default ruleset (`standard`)**: follows traditional Georgian Joker (24 hands in 4 sets: Set 1 = 1→8 cards; Set 2 = four 9-card hands; Set 3 = 8→1 cards; Set 4 = four 9-card hands). Configurable variant `nines` plays two 4-hand sets of 9-card hands (8 hands total).
-- **Trump determination**:
-  - Hands of 1–8 cards: next card after dealing is turned face up for trump (if a Joker, no-trump).
-  - 9-card hands: `nineTrump: "lastCard"` (default: dealer's last card revealed as trump) or `"choose"` (player left of dealer chooses a suit or `none` after seeing 3 cards, then remaining 6 cards are dealt).
-- **Bidding**: clockwise starting left of dealer. **Dealer restriction**: the dealer's bid may not make the sum of all 4 bids equal the number of cards dealt in that hand (`dealer_bid_forbidden`).
-- **Trick play & Joker rules**:
-  - Must follow led suit; if void, must trump (when trump exists); otherwise any card. Jokers may be played anytime.
-  - **Leading a Joker**: must declare `mode: "high" | "low"` and a `suit`. A high Joker demands opponents play their **highest** card of that suit (if holding it). `ledJokerTrumped` controls whether a trump played by a void opponent beats a led high Joker (`"trumpWins"`, default) or not (`"jokerWins"`). A low Joker loses to any card of the named suit (or trump), winning only if no opponent holds the named suit or trumps.
-  - **Following with a Joker**: declare `high` (beats everything played so far; second high Joker beats the first) or `low` (always loses).
-- **Scoring**:
-  - Exact bid = 0 (Pass): `+50`.
-  - Exact bid `k` (1 ≤ k < cards): `+50 + 50 × k`.
-  - Exact bid = all cards ("Pass/Full sweep"): `+100 × cards`.
-  - Missed bid (`tricks > 0`): `+10 × tricks`.
-  - **Hist (khishti) penalty** (`hist: "classic"`, default): bidding ≥ 1 and taking 0 tricks scores `-200` (Sets 1 & 3) or `-500` (Sets 2 & 4); configurable `"none"`.
-  - **Set bonus** (`setBonus`): if a player makes every bid in a set, `"simple"` (default) adds their best hand score from that set; `"double"` doubles their best hand and erases the best hand of other players in that set; `"none"` disables bonuses.
-- **Bots (`easy`/`medium`/`hard`)**: estimate trick strength from trumps, high cards, and jokers; avoid forbidden dealer bids; manage exact-trick targeting (dumping high cards once bid is met).
+- **Players**: 4, no partners · **Deck**: 36 cards (6–A), the black sixes `6S`, `6C` replaced by jokers `X1`, `X2`.
+- **24 deals in four sets**: 1→8 cards, four 9-card deals, 8→1 cards, four 9-card deals. (House variant `nines`: two sets of four 9-card deals.)
+- **Trump**: in 1–8-card deals the next card of the pack is turned; a turned joker means no trump ("ბეზი"). In 9-card deals the dealer's last card shows trump (house variant `nineTrump: "choose"`).
+- **Bidding (თქმა)**: from the dealer's left; the dealer bids last and may not make the bids add up to the number of cards (`dealer_bid_forbidden`).
+- **Trick play (ვაზი)**: follow the led suit; without it you must trump; otherwise any card. A joker may always be played. The trick goes to the highest trump, else the highest card of the led suit.
+- **Joker**: played "high" or "low". A leading joker also names the suit the others must follow (high: their highest card of it). A high joker wins unless a later high joker is played (the later one wins) or — when it led a non-trump suit — a player without that suit trumps it (`ledJokerTrumped: "trumpWins"`). A low joker loses, except a led low joker wins when nobody played the suit, a trump or a high joker.
+- **Scoring**: exact bid `k` → `50 × k + 50`; bid 0 and took 0 → `50`; bid and took every trick → `100 × cards`; missed bid → `10 × tricks taken`. **Set bonus**: a player who makes every bid of a set adds their best single deal of that set.
+- **House variant "ხიშტი" (`hist: "classic"`)**: bid ≥ 1 and took no trick scores −200 (sets 1/3) / −500 (sets 2/4). **Off by default** — the handbook says it is not universal.
 
 ---
 
 ## 2. Japanese Joker (`japanese_joker`) — იაპონური ჯოკერი
 
-A **distinct 2-player Georgian card game**, not a reskinned Joker:
-
-- **Players**: 2 · **Deck**: 36 cards (black sixes replaced by `X1`, `X2`).
-- **Deal & Trump**:
-  1. Each player receives 3 cards; the non-dealer names trump (suit or `none`).
-  2. Each player then receives 5 face-down table cards covered by 5 face-up table cards, plus 5 more cards to their hand (18 cards per player = full 36-card deck).
-- **Playing & Revealing**:
-  - Players may play from their hand or from their face-up table cards.
-  - Playing a face-up table card reveals the covered card beneath: `revealMode: "toHand"` (default: moves secretly into player's hand) or `"flip"` (flips face up on table). With `lastPileToHand: true` (default), when only one intact pile remains on a player's table, both cards move to hand.
-  - Must follow suit across available hand + face-up table cards; if void, must trump; Jokers beat everything (second Joker beats first).
-- **Joker Demand**: when leading a Joker, the leader must either demand a specific visible face-up opponent table card (`{ kind: "card", card }`) or demand the opponent's highest card of a chosen suit (`{ kind: "highest", suit }`).
-- **Scoring & Winning**: every card won counts as **0.5 points** (36 cards = 18 points/round). The round winner scores the point difference `|won₀ - won₁| / 2`. First player to `targetPoints` (default `20`, range 5–50) wins the match.
+- **Players**: 2 · **Deck**: 36 cards, black sixes are jokers · **18 tricks** per deal.
+- **Deal**: 3 cards each; one player names trump or "ბეზი" (no trump) — the chooser alternates between deals — and leads. Then each receives 5 more cards to the hand (8 in hand), 5 face-down table cards and 5 face-up cards on top of them.
+- **Playing**: a player's **first card of a deal comes from the hand**; afterwards the hand or the open table cards. When an open table card is played, the card under it is **turned face up** (house variants: `revealMode: "toHand"`, `lastPileToHand`).
+- **Follow rules**: follow suit; without it trump; otherwise any card. The trick goes to the highest card of the led suit or the highest trump; in ბეზი only the led suit (or a joker).
+- **Joker**: beats everything; a joker played on a joker wins. A **led joker names a suit** and asks for the highest card of it — the opponent must give that card or a joker. Without that (non-trump) suit the opponent must trump, and **the trump beats the joker**.
+- **Scoring**: the player with more tricks scores the difference (11:7 → 4; 9:9 → nothing). Match to **1, 3, 7, 11 or 21** points (default 11).
 
 ---
 
-## 3. Bura — Three-Card (`bura3`)
+## 3. Bura — Three-Card (`bura3`) — ბურა 3 კარტით
 
-- **Players**: 2–4 · **Deck**: 36 cards (default) or 32 cards (`7`–`A`).
-- **Card ranking & values**: `A (11) > 10 (10) > K (4) > Q (3) > J (2) > 9 (0) > 8 (0) > 7 (0) > 6 (0)` (total = 120 points in both packs).
-- **Deal**: 3 cards per player; trump indicator lies face up at the bottom of the stock and is drawn last. Hands refill to 3 from stock after each trick.
-- **Trick play**:
-  - Leader plays 1–3 cards of the **same suit**.
-  - Respondents either `beat` (matching every led card with a distinct higher card of the same suit or trump) or `discard` the same count of cards (`closedDiscards: true` default hides discarded cards from opponents until hand end).
-- **Declarations & Winning a Hand**:
-  - **Bura (3 trumps in hand)**: wins the hand immediately.
-  - **Opening / Claiming (`claim`)**: on their lead after winning at least one trick, a player may open and claim ≥ **31 card points** in their captured pile. If true, claimer scores 1 point (+ carried draws); if false (`< 31`), every opponent scores 1 point.
-  - Optional variations: `combinations` (Molodka = 3 non-trumps of one suit, or 3 aces take the lead), `threeAcesWin`, and `memoryAid` (display known captured points; off by default).
-- **Match win**: first player to `targetPoints` (default `7`, range 3–21).
+- **Players**: 2 (one against one) · **Deck**: 20 cards — 10, J, Q, K, A (6–9 removed); house variants 32/36 cards. Strength `A > 10 > K > Q > J`; points A 11, 10 10, K 4, Q 3, J 2 — **120 in the pack**.
+- **Deal**: 3 cards each; one card is turned for trump and lies at the bottom of the stock (drawn last).
+- **Trick**: lead 1–3 cards of one suit; the opponent answers with the same number — every card beaten by a distinct higher card of its suit or a trump, or the cards are thrown (face down, `closedDiscards`). Following suit is not required. The trick winner takes its points.
+- **ვარი (var)**: right after winning a trick, **before the hands are refilled**, the taker chooses "var" or "continue". Var with **31+ captured points wins the deal**; with fewer the opponent wins it.
+- **ბურა**: three trumps in hand on your turn win the deal at once.
+- **მალუტკა**: three cards of one suit led together (a normal 3-card lead).
+- **End of deal**: otherwise the deal is played out — **61+ card points wins**, 60:60 scores nothing. Each deal won is worth 1 point; match to **6, 11 or 21** (default 11).
+- **Interpretation**: the deal winner deals next; after 60:60 the deal passes on. A short stock is shared equally between both hands.
 
 ---
 
-## 4. Bura — Five-Card (`bura5`)
+## 4. Bura — Five-Card (`bura5`) — ბურა 5 კარტით (გუნდური)
 
-An **independent 5-card engine** (not a cosmetic variant of 3-card Bura):
-
-- **Players**: 2–3 · **Deck**: 36 (default) or 32 cards · **Hand size**: 5 cards (refilled after each trick).
-- **Play**: leader plays 1–`maxLead` (`3` default, or `5`) cards of one suit; respondents beat or discard (face down by default). **No mid-hand opening claims and no instant Bura/combination wins** — every hand plays to the last card so all 120 card points are accounted for.
-- **Penalty Scoring (Kozel-style)**:
-  - Hand winner (highest card points): `0` penalties (or `2` each on a tied top score).
-  - Loser who took `0` tricks: `+6` penalties.
-  - Loser below threshold (`< 31` in 2-player, `< 21` in 3-player): `+4` penalties.
-  - Loser at or above threshold: `+2` penalties.
-- **Match win**: match ends once any player reaches `penaltyLimit` (default `12`, range 6–24). Lowest total penalties wins.
+- **Players**: 4 in **two teams**, partners opposite (seats 0+2 vs 1+3) · **Deck**: 36 cards (6–A), strength `A > 10 > K > Q > J > 9 > 8 > 7 > 6`, 120 points.
+- **Deal**: 5 cards each; one card turned for trump at the bottom of the stock; hands are refilled after every trick (winner first, as far as the stock goes).
+- **Trick**: lead 1–5 cards of one suit; everyone answers with the same number. A player takes the trick only by beating **every** card of the current best set with a distinct higher card of its suit or a trump. Partners may throw point cards (A, 10) onto a trick their partner is winning.
+- **მალუტკა**: when an **opponent leads a single card** and all five of your cards are of one suit and beat it, you may lay all five at once — they become the new target (the players still to answer must beat all five).
+- **ბურა**: a full hand of five trumps, shown on your turn, wins the deal at once at its current value (including accepted raises).
+- **Raises (გამოძახებები)** — only on your own turn, teams alternate: ჩვეულებრივი ×1, დავი ×2, სე ×3, ჩარი ×4, პანჯი ×5, შაში ×6. The next opponent answers: **accept** (play on at the new value), **raise again** (one step more) or **concede** (the deal ends; the raising team scores the value before the raise; card points are not counted).
+- **End of deal**: the team with **61+ points** scores the deal value; 60:60 scores nothing. Match to **6, 11 or 21** (default 11).
+- **Interpretation**: the player answering a raise is the next seat clockwise (always the other team); the deal rotates clockwise.
 
 ---
 
@@ -79,50 +60,47 @@ An **independent 5-card engine** (not a cosmetic variant of 3-card Bura):
 
 > **Virtual Entertainment Chips Only**: all poker variants use temporary virtual match chips (default `1000`). No real-money wagers, deposits, withdrawals, or chip purchases exist anywhere in the platform.
 
-Common mechanics across all four variants (`packages/game-engine/src/games/poker/`):
-- **Streets**: Preflop → Flop (3) → Turn (1) → River (1) → Showdown, with burn cards, rotating dealer button, blinds, optional antes, and optional blind escalation (`blindLevelHands`).
-- **Actions**: `fold`, `check`, `call`, `raise { to }`, `allin`. Supports `no_limit`, `pot_limit` (default for Omaha/Hi-Lo), and `fixed_limit` (4-bet street cap).
-- **All-in & Side Pots**: `buildPots` slices main and side pots accurately across unequal stacks; short all-in raises below a full raise increment do not reopen betting for players who already acted; uncalled bets are refunded; chip conservation (`Σ(chips + pot) === constant`) is verified on every step.
+Common mechanics: Preflop → Flop (3) → Turn (1) → River (1) → Showdown, burn cards, rotating button, `fold` / `check` / `call` / `raise { to }` / `allin`, No-Limit, Pot-Limit (max raise = pot after the call) and Fixed-Limit (4-bet cap), side pots, refunds of uncalled bets, chip conservation on every step.
 
-### 5.1 Texas Hold'em (`holdem`)
-- **Players**: 2–9 · **Deck**: 52 cards · **Hole cards**: 2 · Best 5 of 7 cards using standard rankings (`High Card` → `Straight Flush`, wheel `A-2-3-4-5`).
+### 5.1 Texas Hold'em (`holdem`) — ტეხას ჰოლდემი
+- **Players**: 2–10 · 52 cards · 2 hole cards · best five of seven (both, one or none of the hole cards). Small and big blind left of the button.
 
-### 5.2 Short Deck / 6+ Hold'em (`shortdeck`)
-- **Players**: 2–6 · **Deck**: 36 cards (`6`–`A`) · **Hole cards**: 2.
-- **Modified rankings**: **Flush beats Full House**; wheel straight is **`A-6-7-8-9`**; configurable `tripsBeatStraight` (`true` by default, Triton/GG style, or `false`).
+### 5.2 6+ Hold'em / Short Deck (`shortdeck`)
+- **Players**: 2–6 · 36 cards (6–A) · 2 hole cards.
+- **Forced bets (`shortDeckBlinds: "button"`, default)**: everyone pays the **ante** (the small-blind amount unless an ante is set) and the button pays the **Button Blind** (the big-blind amount); there are no small/big blinds; action starts left of the button. House variant `"blinds"`: classic SB/BB.
+- **Ranking**: Royal Flush › Straight Flush › Four of a Kind › **Flush › Full House** › Straight › Three of a Kind › Two Pair › Pair › High Card; `A-6-7-8-9` is the lowest straight. House variant `tripsBeatStraight` (off by default).
 
 ### 5.3 Omaha (`omaha`)
-- **Players**: 2–9 · **Deck**: 52 cards · **Hole cards**: 4 · **Default betting**: Pot-Limit.
-- **Strict evaluation**: `bestOmahaHand` evaluates all $\binom{4}{2} \times \binom{5}{3} = 60$ combinations using **EXACTLY 2 private hole cards and EXACTLY 3 community cards**.
+- **Players**: 2–10 · 52 cards · 4 hole cards · default **Pot-Limit (PLO)**. Exactly **2 hole + 3 board** cards (all 60 combinations evaluated).
 
 ### 5.4 Omaha Hi-Lo (`omaha_hilo`)
-- **Players**: 2–9 · **Deck**: 52 cards · **Hole cards**: 4 · **Default betting**: Pot-Limit.
-- **Split pot**: each pot splits 50/50 between the best High hand and the best qualifying **8-or-better Low hand** (Ace-to-Five low, 5 distinct ranks ≤ 8 using **exactly 2 hole + 3 board cards**; `A-2-3-4-5` is the nut low). If no low qualifies, High scoops the entire pot. Odd chips go to the earliest seat left of the button.
+- **Players**: 2–10 · 4 hole cards · default Pot-Limit. Half the pot to the best High, half to the best **8-or-better Low** (five distinct ranks ≤ 8, ace low, exactly 2 hole + 3 board, `5-4-3-2-A` is best); no qualifying low → High scoops; ties split each half.
 
 ---
 
-## 6. Dominoes (`dominoes`)
+## 6. Dominoes (`dominoes`) — დომინო (ქართული ონლაინ მოდელი)
 
-- **Players**: 2–4 · **Set**: standard 28-tile double-six set (168 total pips).
-- **Deal & Opening**: 7 tiles per player (configurable 5–7 for 2–3 players). Round 1 opens with the highest double dealt; subsequent rounds open with the previous round winner.
-- **Variants**:
-  - `draw` (default): remaining tiles form the boneyard; when unable to play, player must `draw` until playable or boneyard empties, then `pass`.
-  - `block`: no boneyard; unable to play → `pass`.
-- **Scoring & Match Win**:
-  - Domino (emptying hand): winner scores sum of pips left in all opponents' hands.
-  - Blocked game (all players pass consecutively): lowest hand pip total wins the sum of opponents' pips (tie = 0 points).
-  - First player to `scoreLimit` (default `100`, range 50–500) wins.
+- **Players**: 2 · 28-tile double-six set · 7 tiles each; the rest is the **ბაზარი** (bazaar).
+- **Opening**: round 1 is opened by the highest double (no double → heaviest tile); later rounds by the previous winner.
+- **სტავკა**: the first double of a round lies across the chain and opens two more directions (up / down). Later doubles are ordinary tiles and open no branch.
+- **Scoring by fives**: after every move the open ends are added up; a multiple of 5 scores that many points for the mover.
+  - **Interpretation**: an uncovered სტავკა counts **both halves, once**, while any of its sides (left, right, up or down) is still open; a lone first tile counts its total; ordinary doubles at an end count one half.
+- **Bazaar**: without a playable tile you draw one at a time until a tile fits; **the last two bazaar tiles are never drawn**; if nothing can be drawn you pass. (House variant `block`: no drawing.)
+- **დომინო**: playing your last tile scores the opponent's remaining pips **rounded to the nearest 5**.
+- **რიბა** (blocked — both players pass): fewer pips wins the opponent's pips **rounded up to a multiple of 5**; equal pips is a draw.
+- **Match**: first to `scoreLimit` (default 100, 50–500); reaching it during play ends the match.
 
 ---
 
-## 7. Backgammon (`backgammon`)
+## 7. Long Nardi (`backgammon`) — გრძელი ნარდი
 
-- **Players**: 2 · **Checkers**: 15 each (starting at 167 pips each).
-- **Dice & Movement**: server-rolled CSPRNG dice (`rollDie`). Doubles grant 4 moves. Enforces full standard rules:
-  - Must enter from the bar (`25`) before moving any board checker.
-  - Single opponent blot is hit and sent to bar; ≥ 2 opponent checkers block a point.
-  - Bearing off (`0`) allowed only when all 15 checkers are in home board (points 1–6); exact roll or higher die only from the highest occupied point.
-  - **Compulsory play**: must use both dice when any legal 2-die sequence exists; if only one die can be played, must play the **larger** die.
-- **Doubling Cube & Match Play**:
-  - Configurable `matchLength` (`1, 3, 5, 7, 9, 11`, default `5`), `doublingCube` (`true`), and `crawford` (`true` — forbids doubling in the first game when either player is 1 point from winning).
-  - Single win = `1 × cube`; Gammon (loser bore off 0) = `2 × cube`; Backgammon (loser bore off 0 and still has checker on bar or in winner's home board) = `3 × cube`; Dropped double = current cube value.
+The game id stays `backgammon` so rooms, ratings and leaderboards are unchanged; the rules are long nardi.
+
+- **Players**: 2 · 15 stones each · 24 points. Every stone starts on the player's **თავი** (head, point 24 for each player); the heads are diagonally opposite (each player's head is the other's point 12). Both move the same way round the whole board to their **სახლი** (home, points 1–6).
+- **Start**: each player rolls one die; the higher starts and then rolls both dice (each game).
+- **Moving**: each die is a separate move (one stone may use both if the middle point is free); doubles are played four times. A stone may land on an empty point or its own stones, **never on a point holding any opponent stone — there is no hitting**.
+- **Head rule**: one stone may leave the head per turn; on a player's **first turn of a game, 6-6, 4-4 or 3-3 allow two**.
+- **Six-point block**: six consecutive points may not be held unless at least one opponent stone has already passed them (or the opponent has borne off); five in a row is always allowed. The head counts as a held point.
+- **Compulsory play**: both dice if possible; if only one can be played, the larger; no move → the turn passes.
+- **Bearing off (ქვის გატანა)**: once all 15 stones are home: a die removes a stone from its point; if that point is empty the die is played inside home; a larger die removes the farthest stone only when no stone is higher.
+- **Scoring**: win 1 point, **მარსი** (opponent bore off none) 2 points; no koks, no doubling cube. Match to **1, 3, 5 or 7** (default 3).

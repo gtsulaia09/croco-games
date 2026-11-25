@@ -42,6 +42,9 @@ async function step(page: Page, game: (typeof GAMES)[number]): Promise<void> {
       return;
     case "bura3":
     case "bura5": {
+      // Decisions that interrupt the normal flow: var after a won trick, or an opponent's raise.
+      if (await clickFirst(page.getByRole("button", { name: "Continue", exact: true }))) return;
+      if (await clickFirst(page.getByRole("button", { name: "Accept", exact: true }))) return;
       const lead = page.getByRole("button", { name: "Lead", exact: true });
       if (await lead.isVisible()) {
         await clickFirst(hand(page).locator("button.pcard"));
@@ -65,7 +68,7 @@ async function step(page: Page, game: (typeof GAMES)[number]): Promise<void> {
       return;
     case "dominoes":
       if (await page.getByText("Which end?").isVisible()) {
-        await page.getByRole("button", { name: /^Left/ }).click();
+        await clickFirst(page.getByRole("button", { name: /^(Left|Right|Up|Down) \(/ }));
         return;
       }
       if (await clickFirst(hand(page).getByRole("button"))) return;

@@ -81,13 +81,13 @@ describe("invitations", () => {
     const fr = (await host.json("POST", "/api/friend-requests", { toUserId: friend.userId })).body.id;
     await friend.json("POST", `/api/friend-requests/${fr}/accept`);
     const room = await host.json("POST", "/api/rooms", {
-      gameType: "bura3", name: "Invite room", visibility: "invite", maxPlayers: 3, allowSpectators: false, bots: 0,
+      gameType: "holdem", name: "Invite room", visibility: "invite", maxPlayers: 3, allowSpectators: false, bots: 0,
       botDifficulty: "easy", turnSeconds: 30, autoStart: false, chatEnabled: true, allowInvites: true, gameConfig: {},
     });
     expect(room.status).toBe(201);
     const roomId = room.body.id as string;
     // Invite-only rooms are invisible and not joinable without a grant.
-    expect((await stranger.json("GET", "/api/rooms?gameType=bura3&filter=invite")).body.items.some((r: { id: string }) => r.id === roomId)).toBe(false);
+    expect((await stranger.json("GET", "/api/rooms?gameType=holdem&filter=invite")).body.items.some((r: { id: string }) => r.id === roomId)).toBe(false);
     expect((await stranger.json("GET", `/api/rooms/${roomId}`)).status).toBe(404);
     expect((await stranger.json("POST", `/api/rooms/${roomId}/join`, {})).status).toBe(403);
     // Non-friends cannot be invited; non-members cannot invite.

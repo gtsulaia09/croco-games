@@ -50,18 +50,42 @@ describe("Japanese Joker play", () => {
     }
   });
 
-  it("moves the covered card into the hand after a face-up card is played", () => {
+  it("plays the first card of a deal from the hand, then allows open table cards", () => {
+    const s = started(5);
+    const seat = s.toAct;
+    const up = s.table[seat]![0]!.up!;
+    const demand = up.startsWith("X") ? { demand: { kind: "highest" as const, suit: "S" as const } } : {};
+    expect(japaneseJokerEngine.apply(s, seat, { type: "play", card: up, ...demand }, testCtx())).toEqual({ ok: false, error: "first_card_from_hand" });
+    expect(japaneseJokerEngine.view(s, seat).you!.playable.every((c) => s.hands[seat]!.includes(c))).toBe(true);
+    s.playedThisDeal[seat] = true;
+    expect(japaneseJokerEngine.view(s, seat).you!.playable).toContain(up);
+  });
+
+  it("turns the covered card face up after an open table card is played", () => {
     const s = started(5);
     const seat = s.toAct;
     const pile = s.table[seat]![0]!;
     const up = pile.up!;
     const down = pile.down!;
     s.trick = [];
+    s.playedThisDeal[seat] = true;
+    const r = japaneseJokerEngine.apply(s, seat, { type: "play", card: up, ...(up.startsWith("X") ? { demand: { kind: "highest", suit: "S" } } : {}) }, testCtx());
+    if (!r.ok) throw new Error(r.error);
+    expect(r.state.table[seat]![0]).toEqual({ up: down, down: null });
+    expect(japaneseJokerEngine.view(r.state, 1 - seat).table[seat]![0]!.up).toBe(down);
+  });
+
+  it("house variant: the covered card can go to the hand instead", () => {
+    const s = started(5, { revealMode: "toHand" });
+    const seat = s.toAct;
+    const pile = s.table[seat]![0]!;
+    const up = pile.up!;
+    const down = pile.down!;
+    s.playedThisDeal[seat] = true;
     const r = japaneseJokerEngine.apply(s, seat, { type: "play", card: up, ...(up.startsWith("X") ? { demand: { kind: "highest", suit: "S" } } : {}) }, testCtx());
     if (!r.ok) throw new Error(r.error);
     expect(r.state.table[seat]![0]).toEqual({ up: null, down: null });
     expect(r.state.hands[seat]).toContain(down);
-    // The opponent cannot see which card went to the hand.
     expect(JSON.stringify(japaneseJokerEngine.view(r.state, 1 - seat))).not.toContain(`"${down}"`);
   });
 
@@ -74,6 +98,7 @@ describe("Japanese Joker play", () => {
     s.hands[follower] = ["7C", "KS"];
     s.table[follower] = [{ up: "9D", down: "8S" }];
     s.trump = "S";
+    s.playedThisDeal = [true, true];
     let r = japaneseJokerEngine.apply(s, leader, { type: "play", card: "AD" }, testCtx());
     if (!r.ok) throw new Error(r.error);
     expect(japaneseJokerEngine.apply(r.state, follower, { type: "play", card: "7C" }, testCtx())).toEqual({ ok: false, error: "must_follow_rules" });
@@ -82,31 +107,39 @@ describe("Japanese Joker play", () => {
     expect(r.ok).toBe(true);
   });
 
-  it("a led joker demands a visible card or the highest of a suit", () => {
+  it("a led joker demands the highest card of a named suit", () => {
     const s = started(7);
     const leader = s.toAct;
     const follower = 1 - leader;
-    s.hands[leader] = ["X1", "7H"];
+    s.hands[leader] = ["X1"];
     s.table[leader] = [{ up: null, down: null }];
     s.hands[follower] = ["QD", "8D"];
     s.table[follower] = [{ up: "AH", down: "6D" }];
+    s.playedThisDeal = [true, true];
     expect(japaneseJokerEngine.apply(s, leader, { type: "play", card: "X1" }, testCtx())).toEqual({ ok: false, error: "demand_required" });
-    expect(japaneseJokerEngine.apply(s, leader, { type: "play", card: "X1", demand: { kind: "card", card: "QD" } }, testCtx())).toEqual({
-      ok: false,
-      error: "demand_card_not_visible",
-    });
-    const r = japaneseJokerEngine.apply(s, leader, { type: "play", card: "X1", demand: { kind: "card", card: "AH" } }, testCtx());
+    expect(japaneseJokerEngine.actionSchema.safeParse({ type: "play", card: "X1", demand: { kind: "card", card: "AH" } }).success).toBe(false);
+    const r = japaneseJokerEngine.apply(s, leader, { type: "play", card: "X1", demand: { kind: "highest", suit: "D" } }, testCtx());
     if (!r.ok) throw new Error(r.error);
-    expect(japaneseJokerEngine.legalActions(r.state, follower)).toEqual([{ type: "play", card: "AH" }]);
+    expect(japaneseJokerEngine.legalActions(r.state, follower)).toEqual([{ type: "play", card: "QD" }]);
+  });
 
-    const s2 = started(7);
-    s2.hands[leader] = ["X1"];
-    s2.table[leader] = [{ up: null, down: null }];
-    s2.hands[follower] = ["QD", "8D"];
-    s2.table[follower] = [{ up: "AH", down: "6D" }];
-    const r2 = japaneseJokerEngine.apply(s2, leader, { type: "play", card: "X1", demand: { kind: "highest", suit: "D" } }, testCtx());
-    if (!r2.ok) throw new Error(r2.error);
-    expect(japaneseJokerEngine.legalActions(r2.state, follower)).toEqual([{ type: "play", card: "QD" }]);
+  it("without the demanded suit the opponent must trump, and the trump beats the joker", () => {
+    const s = started(8);
+    const leader = s.toAct;
+    const follower = 1 - leader;
+    s.trump = "S";
+    s.hands[leader] = ["X1", "7H"];
+    s.table[leader] = [{ up: null, down: null }];
+    s.hands[follower] = ["7S", "8D"];
+    s.table[follower] = [{ up: null, down: null }];
+    s.playedThisDeal = [true, true];
+    let r = japaneseJokerEngine.apply(s, leader, { type: "play", card: "X1", demand: { kind: "highest", suit: "C" } }, testCtx());
+    if (!r.ok) throw new Error(r.error);
+    expect(japaneseJokerEngine.legalActions(r.state, follower)).toEqual([{ type: "play", card: "7S" }]);
+    r = japaneseJokerEngine.apply(r.state, follower, { type: "play", card: "7S" }, testCtx());
+    if (!r.ok) throw new Error(r.error);
+    expect(r.state.lastTrick!.winner).toBe(follower);
+    expect(r.state.won[follower]).toBe(1);
   });
 
   it("decides tricks: jokers beat everything, second joker beats the first", () => {
@@ -117,23 +150,32 @@ describe("Japanese Joker play", () => {
     expect(japaneseTrickWinner([p(0, "AS"), p(1, "X2")], "S")).toBe(1);
     expect(japaneseTrickWinner([{ ...p(0, "X1"), demand: { kind: "highest", suit: "H" } }, p(1, "AH")], "S")).toBe(0);
     expect(japaneseTrickWinner([{ ...p(0, "X1"), demand: { kind: "highest", suit: "H" } }, p(1, "X2")], "S")).toBe(1);
+    // A trump beats a joker that demanded a non-trump suit; not when trumps were demanded or in "bez".
+    expect(japaneseTrickWinner([{ ...p(0, "X1"), demand: { kind: "highest", suit: "H" } }, p(1, "7S")], "S")).toBe(1);
+    expect(japaneseTrickWinner([{ ...p(0, "X1"), demand: { kind: "highest", suit: "S" } }, p(1, "7D")], "S")).toBe(0);
+    expect(japaneseTrickWinner([{ ...p(0, "X1"), demand: { kind: "highest", suit: "H" } }, p(1, "7S")], null)).toBe(0);
   });
 });
 
 describe("Japanese Joker matches", () => {
-  it("plays to the target with ½-point-per-card scoring", () => {
+  it("uses the handbook defaults: target 11, covered cards flip face up", () => {
+    expect(cfg()).toEqual({ targetPoints: 11, revealMode: "flip", lastPileToHand: false });
+    expect(japaneseJokerConfigSchema.safeParse({ targetPoints: 8 }).success).toBe(false);
+  });
+
+  it("plays to the target; the deal winner scores the trick difference", () => {
     for (const seed of [1, 2, 3]) {
-      const { state, finished } = simulate(japaneseJokerEngine, cfg({ targetPoints: 8, revealMode: seed === 3 ? "flip" : "toHand" }), 2, seed, {
+      const { state, finished } = simulate(japaneseJokerEngine, cfg({ targetPoints: 7, revealMode: seed === 3 ? "toHand" : "flip" }), 2, seed, {
         difficulty: ["hard", "medium"],
         onStep: (st) => {
           if (st.lastRound) {
-            expect(st.lastRound.won[0]! + st.lastRound.won[1]!).toBe(36);
-            expect(st.lastRound.points[0]! + st.lastRound.points[1]!).toBe(Math.abs(st.lastRound.won[0]! - st.lastRound.won[1]!) / 2);
+            expect(st.lastRound.won[0]! + st.lastRound.won[1]!).toBe(18);
+            expect(st.lastRound.points[0]! + st.lastRound.points[1]!).toBe(Math.abs(st.lastRound.won[0]! - st.lastRound.won[1]!));
           }
         },
       });
       expect(finished).toBe(true);
-      expect(Math.max(...state.scores)).toBeGreaterThanOrEqual(8);
+      expect(Math.max(...state.scores)).toBeGreaterThanOrEqual(7);
     }
   });
 });

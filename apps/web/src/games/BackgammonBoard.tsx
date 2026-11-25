@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Check, Dices, RotateCcw, Undo2 } from "lucide-react";
 import type { BackgammonView, Move } from "@croco/game-engine/games/backgammon";
 import { useT } from "../i18n";
-import { HudChip, SeatStat, SeatTag, TurnBar, type BoardProps } from "./common";
+import { HudChip, SeatStat, SeatTag, TurnBar, useSeatName, type BoardProps } from "./common";
 
-const absIndex = (player: number, rel: number) => (player === 0 ? rel - 1 : 24 - rel);
+/** Long nardi coordinates: each player counts 24 (head) → 1; heads are diagonally opposite. */
+const absIndex = (player: number, rel: number) => (player === 0 ? rel - 1 : (rel + 11) % 24);
+const HEAD = 24;
 
 /* Board geometry (SVG user units) */
 const W = 700;
@@ -21,7 +23,7 @@ const TRAY_X = RIGHT_END + MIDF;
 const FIELD_H = H - FR * 2;
 const HALF = FIELD_H / 2;
 const PL = 172; // point length
-const R = PW / 2 - 2.6; // checker radius
+const R = PW / 2 - 2.6; // stone radius
 
 const DIE_PIPS: Record<number, Array<[number, number]>> = {
   1: [[19, 19]],
@@ -47,7 +49,7 @@ function Die({ value, x, y }: { value: number; x: number; y: number }) {
   );
 }
 
-function Checker({ cx, cy, mine, ring }: { cx: number; cy: number; mine: boolean; ring?: "source" | "selected" }) {
+function Stone({ cx, cy, mine, ring }: { cx: number; cy: number; mine: boolean; ring?: "source" | "selected" }) {
   return (
     <g className="bg-land">
       <circle cx={cx + 1.2} cy={cy + 2.4} r={R} fill="rgba(0,0,0,0.4)" />
@@ -67,7 +69,9 @@ function Checker({ cx, cy, mine, ring }: { cx: number; cy: number; mine: boolean
 
 export default function BackgammonBoard({ view, mySeat, seats, deadline, onAction }: BoardProps<BackgammonView>) {
   const t = useT();
+  const name = useSeatName(seats);
   const me = mySeat ?? 0;
+  const opp = 1 - me;
   const myTurn = view.toAct !== null && view.toAct === mySeat;
   const sequences = useMemo(() => view.you?.sequences ?? [], [view.you?.sequences]);
   const [partial, setPartial] = useState<Move[]>([]);
@@ -78,34 +82,38 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
     setFrom(null);
   }, [turnKey]);
 
-  const prefixMatches = sequences.filter((seq) => partial.every((m, i) => seq[i]?.from === m.from && seq[i]?.to === m.to));
-  const nextMoves = prefixMatches.map((seq) => seq[partial.length]).filter((m): m is Move => Boolean(m));
-  const required = sequences[0]?.length ?? 0;
-  const complete = partial.length === required && prefixMatches.some((s) => s.length === partial.length);
-  const sources = new Set(nextMoves.map((m) => m.from));
-  const targets = new Set(nextMoves.filter((m) => m.from === from).map((m) => m.to));
-
   const preview = useMemo(() => {
     const points = [...view.points];
-    const bar = [...view.bar];
     const off = [...view.off];
     const sign = me === 0 ? 1 : -1;
-    const add = (arr: number[], i: number, d: number) => (arr[i] = (arr[i] ?? 0) + d);
     for (const m of partial) {
-      if (m.from === 25) add(bar, me, -1);
-      else add(points, absIndex(me, m.from), -sign);
-      if (m.to === 0) add(off, me, 1);
-      else {
-        const idx = absIndex(me, m.to);
-        if ((points[idx] ?? 0) * sign === -1) {
-          points[idx] = 0;
-          add(bar, 1 - me, 1);
-        }
-        add(points, idx, sign);
-      }
+      points[absIndex(me, m.from)]! -= sign;
+      if (m.to === 0) off[me]! += 1;
+      else points[absIndex(me, m.to)]! += sign;
     }
-    return { points, bar, off };
-  }, [view.points, view.bar, view.off, partial, me]);
+    return { points, off };
+  }, [view.points, view.off, partial, me]);
+
+  const ownSign = me === 0 ? 1 : -1;
+  const stonesAt = (rel: number) => preview.points[absIndex(me, rel)]!;
+
+  // Order-independent matching: the moves made so far must all appear in a legal sequence.
+  const remaining = sequences
+    .map((seq) => {
+      const rest = [...seq];
+      for (const m of partial) {
+        const i = rest.findIndex((x) => x.from === m.from && x.to === m.to);
+        if (i < 0) return null;
+        rest.splice(i, 1);
+      }
+      return rest;
+    })
+    .filter((r): r is Move[] => r !== null);
+  const nextMoves = remaining.flat().filter((m) => stonesAt(m.from) * ownSign > 0 && (m.to === 0 || stonesAt(m.to) * ownSign >= 0));
+  const required = sequences[0]?.length ?? 0;
+  const complete = partial.length === required && remaining.some((r) => r.length === 0);
+  const sources = new Set(nextMoves.map((m) => m.from));
+  const targets = new Set(nextMoves.filter((m) => m.from === from).map((m) => m.to));
 
   function clickPoint(rel: number) {
     if (!myTurn || view.phase !== "move") return;
@@ -131,11 +139,11 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
     return top ? FR + R + 1.5 + k * step : H - FR - R - 1.5 - k * step;
   };
 
-  const checkers = (rel: number) => preview.points[absIndex(me, rel)]!;
-  const ownSign = me === 0 ? 1 : -1;
-  const cubeY = view.cube.owner === null ? H / 2 - 15 : view.cube.owner === me ? H - FR - 40 : FR + 10;
   const shownDice = view.dice.length === 4 ? [view.dice[0]!, view.dice[0]!] : view.dice;
   const diceCx = BAR_X + BAR + 3 * PW;
+  // The opponent's head sits on my point 12.
+  const oppHeadRel = 12;
+  const showOpening = view.openingRoll && !view.lastMove && view.phase !== "over";
 
   return (
     <div className="board">
@@ -148,26 +156,34 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
           <>
             <HudChip>{t("backgammon.matchTo", { n: view.matchLength })}</HudChip>
             <HudChip tone="gold">
-              {view.scores[me]} – {view.scores[1 - me]}
+              {view.scores[me]} – {view.scores[opp]}
             </HudChip>
-            <HudChip>
-              {t("backgammon.cube")}: {view.cube.value}
-            </HudChip>
-            {view.crawfordGame && <HudChip tone="brand">{t("backgammon.crawford")}</HudChip>}
           </>
         }
       />
 
+      {showOpening && (
+        <div className="notice fade-in">
+          {t("backgammon.starts", { name: name(view.toAct ?? 0), a: view.openingRoll![me]!, b: view.openingRoll![opp]! })}
+        </div>
+      )}
+      {view.lastGame && view.lastGame.game === view.game - 1 && !view.lastMove && (
+        <div className="notice fade-in">
+          {view.lastGame.kind === "mars" ? `${t("backgammon.mars")} ` : ""}
+          {t("backgammon.gameWon", { name: name(view.lastGame.winner), n: view.lastGame.points })}
+        </div>
+      )}
+
       <div className="bg-layout">
         <div className="bg-opp">
-          <SeatTag seat={1 - me} seats={seats} active={view.toAct === 1 - me} compact>
+          <SeatTag seat={opp} seats={seats} active={view.toAct === opp} compact>
             <span className="inline-block size-3 rounded-full bg-[#1b1512] border border-white/40" aria-hidden="true" />
-            <SeatStat label={t("backgammon.pips")} value={view.pips[1 - me]} />
-            <SeatStat label={t("backgammon.off")} value={`${view.off[1 - me]}/15`} tone="gold" />
+            <SeatStat label={t("backgammon.pips")} value={view.pips[opp]} />
+            <SeatStat label={t("backgammon.off")} value={`${view.off[opp]}/15`} tone="gold" />
           </SeatTag>
         </div>
 
-        <svg viewBox={`0 0 ${W} ${H}`} className="bg-board" role="img" aria-label="backgammon board">
+        <svg viewBox={`0 0 ${W} ${H}`} className="bg-board" role="img" aria-label={t("games.backgammon.name")}>
           <defs>
             <linearGradient id="walnut" x1="0" y1="0" x2="1" y2="0.15">
               <stop offset="0%" stopColor="#3d2314" />
@@ -230,7 +246,7 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
             </g>
           ))}
 
-          {/* Bar with brass hinges */}
+          {/* Centre bar with brass hinges */}
           <rect x={BAR_X + BAR / 2 - 1} y={FR} width={2} height={FIELD_H} fill="rgba(0,0,0,0.45)" />
           {[FR + 44, H - FR - 74].map((y) => (
             <g key={y}>
@@ -242,14 +258,14 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
           {/* Bear-off tray */}
           <rect x={TRAY_X} y={FR} width={TRAY} height={FIELD_H} rx={4} fill="#24150c" stroke="rgba(0,0,0,0.6)" strokeWidth={2} />
           <line x1={TRAY_X} y1={H / 2} x2={TRAY_X + TRAY} y2={H / 2} stroke="#4a2a18" strokeWidth={4} />
-          {Array.from({ length: Math.min(preview.off[1 - me] ?? 0, 15) }, (_, k) => (
+          {Array.from({ length: Math.min(preview.off[opp] ?? 0, 15) }, (_, k) => (
             <rect key={`o${k}`} x={TRAY_X + 5} y={FR + 6 + k * 11} width={TRAY - 10} height={8.5} rx={3} fill="url(#chk-ebony)" stroke="#000" strokeWidth={0.6} />
           ))}
           {Array.from({ length: Math.min(preview.off[me] ?? 0, 15) }, (_, k) => (
             <rect key={`m${k}`} x={TRAY_X + 5} y={H - FR - 14.5 - k * 11} width={TRAY - 10} height={8.5} rx={3} fill="url(#chk-ivory)" stroke="#a8987a" strokeWidth={0.6} />
           ))}
 
-          {/* 24 points with their checkers */}
+          {/* 24 points with their stones */}
           {Array.from({ length: 24 }, (_, i) => i + 1).map((rel) => {
             const { x, top } = pointX(rel);
             const y0 = top ? FR : H - FR;
@@ -257,12 +273,12 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
             const isSource = myTurn && sources.has(rel);
             const isTarget = from !== null && targets.has(rel);
             const isSelected = from === rel;
-            const n = checkers(rel);
+            const n = stonesAt(rel);
             const count = Math.abs(n);
             const mine = n * ownSign > 0;
             const cx = x + PW / 2;
             const shown = Math.min(count, 5);
-            const landY = stackY(top, Math.min(mine || count === 0 ? count : 0, 4), Math.max(count + 1, 1));
+            const landY = stackY(top, Math.min(count, 4), count + 1);
             return (
               <g
                 key={rel}
@@ -273,7 +289,6 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
                 role={isSource || isTarget ? "button" : undefined}
                 aria-label={`${t("backgammon.point")} ${rel}`}
               >
-                {/* hit area for touch */}
                 <rect x={x} y={top ? FR : H / 2} width={PW} height={HALF} fill="transparent" />
                 <polygon points={`${x + 1.5},${y0} ${x + PW - 1.5},${y0} ${cx},${y1}`} fill={rel % 2 ? "url(#pt-ivory)" : "url(#pt-wine)"} />
                 <polygon points={`${x + 5},${y0} ${x + PW - 5},${y0} ${cx},${top ? y1 - 14 : y1 + 14}`} fill="none" stroke="rgba(0,0,0,0.14)" strokeWidth={1} />
@@ -281,15 +296,9 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
                 {isSelected && <polygon points={`${x + 1.5},${y0} ${x + PW - 1.5},${y0} ${cx},${y1}`} fill="rgba(242,201,76,0.16)" stroke="#f2c94c" strokeWidth={2} />}
 
                 {Array.from({ length: shown }, (_, k) => {
-                  const topChecker = k === shown - 1;
+                  const topStone = k === shown - 1;
                   return (
-                    <Checker
-                      key={k}
-                      cx={cx}
-                      cy={stackY(top, k, count)}
-                      mine={mine}
-                      ring={topChecker ? (isSelected ? "selected" : isSource ? "source" : undefined) : undefined}
-                    />
+                    <Stone key={k} cx={cx} cy={stackY(top, k, count)} mine={mine} ring={topStone ? (isSelected ? "selected" : isSource ? "source" : undefined) : undefined} />
                   );
                 })}
                 {count > 5 && (
@@ -298,7 +307,6 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
                   </text>
                 )}
 
-                {/* Landing spot with the distance moved */}
                 {isTarget && (
                   <g>
                     <circle cx={cx} cy={landY} r={R - 1} fill="rgba(39,182,84,0.25)" stroke="#27b654" strokeWidth={2} strokeDasharray="4 3" />
@@ -308,37 +316,18 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
                   </g>
                 )}
 
-                <text x={cx} y={top ? FR - 4.5 : H - 4.5} textAnchor="middle" fontSize={9.5} fontWeight={700} fill="rgba(255,235,200,0.6)">
-                  {rel}
+                <text x={cx} y={top ? FR - 4.5 : H - 4.5} textAnchor="middle" fontSize={9.5} fontWeight={700} fill={rel === HEAD || rel === oppHeadRel ? "#e2c27a" : "rgba(255,235,200,0.6)"}>
+                  {rel === HEAD || rel === oppHeadRel ? `${t("backgammon.head")} · ${rel}` : rel}
                 </text>
               </g>
             );
           })}
 
-          {/* Checkers on the bar */}
-          {[me, 1 - me].map((p) =>
-            preview.bar[p]! > 0 ? (
-              <g
-                key={p}
-                onClick={() => p === me && clickPoint(25)}
-                data-point={p === me ? 25 : undefined}
-                data-source={(p === me && myTurn && sources.has(25)) || undefined}
-                role={p === me && sources.has(25) ? "button" : undefined}
-                aria-label={t("backgammon.bar")}
-              >
-                <Checker cx={BAR_X + BAR / 2} cy={p === me ? H / 2 + 54 : H / 2 - 54} mine={p === me} ring={p === me && from === 25 ? "selected" : p === me && myTurn && sources.has(25) ? "source" : undefined} />
-                <text x={BAR_X + BAR / 2} y={p === me ? H / 2 + 59 : H / 2 - 49} textAnchor="middle" fontSize={13} fontWeight={900} fill={p === me ? "#2a211c" : "#f1e8d6"}>
-                  {preview.bar[p]}
-                </text>
-              </g>
-            ) : null,
-          )}
-
           {/* Bear-off target */}
           {from !== null && targets.has(0) && (
             <g onClick={() => clickPoint(0)} data-point={0} data-target role="button" aria-label={t("backgammon.off")}>
               <rect x={TRAY_X + 1} y={H / 2 + 3} width={TRAY - 2} height={HALF - 4} rx={4} fill="rgba(39,182,84,0.35)" stroke="#27b654" strokeWidth={2.4} />
-              <text x={TRAY_X + TRAY / 2} y={H / 2 + HALF / 2} textAnchor="middle" fontSize={10.5} fontWeight={900} fill="#ffffff">
+              <text x={TRAY_X + TRAY / 2} y={H / 2 + HALF / 2} textAnchor="middle" fontSize={12} fontWeight={900} fill="#ffffff">
                 ↓
               </text>
             </g>
@@ -358,15 +347,6 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
               </g>
             )}
           </g>
-
-          {/* Doubling cube on the bar */}
-          <g transform={`translate(${BAR_X + (BAR - 30) / 2} ${cubeY})`}>
-            <rect x={1} y={2} width={30} height={30} rx={5} fill="rgba(0,0,0,0.45)" />
-            <rect width={30} height={30} rx={5} fill="url(#bg-ivory)" stroke="#a8987a" strokeWidth={1} />
-            <text x={15} y={20.5} textAnchor="middle" fontSize={14} fontWeight={900} fill="#1a1715">
-              {view.cube.value === 1 ? 64 : view.cube.value}
-            </text>
-          </g>
         </svg>
 
         <div className="bg-me">
@@ -381,27 +361,9 @@ export default function BackgammonBoard({ view, mySeat, seats, deadline, onActio
       {myTurn && (
         <div className="action-bar fade-in">
           {view.phase === "preroll" && (
-            <>
-              <button className="btn-primary btn-lg px-8" onClick={() => onAction({ type: "roll" })}>
-                <Dices size={17} /> {t("backgammon.roll")}
-              </button>
-              {view.canDouble && (
-                <button className="btn-gold btn-lg px-6" onClick={() => onAction({ type: "double" })}>
-                  {t("backgammon.double")}
-                </button>
-              )}
-            </>
-          )}
-          {view.phase === "doubled" && (
-            <>
-              <span className="action-title w-full text-center">{t("backgammon.offered")}</span>
-              <button className="btn-primary btn-lg px-7" onClick={() => onAction({ type: "take" })}>
-                {t("backgammon.take")}
-              </button>
-              <button className="btn-danger btn-lg px-7" onClick={() => onAction({ type: "drop" })}>
-                {t("backgammon.drop")}
-              </button>
-            </>
+            <button className="btn-primary btn-lg px-8" onClick={() => onAction({ type: "roll" })}>
+              <Dices size={17} /> {t("backgammon.roll")}
+            </button>
           )}
           {view.phase === "move" && (
             <>

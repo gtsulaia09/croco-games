@@ -1,15 +1,22 @@
 /**
- * Bura — three-card version (default ruleset documented in docs/games/GAME_RULES.md §Bura).
- * Lead 1–3 cards of one suit; opponents beat every card or throw the same number face down.
- * A player who has taken a trick may "open" (claim) on their lead: 31+ card points wins the
- * hand, a false claim gives every opponent a point. Three trumps ("bura") win immediately.
+ * Bura — three-card version, one against one (owner's rules handbook, 2026-11-25; parabura.ge):
+ *  - 20-card pack (10, J, Q, K, A in four suits; 6–9 removed), 120 card points;
+ *  - three cards each; one card is turned for trump and lies at the bottom of the stock;
+ *  - lead 1–3 cards of one suit; the opponent answers with the same number, beating every card
+ *    with a distinct higher card of its suit or a trump, or throwing the cards (face down);
+ *  - after winning a trick the taker chooses "var" or "continue" BEFORE the hands are refilled:
+ *    var with 31+ captured points wins the deal, with fewer the opponent wins it;
+ *  - "bura" (three trumps in hand on your turn) wins the deal at once;
+ *  - otherwise the deal is played out: 61+ card points wins, 60:60 is a draw;
+ *  - each deal won is worth one point; first to the target (6 / 11 / 21) wins the match.
  */
 import { z } from "zod";
 import { suitOf, type Card, type Suit } from "../../core/cards";
-import { deepClone, fail, nextSeat, placementsFromScores, type EngineContext, type GameEngine, type PublicEvent } from "../../core/engine";
+import { deepClone, fail, placementsFromScores, type EngineContext, type GameEngine, type PublicEvent } from "../../core/engine";
 import { pick, shuffle } from "../../core/rng";
 import { combos } from "../poker/evaluator";
 import {
+  BURA_DECK_20,
   BURA_DECK_32,
   BURA_DECK_36,
   canBeatSet,
@@ -23,18 +30,18 @@ import {
   type Trick,
 } from "../_bura/core";
 
+const PLAYERS = 2;
 const HAND = 3;
 const MAX_LEAD = 3;
+export const VAR_POINTS = 31;
+export const DEAL_POINTS = 61;
 
 export const bura3ConfigSchema = z.strictObject({
-  targetPoints: z.number().int().min(3).max(21).default(7),
-  deck: z.enum(["36", "32"]).default("36"),
-  /** Non-beating cards are played face down and stay hidden until a claim. */
+  targetPoints: z.union([z.literal(6), z.literal(11), z.literal(21)]).default(11),
+  /** "20" is the rules pack; 32/36 are house variants (6–9 / 7–9 are worth nothing). */
+  deck: z.enum(["20", "32", "36"]).default("20"),
+  /** Thrown (non-beating) cards are played face down and stay hidden. */
   closedDiscards: z.boolean().default(true),
-  /** Molodka (3 of a non-trump suit) and three aces take the lead out of turn. */
-  combinations: z.boolean().default(false),
-  /** Variation: three aces win the hand like a bura when nobody holds a bura. */
-  threeAcesWin: z.boolean().default(false),
   /** Show players the known points in their own pile (default off: players must remember). */
   memoryAid: z.boolean().default(false),
 });
@@ -46,12 +53,14 @@ export const bura3ActionSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("lead"), cards: cardsSchema }),
   z.strictObject({ type: z.literal("beat"), cards: cardsSchema }),
   z.strictObject({ type: z.literal("discard"), cards: cardsSchema }),
+  /** "Var": claim the deal with 31+ captured points (only right after winning a trick). */
   z.strictObject({ type: z.literal("claim") }),
-  z.strictObject({ type: z.literal("pass") }),
+  /** Decline var and refill the hands. */
+  z.strictObject({ type: z.literal("continue") }),
 ]);
 export type Bura3Action = z.infer<typeof bura3ActionSchema>;
 
-type HandEndReason = "claim" | "false_claim" | "bura" | "three_aces" | "draw";
+export type Bura3EndReason = "points" | "var" | "false_var" | "bura" | "draw";
 
 export interface Bura3State {
   config: Bura3Config;
@@ -61,24 +70,23 @@ export interface Bura3State {
   trumpCard: Card;
   trump: Suit;
   captured: Card[][];
+  /** Cards each player saw go into their own pile (for the memory aid and bots). */
   known: Card[][];
   tricksWon: number[];
   leader: number;
   dealer: number;
-  phase: "lead" | "respond" | "final" | "over";
+  phase: "lead" | "respond" | "var" | "over";
   trick: Trick | null;
-  forcedLead: Card[] | null;
   scores: number[];
-  drawCarry: number;
   handNumber: number;
   lastHand: {
     handNumber: number;
     winner: number | null;
-    reason: HandEndReason;
+    reason: Bura3EndReason;
     claimer: number | null;
     claimedPoints: number | null;
+    points: number[];
     revealed: Record<number, Card[]>;
-    awarded: number[];
   } | null;
 }
 
@@ -92,116 +100,80 @@ export interface Bura3View {
   toAct: number | null;
   scores: number[];
   targetPoints: number;
-  drawCarry: number;
   players: Array<{ seat: number; handCount: number; capturedCount: number; tricksWon: number }>;
   trick: { leader: number; count: number; bestSeat: number; plays: Array<{ seat: number; faceUp: Card[] | null; count: number }> } | null;
-  you: { seat: number; hand: Card[]; knownPoints: number | null; hiddenInPile: number | null; forcedLead: Card[] | null } | null;
+  you: { seat: number; hand: Card[]; knownPoints: number | null; hiddenInPile: number | null } | null;
   lastHand: Bura3State["lastHand"];
 }
 
 function deckFor(config: Bura3Config): readonly Card[] {
-  return config.deck === "32" ? BURA_DECK_32 : BURA_DECK_36;
+  return config.deck === "36" ? BURA_DECK_36 : config.deck === "32" ? BURA_DECK_32 : BURA_DECK_20;
 }
 
-function order(state: Bura3State, from: number): number[] {
-  return Array.from({ length: state.players }, (_, i) => (from + i) % state.players);
-}
+const other = (s: number) => 1 - s;
 
 function deal(state: Bura3State, ctx: EngineContext, events: PublicEvent[]): void {
   const deck = shuffle(deckFor(state.config), ctx.rng);
   state.handNumber += 1;
-  state.hands = Array.from({ length: state.players }, () => []);
-  state.captured = Array.from({ length: state.players }, () => []);
-  state.known = Array.from({ length: state.players }, () => []);
-  state.tricksWon = new Array<number>(state.players).fill(0);
-  for (let r = 0; r < HAND; r++) for (const s of order(state, state.dealer + 1)) state.hands[s]!.push(deck.pop()!);
+  state.hands = [[], []];
+  state.captured = [[], []];
+  state.known = [[], []];
+  state.tricksWon = [0, 0];
+  const first = other(state.dealer);
+  for (let r = 0; r < HAND; r++) for (const s of [first, state.dealer]) state.hands[s]!.push(deck.pop()!);
   state.trumpCard = deck.pop()!;
   state.trump = suitOf(state.trumpCard);
-  // The trump indicator lies face up under the stock and is drawn last.
+  // The trump indicator lies face up at the bottom of the stock and is drawn last.
   state.stock = [state.trumpCard, ...deck];
-  state.leader = nextSeat(state.dealer, state.players);
+  state.leader = first;
   state.trick = null;
-  state.forcedLead = null;
   state.phase = "lead";
   events.push({ type: "deal", handNumber: state.handNumber, dealer: state.dealer, trumpCard: state.trumpCard });
-  checkCombinations(state, ctx, events);
+  checkBura(state, first, ctx, events);
 }
 
-function endHand(state: Bura3State, ctx: EngineContext, events: PublicEvent[], result: {
-  winner: number | null;
-  reason: HandEndReason;
-  claimer?: number;
-  revealed?: Record<number, Card[]>;
-}): void {
-  const awarded = new Array<number>(state.players).fill(0);
-  if (result.reason === "false_claim") {
-    for (let s = 0; s < state.players; s++) if (s !== result.claimer) awarded[s] = 1;
-  } else if (result.winner !== null) {
-    awarded[result.winner] = 1 + state.drawCarry;
-    state.drawCarry = 0;
-  } else {
-    state.drawCarry += 1;
-  }
-  for (let s = 0; s < state.players; s++) state.scores[s]! += awarded[s]!;
+const hasBura = (state: Bura3State, seat: number) => state.hands[seat]!.length === HAND && state.hands[seat]!.every((c) => suitOf(c) === state.trump);
+
+/** Three trumps on your turn win the deal at once. Returns true if the deal ended. */
+function checkBura(state: Bura3State, seat: number, ctx: EngineContext, events: PublicEvent[]): boolean {
+  if (!hasBura(state, seat)) return false;
+  endDeal(state, ctx, events, { winner: seat, reason: "bura", revealed: { [seat]: [...state.hands[seat]!] } });
+  return true;
+}
+
+function endDeal(
+  state: Bura3State,
+  ctx: EngineContext,
+  events: PublicEvent[],
+  result: { winner: number | null; reason: Bura3EndReason; claimer?: number; revealed?: Record<number, Card[]> },
+): void {
+  if (result.winner !== null) state.scores[result.winner]! += 1;
+  const points = state.captured.map(sumPoints);
   state.lastHand = {
     handNumber: state.handNumber,
     winner: result.winner,
     reason: result.reason,
     claimer: result.claimer ?? null,
-    claimedPoints: result.claimer !== undefined ? sumPoints(state.captured[result.claimer]!) : null,
+    claimedPoints: result.claimer !== undefined ? points[result.claimer]! : null,
+    points: result.reason === "points" || result.reason === "draw" || result.claimer !== undefined ? points : [],
     revealed: result.revealed ?? {},
-    awarded,
   };
   events.push({ type: "hand_end", ...state.lastHand });
+  state.trick = null;
   if (state.scores.some((p) => p >= state.config.targetPoints)) {
     state.phase = "over";
-    state.trick = null;
     return;
   }
-  // The hand winner (or claimer) deals next; after a draw the same dealer deals again.
-  if (result.winner !== null) state.dealer = result.winner;
-  else if (result.claimer !== undefined) state.dealer = result.claimer;
+  // The deal winner deals next; after a draw the deal passes on.
+  state.dealer = result.winner ?? other(state.dealer);
   deal(state, ctx, events);
 }
 
-function checkCombinations(state: Bura3State, ctx: EngineContext, events: PublicEvent[]): void {
-  if (state.phase !== "lead") return;
-  const seats = order(state, state.leader);
-  const trumps = (s: number) => state.hands[s]!.length === HAND && state.hands[s]!.every((c) => suitOf(c) === state.trump);
-  const aces = (s: number) => state.hands[s]!.length === HAND && state.hands[s]!.every((c) => c[0] === "A");
-  const bura = seats.find(trumps);
-  if (bura !== undefined) {
-    endHand(state, ctx, events, { winner: bura, reason: "bura", revealed: { [bura]: [...state.hands[bura]!] } });
-    return;
-  }
-  if (state.config.threeAcesWin) {
-    const ace = seats.find(aces);
-    if (ace !== undefined) {
-      endHand(state, ctx, events, { winner: ace, reason: "three_aces", revealed: { [ace]: [...state.hands[ace]!] } });
-      return;
-    }
-  }
-  if (!state.config.combinations) return;
-  const molodka = (s: number) =>
-    state.hands[s]!.length === HAND &&
-    state.hands[s]!.every((c) => suitOf(c) === suitOf(state.hands[s]![0]!)) &&
-    suitOf(state.hands[s]![0]!) !== state.trump;
-  const holder = seats.find(aces) ?? seats.find(molodka);
-  if (holder !== undefined) {
-    state.leader = holder;
-    state.forcedLead = [...state.hands[holder]!];
-    events.push({ type: "combination", seat: holder, kind: aces(holder) ? "three_aces" : "molodka" });
-  }
-}
-
-function drawAfterTrick(state: Bura3State, winner: number): void {
-  const needed = state.hands.reduce((s, h) => s + (HAND - h.length), 0);
-  if (needed === 0 || state.stock.length < needed) return; // short stock is not used
-  for (let round = 0; round < HAND; round++) {
-    for (const s of order(state, winner)) {
-      if (state.hands[s]!.length < HAND && state.stock.length > 0) state.hands[s]!.push(state.stock.pop()!);
-    }
-  }
+/** Refill both hands to three, winner first, sharing a short stock equally (trump card last). */
+function refill(state: Bura3State, winner: number): void {
+  const need = HAND - state.hands[winner]!.length;
+  const each = Math.min(need, Math.floor(state.stock.length / PLAYERS));
+  for (let k = 0; k < each; k++) for (const s of [winner, other(winner)]) state.hands[s]!.push(state.stock.pop()!);
 }
 
 function resolveTrick(state: Bura3State, ctx: EngineContext, events: PublicEvent[]): void {
@@ -216,43 +188,46 @@ function resolveTrick(state: Bura3State, ctx: EngineContext, events: PublicEvent
   events.push({ type: "trick_won", seat: winner, cards: cards.length });
   state.trick = null;
   state.leader = winner;
-  state.forcedLead = null;
-  drawAfterTrick(state, winner);
-  if (state.hands.every((h) => h.length === 0)) {
-    state.phase = "final";
+  if (state.hands.every((h) => h.length === 0) && state.stock.length === 0) {
+    finishByPoints(state, ctx, events);
+    return;
+  }
+  // The taker may declare "var" before the hands are refilled.
+  state.phase = "var";
+}
+
+function finishByPoints(state: Bura3State, ctx: EngineContext, events: PublicEvent[]): void {
+  const points = state.captured.map(sumPoints);
+  const winner = points[0]! >= DEAL_POINTS ? 0 : points[1]! >= DEAL_POINTS ? 1 : null;
+  endDeal(state, ctx, events, { winner, reason: winner === null ? "draw" : "points" });
+}
+
+function continueDeal(state: Bura3State, ctx: EngineContext, events: PublicEvent[]): void {
+  refill(state, state.leader);
+  if (state.hands[state.leader]!.length === 0) {
+    finishByPoints(state, ctx, events);
     return;
   }
   state.phase = "lead";
-  checkCombinations(state, ctx, events);
+  checkBura(state, state.leader, ctx, events);
 }
 
 function legal(state: Bura3State, seat: number): Bura3Action[] {
   const hand = state.hands[seat]!;
+  if (state.phase === "var" && seat === state.leader) return [{ type: "claim" }, { type: "continue" }];
   if (state.phase === "lead" && seat === state.leader) {
-    const out: Bura3Action[] = state.forcedLead
-      ? [{ type: "lead", cards: [...state.forcedLead] }]
-      : leadOptions(hand, MAX_LEAD).map((cards) => ({ type: "lead" as const, cards }));
-    if (state.tricksWon[seat]! > 0) out.push({ type: "claim" });
-    return out;
-  }
-  if (state.phase === "final" && seat === state.leader) {
-    return state.tricksWon[seat]! > 0 ? [{ type: "claim" }, { type: "pass" }] : [{ type: "pass" }];
+    const max = Math.min(MAX_LEAD, state.hands[other(seat)]!.length);
+    return leadOptions(hand, max).map((cards) => ({ type: "lead" as const, cards }));
   }
   if (state.phase === "respond" && state.trick?.pending[0] === seat) {
-    const k = state.trick.count;
-    const options = combos(hand, k);
     const out: Bura3Action[] = [];
-    for (const o of options) {
+    for (const o of combos(hand, state.trick.count)) {
       if (canBeatSet(o, state.trick.best, state.trump)) out.push({ type: "beat", cards: o });
       out.push({ type: "discard", cards: o });
     }
     return out;
   }
   return [];
-}
-
-function sameMultiset(a: readonly Card[], b: readonly Card[]): boolean {
-  return a.length === b.length && [...a].sort().join() === [...b].sort().join();
 }
 
 function holds(hand: readonly Card[], cards: readonly Card[]): boolean {
@@ -264,10 +239,10 @@ export const bura3Engine: GameEngine<Bura3State, Bura3Action, Bura3Config, Bura3
   type: "bura3",
   configSchema: bura3ConfigSchema as unknown as z.ZodType<Bura3Config>,
   actionSchema: bura3ActionSchema,
-  seatLimits: () => ({ min: 2, max: 4 }),
+  seatLimits: () => ({ min: PLAYERS, max: PLAYERS }),
 
   create(config, players, ctx) {
-    if (players < 2 || players > 4) throw new Error("Bura needs 2–4 players");
+    if (players !== PLAYERS) throw new Error("Three-card Bura is played one against one");
     const state: Bura3State = {
       config,
       players,
@@ -279,12 +254,10 @@ export const bura3Engine: GameEngine<Bura3State, Bura3Action, Bura3Config, Bura3
       known: [],
       tricksWon: [],
       leader: 0,
-      dealer: ctx.rng.int(players),
+      dealer: ctx.rng.int(PLAYERS),
       phase: "lead",
       trick: null,
-      forcedLead: null,
-      scores: new Array<number>(players).fill(0),
-      drawCarry: 0,
+      scores: [0, 0],
       handNumber: 0,
       lastHand: null,
     };
@@ -306,40 +279,36 @@ export const bura3Engine: GameEngine<Bura3State, Bura3Action, Bura3Config, Bura3
     const events: PublicEvent[] = [];
     const hand = next.hands[seat]!;
 
-    if (action.type === "claim" || action.type === "pass") {
-      if (seat !== next.leader || (next.phase !== "lead" && next.phase !== "final")) return fail("not_your_turn");
-      if (action.type === "pass") {
-        if (next.phase !== "final") return fail("cannot_pass");
-        endHand(next, ctx, events, { winner: null, reason: "draw" });
+    if (action.type === "claim" || action.type === "continue") {
+      if (next.phase !== "var" || seat !== next.leader) return fail("var_not_available");
+      if (action.type === "continue") {
+        continueDeal(next, ctx, events);
         return { ok: true, state: next, events };
       }
-      if (next.tricksWon[seat] === 0) return fail("no_tricks_taken");
       const points = sumPoints(next.captured[seat]!);
       const revealed = { [seat]: [...next.captured[seat]!] };
-      events.push({ type: "claim", seat, points });
-      if (points >= 31) endHand(next, ctx, events, { winner: seat, reason: "claim", claimer: seat, revealed });
-      else endHand(next, ctx, events, { winner: null, reason: "false_claim", claimer: seat, revealed });
+      events.push({ type: "var", seat, points });
+      if (points >= VAR_POINTS) endDeal(next, ctx, events, { winner: seat, reason: "var", claimer: seat, revealed });
+      else endDeal(next, ctx, events, { winner: other(seat), reason: "false_var", claimer: seat, revealed });
       return { ok: true, state: next, events };
     }
 
     if (action.type === "lead") {
       if (next.phase !== "lead" || seat !== next.leader) return fail("not_your_turn");
       if (!holds(hand, action.cards)) return fail("card_not_in_hand");
-      if (!isValidLead(action.cards, MAX_LEAD)) return fail("lead_must_be_one_suit");
-      if (next.forcedLead && !sameMultiset(next.forcedLead, action.cards)) return fail("must_lead_combination");
+      if (!isValidLead(action.cards, Math.min(MAX_LEAD, next.hands[other(seat)]!.length))) return fail("lead_must_be_one_suit");
       next.hands[seat] = hand.filter((c) => !action.cards.includes(c));
-      const pending = order(next, seat).slice(1);
       next.trick = {
         leader: seat,
         count: action.cards.length,
         plays: [{ seat, faceUp: [...action.cards], cards: [...action.cards] }],
         bestSeat: seat,
         best: [...action.cards],
-        pending,
+        pending: [other(seat)],
       };
-      next.forcedLead = null;
       next.phase = "respond";
       events.push({ type: "lead", seat, cards: [...action.cards] });
+      checkBura(next, other(seat), ctx, events);
       return { ok: true, state: next, events };
     }
 
@@ -371,7 +340,6 @@ export const bura3Engine: GameEngine<Bura3State, Bura3Action, Bura3Config, Bura3
             hand: [...state.hands[seat]!],
             knownPoints: state.config.memoryAid ? sumPoints(state.known[seat]!) : null,
             hiddenInPile: state.config.memoryAid ? state.captured[seat]!.length - state.known[seat]!.length : null,
-            forcedLead: state.leader === seat && state.forcedLead ? [...state.forcedLead] : null,
           };
     return {
       phase: state.phase,
@@ -383,13 +351,7 @@ export const bura3Engine: GameEngine<Bura3State, Bura3Action, Bura3Config, Bura3
       toAct: bura3Engine.actors(state)[0] ?? null,
       scores: [...state.scores],
       targetPoints: state.config.targetPoints,
-      drawCarry: state.drawCarry,
-      players: state.hands.map((h, i) => ({
-        seat: i,
-        handCount: h.length,
-        capturedCount: state.captured[i]!.length,
-        tricksWon: state.tricksWon[i]!,
-      })),
+      players: state.hands.map((h, i) => ({ seat: i, handCount: h.length, capturedCount: state.captured[i]!.length, tricksWon: state.tricksWon[i]! })),
       trick: state.trick
         ? {
             leader: state.trick.leader,
@@ -422,11 +384,11 @@ export const bura3Engine: GameEngine<Bura3State, Bura3Action, Bura3Config, Bura3
   outcome: (state) => ({ placements: placementsFromScores(state.scores), scores: [...state.scores] }),
 
   timeoutAction(state, seat, ctx) {
-    const options = legal(state, seat);
-    if (state.phase === "final") return { type: "pass" };
+    if (state.phase === "var") return { type: "continue" };
     if (state.phase === "respond" && state.trick) {
       return { type: "discard", cards: cheapestDiscard(state.hands[seat]!, state.trick.count, state.trump) };
     }
+    const options = legal(state, seat);
     const singles = options.filter((o) => o.type === "lead" && o.cards.length === 1);
     return singles.length ? (singles[0] as Bura3Action) : pick(options, ctx.rng);
   },
@@ -435,15 +397,12 @@ export const bura3Engine: GameEngine<Bura3State, Bura3Action, Bura3Config, Bura3
     const you = view.you!;
     const trump = view.trump;
     if (options.length === 1) return options[0]!;
-    const known = you.knownPoints ?? 0;
-    const canClaim = options.some((o) => o.type === "claim");
-    if (canClaim) {
-      // Easy bots occasionally misjudge; others only claim when the known points suffice.
-      // Hidden face-down cards may be worth nothing, so only known points are trusted.
+    if (view.phase === "var") {
+      // Only points the bot actually saw count; hidden thrown cards may be worth nothing.
+      const known = you.knownPoints ?? 0;
       const estimate = difficulty === "easy" ? known + rng.int(9) - 4 : known;
-      if (estimate >= 31) return { type: "claim" };
+      return estimate >= VAR_POINTS ? { type: "claim" } : { type: "continue" };
     }
-    if (view.phase === "final") return { type: "pass" };
     if (view.phase === "respond" && view.trick) {
       const best = view.trick.plays.find((p) => p.seat === view.trick!.bestSeat)?.faceUp ?? [];
       const atStake = view.trick.plays.reduce((s, p) => s + (p.faceUp ? sumPoints(p.faceUp) : 0), 0);

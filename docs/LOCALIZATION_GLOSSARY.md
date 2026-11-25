@@ -26,15 +26,19 @@ This glossary defines the canonical Georgian (`ka-GE`) and English (`en`) termin
 
 ## 2. Joker & Japanese Joker
 
+Terms follow the owner's rules handbook (*„თამაშების წესები და ტერმინების ლექსიკონი"*, 2026-11-25).
+
 | Concept | English (`en`) | Georgian (`ka-GE`) | Grammar & Usage Notes |
 |---|---|---|---|
-| Bid | Bid | ნათქვამი | Declared number of tricks |
-| Tricks won | Won / Tricks | წაღებული | Tricks captured in current hand |
-| Set (4/8 hands) | Set | პულკა | Traditional Georgian Joker set |
-| Undertrick penalty | Khishti penalty | ხიშტის ჯარიმა | Classic Georgian Joker penalty |
-| Score sheet | Scoreboard | ცხრილი | Natural Georgian player term |
+| Trick | Trick | ვაზი | One round of play (handbook: *ვაზი / ხრიკი*) |
+| Bid | Bid | ნათქვამი (თქმა) | Declared number of tricks |
+| Tricks taken | Taken / Tricks | აღებული / ვაზი | Tricks captured in the current deal |
+| No trump | No trump (bez) | ბეზი | Handbook term (replaces *უკოზირო*) |
+| Set (8/4 deals) | Set | სეტი | Handbook term (replaces *პულკა*) |
+| Undertrick penalty | Khishti | ხიშტი | House variant, off by default |
+| Score sheet | Score sheet | ქულების ცხრილი | |
 | Joker genitive / instrumental | Joker's / with Joker | ჯოკრის / ჯოკრით | Syncopated stem (*ჯოკრის*, not *ჯოკერის*) |
-| Joker demand | Joker demand | ჯოკრის მოთხოვნა | Japanese Joker mechanic |
+| Joker demand | Joker demands | ჯოკერი ითხოვს | Japanese Joker: the led joker names a suit |
 
 ---
 
@@ -42,37 +46,49 @@ This glossary defines the canonical Georgian (`ka-GE`) and English (`en`) termin
 
 | Concept | English (`en`) | Georgian (`ka-GE`) | Notes |
 |---|---|---|---|
-| Lead | Lead | ჩამოსვლა | Leading same-suit card(s) |
-| Beat | Beat | გაჭრა | Beating the led combo |
-| Throw face down | Throw face down | გატანება (დახურულად) | Standard Georgian Bura term (*გატანება*) |
-| Declare 31+ | Open (31+) | გახსნა (31+) | Ending hand with 31+ points |
+| Lead | Lead | დაწყება | Handbook: *დაწყება / წამყვანი* |
+| Beat | Beat | გაჭრა | Beating the led cards |
+| Throw face down | Throw face down | გატანება (დახურულად) | Established Georgian Bura term |
+| Early claim (3-card) | Var | ვარი | 31+ points right after winning a trick |
+| Continue | Continue | გაგრძელება | Declining var |
+| Five trumps / three trumps | Bura | ბურა | Wins the deal at once |
+| One-suit hand | Malutka | მალუტკა | Replaces the old *მოლოდკა* |
+| Raises ×2…×6 | Davi / Se / Chari / Panji / Shashi | დავი / სე / ჩარი / პანჯი / შაში | 5-card team Bura; ×1 is *ჩვეულებრივი* |
+| Accept / concede a raise | Accept / Concede | თანხმობა / დათმობა | |
+| Partner / team | Partner / Our team / Opponents | პარტნიორი / ჩვენი გუნდი / მეტოქეები | |
 
 ---
 
 ## 4. Poker (Texas Hold'em, 6+ Short Deck, Omaha, Omaha Hi-Lo)
 
-Established Georgian poker room & Crocobet conventions use transliterated international poker action terms rather than artificial literal translations:
+Georgian poker rooms use transliterated international action terms; the handbook keeps the English names (Fold, Check, …) in explanations.
 
 | Concept | English (`en`) | Georgian (`ka-GE`) | Notes |
 |---|---|---|---|
-| Texas Hold'em | Texas Hold'em | ტექსას ჰოლდემი | Standard Georgian orthography (*ტექსას*, not *ტეხას*) |
-| 6+ Short Deck | 6+ Hold'em (Short Deck) | 6+ ჰოლდემი (Short Deck) | 36-card variant |
-| Hole cards / Community cards | Hole cards / Community cards | ჯიბის კარტი / საერთო კარტები | Private vs board cards |
+| Texas Hold'em | Texas Hold'em | ტეხას ჰოლდემი | Handbook spelling (*ტეხას*) |
+| 6+ Short Deck | 6+ Hold'em (Short Deck) | 6+ ჰოლდემი (Short Deck) | Ante + Button Blind by default |
+| Hole cards / Community cards | Hole cards / Community cards | ჯიბის (პირადი) კარტი / საერთო კარტები | Private vs board cards |
 | Pot / Chips / Blinds | Pot / Chips / Blinds | ბანკი / ჩიპები / ბლაინდები | Core betting terms |
+| Ante / Button Blind | Ante / Button Blind | ანტე / Button Blind | 6+ forced bets |
 | Actions | Fold / Check / Call / Bet / Raise / All-in | ფოლდი / ჩეკი / ქოლი / ბეთი / რეიზი / ოლ-ინი | Standard Georgian poker table actions |
-| Streets | Preflop / Flop / Turn / River / Showdown | პრეფლოპი / ფლოპი / თერნი / რივერი / შოუდაუნი | Localized street progression |
+| Streets | Preflop / Flop / Turn / River / Showdown | პრეფლოპი / ფლოპი / თერნი / რივერი / შოუდაუნი | |
 | Hand ranks | Pair / Two Pair / Trips / Straight / Flush / Full House / Quads / Straight Flush | წყვილი / ორი წყვილი / სეტი / სტრიტი / ფლეში / ფულ-ჰაუსი / კარე / სტრიტ-ფლეში | Shown at showdown |
 
 ---
 
-## 5. Dominoes & Backgammon (Nardy)
+## 5. Dominoes & Long Nardi
 
 | Concept | English (`en`) | Georgian (`ka-GE`) | Notes |
 |---|---|---|---|
-| Tile / Boneyard | Tile / Boneyard | ქვა / ბაზარი | Traditional Georgian dominoes terms |
-| Point (Backgammon) | Point | უჯრა | Georgian Nardy term (avoids Russian calque *პუნქტი*) |
-| Bar / Bear off | Bar / Borne off | ბარი / გაყვანილი | Georgian Nardy checker movement terms |
-| Doubling cube | Doubling cube | გაორმაგების კუბი | Match doubling cube |
+| Tile / Bazaar | Tile / Bazaar | ქვა / ბაზარი | Last two bazaar tiles are never drawn |
+| First double (spinner) | Stavka | სტავკა | Opens up / down |
+| Open ends | Open ends | ღია ბოლოები | Their sum scores in fives |
+| Last tile played / blocked board | Domino / Riba | დომინო / რიბა | Round-end scoring |
+| Long nardi | Long Nardi | გრძელი ნარდი | The game formerly labelled backgammon |
+| Point | Point | უჯრა | Avoids the calque *პუნქტი* |
+| Head / Home | Head / Home | თავი / სახლი | Starting point / last six points |
+| Bear off | Borne off | გატანილი (ქვის გატანა) | Replaces *გაყვანილი* |
+| Win with opponent bearing off none | Mars | მარსი | 2 points |
 
 ---
 

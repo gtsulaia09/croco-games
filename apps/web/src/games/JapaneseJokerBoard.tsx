@@ -2,7 +2,7 @@ import { useState, type CSSProperties } from "react";
 import { Swords } from "lucide-react";
 import type { JapaneseJokerView } from "@croco/game-engine/games/japanese_joker";
 import { useT } from "../i18n";
-import { cardLabel, Modal, SuitIcon, suitSymbol } from "../components/ui";
+import { Modal, SuitIcon, suitSymbol } from "../components/ui";
 import { CardHand, CardSlot, PlayingCard } from "./cards";
 import { sortHand } from "./cardOrder";
 import { GameTable, HudChip, isRedSuit, MiniCardCount, SeatStat, SeatTag, SuitPicker, SUITS, tiltFor, TrumpBadge, TurnBar, useSeatName, type BoardProps } from "./common";
@@ -64,7 +64,6 @@ export default function JapaneseJokerBoard({ view, mySeat, seats, deadline, onAc
     else onAction({ type: "play", card });
   }
 
-  const oppUp = view.table[opp]?.map((p) => p.up).filter((c): c is string => Boolean(c) && !c!.startsWith("X")) ?? [];
   const hand = view.you ? sortHand(view.you.hand, { trump: view.trump }) : [];
   const handActive = myTurn && view.phase === "play";
 
@@ -110,7 +109,7 @@ export default function JapaneseJokerBoard({ view, mySeat, seats, deadline, onAc
                     />
                     {p.demand && (
                       <span className="trick-tag" data-tone="gold">
-                        {p.demand.kind === "card" ? t("jj.demandCard", { card: cardLabel(p.demand.card) }) : t("jj.demandHighest", { suit: suitSymbol(p.demand.suit) })}
+                        {t("jj.demandHighest", { suit: suitSymbol(p.demand.suit) })}
                       </span>
                     )}
                   </div>
@@ -151,7 +150,7 @@ export default function JapaneseJokerBoard({ view, mySeat, seats, deadline, onAc
         <div className="dock">
           {handActive && (
             <div className="flex justify-center">
-              <span className="hint-pill">{t("jj.playHint")}</span>
+              <span className="hint-pill">{view.you.firstFromHand ? t("jj.firstFromHand") : t("jj.playHint")}</span>
             </div>
           )}
           <CardHand
@@ -169,27 +168,6 @@ export default function JapaneseJokerBoard({ view, mySeat, seats, deadline, onAc
       {/* Joker demand */}
       <Modal open={joker !== null} onClose={() => setJoker(null)} title={t("jj.demand")}>
         <div className="grid gap-4">
-          {oppUp.length > 0 && (
-            <div className="grid gap-2">
-              <span className="label">{t("ui.oppTable")}</span>
-              <div className="flex flex-wrap gap-2">
-                {oppUp.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    className="btn-secondary btn-sm h-auto py-1.5 px-2.5 gap-2"
-                    onClick={() => {
-                      onAction({ type: "play", card: joker, demand: { kind: "card", card: c } });
-                      setJoker(null);
-                    }}
-                  >
-                    <PlayingCard card={c} size="xs" />
-                    <span>{t("jj.demandCard", { card: cardLabel(c) })}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
           <div className="grid gap-2">
             <span className="label">{t("jj.demand")}</span>
             <div className="flex flex-wrap gap-2">

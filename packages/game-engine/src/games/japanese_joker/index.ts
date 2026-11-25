@@ -1,14 +1,17 @@
 /**
  * Japanese Joker (იაპონური ჯოკერი) — a two-player Georgian game, distinct from Joker:
  *  - 36-card pack, black sixes are jokers;
- *  - 3 cards dealt, the non-dealer names trump (or no trump), then each player receives a row
- *    of 5 face-down cards covered by 5 face-up cards, and 5 more cards to the hand;
- *  - players may play from the hand or from their face-up table cards; following suit is
- *    compulsory, then trumping; jokers beat everything;
- *  - a led joker "demands" an opponent's face-up card or the highest card of a suit;
- *  - every card won is worth ½ point; the round winner scores the difference; first to the
- *    target (default 20) wins.
- * Source and assumptions: docs/games/GAME_RULES.md §Japanese Joker.
+ *  - 3 cards dealt, one player (alternating) names trump or "bez" (no trump) and leads; then each
+ *    player receives 5 face-down table cards covered by 5 face-up cards and 5 more cards to the hand;
+ *  - a player's first card of a deal comes from the hand; afterwards hand or open table cards;
+ *    when an open table card is played the card beneath is turned face up;
+ *  - following suit is compulsory, then trumping; a joker beats everything (a joker played on a
+ *    joker wins);
+ *  - a led joker demands the highest card of a named suit; without that (non-trump) suit the
+ *    opponent must trump, and the trump beats the joker;
+ *  - 18 tricks per deal; the player with more tricks scores the difference (11:7 gives 4, 9:9 is a
+ *    draw); first to the chosen target (1 / 3 / 7 / 11 / 21) wins.
+ * Source: owner's rules handbook (2026-11-25) and mygame.ge; see docs/games/GAME_RULES.md.
  */
 import { z } from "zod";
 import { DECK_36_JOKERS, isJoker, rankValue, suitOf, SUITS, type Card, type Suit } from "../../core/cards";
@@ -16,20 +19,18 @@ import { deepClone, fail, placementsFromScores, type EngineContext, type GameEng
 import { pick, shuffle } from "../../core/rng";
 
 export const japaneseJokerConfigSchema = z.strictObject({
-  targetPoints: z.number().int().min(5).max(50).default(20),
-  /** After a face-up table card is played the card beneath goes to the hand (source) or flips face up. */
-  revealMode: z.enum(["toHand", "flip"]).default("toHand"),
-  /** When only one complete pile is left on a player's table, both cards go to the hand. */
-  lastPileToHand: z.boolean().default(true),
+  targetPoints: z.union([z.literal(1), z.literal(3), z.literal(7), z.literal(11), z.literal(21)]).default(11),
+  /** After a face-up table card is played the card beneath is turned face up (rules) or goes to the hand (house variant). */
+  revealMode: z.enum(["flip", "toHand"]).default("flip"),
+  /** House variant: when only one complete pile is left on a player's table, both cards go to the hand. */
+  lastPileToHand: z.boolean().default(false),
 });
 export type JapaneseJokerConfig = z.infer<typeof japaneseJokerConfigSchema>;
 
 const suitSchema = z.enum(SUITS);
 const cardSchema = z.enum(DECK_36_JOKERS as [string, ...string[]]);
-const demandSchema = z.discriminatedUnion("kind", [
-  z.strictObject({ kind: z.literal("card"), card: cardSchema }),
-  z.strictObject({ kind: z.literal("highest"), suit: suitSchema }),
-]);
+/** A led joker asks for the highest card of a named suit. */
+const demandSchema = z.strictObject({ kind: z.literal("highest"), suit: suitSchema });
 export const japaneseJokerActionSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("trump"), suit: z.union([suitSchema, z.literal("none")]) }),
   z.strictObject({ type: z.literal("play"), card: cardSchema, demand: demandSchema.optional() }),
@@ -64,8 +65,11 @@ export interface JapaneseJokerState {
   toAct: number;
   trick: Play[];
   lastTrick: { plays: Play[]; winner: number } | null;
+  /** Tricks taken this deal. */
   won: number[];
   scores: number[];
+  /** Whether each player has played a card this deal (the first card must come from the hand). */
+  playedThisDeal: [boolean, boolean];
   lastRound: { round: number; won: number[]; points: number[] } | null;
 }
 
@@ -84,7 +88,7 @@ export interface JapaneseJokerView {
   targetPoints: number;
   table: Array<Array<{ up: Card | null; hasDown: boolean }>>;
   handCounts: number[];
-  you: { seat: number; hand: Card[]; playable: Card[] } | null;
+  you: { seat: number; hand: Card[]; playable: Card[]; firstFromHand: boolean } | null;
   lastRound: JapaneseJokerState["lastRound"];
 }
 
@@ -114,37 +118,44 @@ function deal(state: JapaneseJokerState, ctx: EngineContext, events: PublicEvent
   state.trick = [];
   state.lastTrick = null;
   state.won = [0, 0];
+  state.playedThisDeal = [false, false];
   events.push({ type: "deal", round: state.round, dealer: state.dealer });
 }
 
-function playable(state: Pick<JapaneseJokerState, "hands" | "table" | "trick" | "trump">, seat: number): Card[] {
-  const pool = [...state.hands[seat]!, ...state.table[seat]!.map((p) => p.up).filter((c): c is Card => c !== null)];
+function playable(state: Pick<JapaneseJokerState, "hands" | "table" | "trick" | "trump" | "playedThisDeal">, seat: number): Card[] {
+  const tableUp = state.playedThisDeal[seat] ? state.table[seat]!.map((p) => p.up).filter((c): c is Card => c !== null) : [];
+  const pool = [...state.hands[seat]!, ...tableUp];
   const lead = state.trick[0];
   if (!lead) return pool;
   const jokers = pool.filter(isJoker);
   const normal = pool.filter((c) => !isJoker(c));
+  const trumps = state.trump ? normal.filter((c) => suitOf(c) === state.trump) : [];
   if (isJoker(lead.card) && lead.demand) {
-    if (lead.demand.kind === "card") {
-      return normal.includes(lead.demand.card) ? [lead.demand.card, ...jokers] : pool;
-    }
     const suit = lead.demand.suit;
     const ofSuit = normal.filter((c) => suitOf(c) === suit);
-    if (!ofSuit.length) return pool;
-    const highest = ofSuit.reduce((a, b) => (rankValue(b) > rankValue(a) ? b : a));
-    return [highest, ...jokers];
+    if (ofSuit.length) {
+      const highest = ofSuit.reduce((a, b) => (rankValue(b) > rankValue(a) ? b : a));
+      return [highest, ...jokers];
+    }
+    // Without the demanded (non-trump) suit the opponent must trump; the trump then beats the joker.
+    if (suit !== state.trump && trumps.length) return [...trumps, ...jokers];
+    return pool;
   }
   const suit = suitOf(lead.card);
   const ofSuit = normal.filter((c) => suitOf(c) === suit);
   if (ofSuit.length) return [...ofSuit, ...jokers];
-  const trumps = state.trump ? normal.filter((c) => suitOf(c) === state.trump) : [];
   if (trumps.length) return [...trumps, ...jokers];
   return pool;
 }
 
 export function japaneseTrickWinner(trick: Play[], trump: Suit | null): number {
   const [lead, follow] = trick as [Play, Play];
-  if (isJoker(follow.card)) return follow.seat; // a following joker beats everything, incl. the first joker
-  if (isJoker(lead.card)) return lead.seat;
+  if (isJoker(follow.card)) return follow.seat; // a joker played on a joker wins
+  if (isJoker(lead.card)) {
+    const demanded = lead.demand?.suit ?? null;
+    if (trump && demanded !== trump && suitOf(follow.card) === trump) return follow.seat;
+    return lead.seat;
+  }
   const ls = suitOf(lead.card);
   const fs = suitOf(follow.card);
   if (fs === ls) return rankValue(follow.card) > rankValue(lead.card) ? follow.seat : lead.seat;
@@ -183,7 +194,7 @@ function cardsLeft(state: JapaneseJokerState): number {
 }
 
 function finishRound(state: JapaneseJokerState, ctx: EngineContext, events: PublicEvent[]): void {
-  const diff = (state.won[0]! - state.won[1]!) / 2;
+  const diff = state.won[0]! - state.won[1]!;
   const points = [Math.max(0, diff), Math.max(0, -diff)];
   state.scores[0]! += points[0]!;
   state.scores[1]! += points[1]!;
@@ -203,10 +214,8 @@ function legal(state: JapaneseJokerState, seat: number): JapaneseJokerAction[] {
   if (state.phase === "trump") return [...SUITS.map((suit) => ({ type: "trump" as const, suit })), { type: "trump", suit: "none" }];
   const out: JapaneseJokerAction[] = [];
   const leading = state.trick.length === 0;
-  const opponentUp = state.table[other(seat)]!.map((p) => p.up).filter((c): c is Card => c !== null && !isJoker(c));
   for (const card of playable(state, seat)) {
     if (isJoker(card) && leading) {
-      for (const c of opponentUp) out.push({ type: "play", card, demand: { kind: "card", card: c } });
       for (const suit of SUITS) out.push({ type: "play", card, demand: { kind: "highest", suit } });
     } else {
       out.push({ type: "play", card });
@@ -239,6 +248,7 @@ export const japaneseJokerEngine: GameEngine<JapaneseJokerState, JapaneseJokerAc
       lastTrick: null,
       won: [0, 0],
       scores: [0, 0],
+      playedThisDeal: [false, false],
       lastRound: null,
     };
     deal(state, ctx, []);
@@ -270,20 +280,19 @@ export const japaneseJokerEngine: GameEngine<JapaneseJokerState, JapaneseJokerAc
     }
     if (next.phase !== "play") return fail("not_play_phase");
     if (!playable(next, seat).includes(action.card)) {
-      const owned = next.hands[seat]!.includes(action.card) || next.table[seat]!.some((p) => p.up === action.card);
-      return fail(owned ? "must_follow_rules" : "card_not_available");
+      const inHand = next.hands[seat]!.includes(action.card);
+      const onTable = next.table[seat]!.some((p) => p.up === action.card);
+      if (onTable && !inHand && !next.playedThisDeal[seat]) return fail("first_card_from_hand");
+      return fail(inHand || onTable ? "must_follow_rules" : "card_not_available");
     }
     const leading = next.trick.length === 0;
     if (isJoker(action.card) && leading) {
       if (!action.demand) return fail("demand_required");
-      if (action.demand.kind === "card") {
-        const opponentUp = next.table[other(seat)]!.map((p) => p.up);
-        if (!opponentUp.includes(action.demand.card) || isJoker(action.demand.card)) return fail("demand_card_not_visible");
-      }
     } else if (action.demand) {
       return fail("demand_not_allowed");
     }
     const from = removeCard(next, seat, action.card)!;
+    next.playedThisDeal[seat] = true;
     const play: Play = { seat, card: action.card, from, ...(action.demand ? { demand: deepClone(action.demand) } : {}) };
     next.trick.push(play);
     events.push({ type: "play", ...play });
@@ -292,7 +301,7 @@ export const japaneseJokerEngine: GameEngine<JapaneseJokerState, JapaneseJokerAc
       return { ok: true, state: next, events };
     }
     const winner = japaneseTrickWinner(next.trick, next.trump);
-    next.won[winner]! += 2;
+    next.won[winner]! += 1;
     next.lastTrick = { plays: next.trick, winner };
     next.trick = [];
     next.leader = winner;
@@ -323,7 +332,12 @@ export const japaneseJokerEngine: GameEngine<JapaneseJokerState, JapaneseJokerAc
       you:
         seat === null
           ? null
-          : { seat, hand: [...state.hands[seat]!], playable: state.phase === "play" && state.toAct === seat ? playable(state, seat) : [] },
+          : {
+              seat,
+              hand: [...state.hands[seat]!],
+              playable: state.phase === "play" && state.toAct === seat ? playable(state, seat) : [],
+              firstFromHand: state.phase === "play" && !state.playedThisDeal[seat],
+            },
       lastRound: state.lastRound ? deepClone(state.lastRound) : null,
     };
   },
@@ -346,11 +360,11 @@ export const japaneseJokerEngine: GameEngine<JapaneseJokerState, JapaneseJokerAc
     const trump = view.trump;
     const value = (c: Card) => (isJoker(c) ? 30 : rankValue(c) + (trump && suitOf(c) === trump ? 10 : 0));
     if (view.trick.length === 0) {
-      // Use a joker to pull the opponent's best visible card (hard), otherwise lead the strongest non-joker.
-      const jokerDemands = plays.filter((p) => isJoker(p.card) && p.demand?.kind === "card");
-      if (difficulty === "hard" && jokerDemands.length) {
-        return jokerDemands.sort((a, b) => value((b.demand as { card: Card }).card) - value((a.demand as { card: Card }).card))[0]!;
-      }
+      // Hard bots use a joker to pull the suit of the opponent's best visible card.
+      const oppUp = (view.table[1 - you.seat] ?? []).map((p) => p.up).filter((c): c is Card => c !== null && !isJoker(c));
+      const target = oppUp.sort((a, b) => value(b) - value(a))[0];
+      const jokerDemand = target ? plays.find((p) => isJoker(p.card) && p.demand?.suit === suitOf(target)) : undefined;
+      if (difficulty === "hard" && jokerDemand && target && rankValue(target) >= 13) return jokerDemand;
       const normals = plays.filter((p) => !isJoker(p.card));
       if (normals.length) {
         const sorted = normals.sort((a, b) => value(a.card) - value(b.card));

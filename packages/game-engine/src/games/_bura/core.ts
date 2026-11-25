@@ -10,6 +10,8 @@ const BURA_ORDER = ["6", "7", "8", "9", "J", "Q", "K", "T", "A"] as const;
 const BURA_POINTS: Record<string, number> = { A: 11, T: 10, K: 4, Q: 3, J: 2 };
 
 export const BURA_DECK_36: readonly Card[] = makeDeck(["6", "7", "8", "9", "T", "J", "Q", "K", "A"]);
+/** Three-card Bura pack: tens to aces only (6–9 removed), still 120 points. */
+export const BURA_DECK_20: readonly Card[] = makeDeck(["T", "J", "Q", "K", "A"]);
 export const BURA_DECK_32: readonly Card[] = makeDeck(["7", "8", "9", "T", "J", "Q", "K", "A"]);
 
 export function buraRank(card: Card): number {

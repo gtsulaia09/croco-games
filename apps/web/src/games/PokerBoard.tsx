@@ -14,6 +14,8 @@ const VARIANT_RULE: Record<PokerVariant, string | null> = {
 };
 
 function computeBlindSeats(view: PokerView): { sb: number | null; bb: number | null } {
+  // 6+ Hold'em: only the button posts a (button) blind.
+  if (view.blindMode === "button") return { sb: null, bb: view.dealer };
   const active = view.players.filter((p) => !p.busted).map((p) => p.seat);
   if (active.length < 2) return { sb: null, bb: null };
   const idx = active.indexOf(view.dealer);
@@ -73,8 +75,14 @@ export default function PokerBoard({ view, mySeat, seats, deadline, onAction }: 
             <HudChip tone="brand">{t(`games.${view.variant}.name`)}</HudChip>
             <HudChip>{t("poker.handOf", { n: view.handNumber, max: view.maxHands })}</HudChip>
             <HudChip>
-              {t("poker.blinds", { sb: view.blinds.small, bb: view.blinds.big })}
-              {view.blinds.ante > 0 ? ` · +${view.blinds.ante}` : ""}
+              {view.blindMode === "button" ? (
+                t("poker.anteButton", { ante: view.blinds.ante, bb: view.blinds.big })
+              ) : (
+                <>
+                  {t("poker.blinds", { sb: view.blinds.small, bb: view.blinds.big })}
+                  {view.blinds.ante > 0 ? ` · +${view.blinds.ante}` : ""}
+                </>
+              )}
             </HudChip>
             <HudChip>{t(`poker.structures.${view.structure}`)}</HudChip>
           </>

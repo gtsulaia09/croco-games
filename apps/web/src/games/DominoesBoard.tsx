@@ -1,6 +1,6 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
-import { ArrowLeft, ArrowRight, Layers } from "lucide-react";
-import type { DominoesView } from "@croco/game-engine/games/dominoes";
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Layers } from "lucide-react";
+import type { DominoesView, End } from "@croco/game-engine/games/dominoes";
 import { useT } from "../i18n";
 import { GameTable, HudChip, opponentsOrder, SeatStat, SeatTag, TurnBar, useSeatName, type BoardProps } from "./common";
 
@@ -14,6 +14,15 @@ const PIPS: Record<number, Array<[number, number]>> = {
   5: [[8.5, 8.5], [23.5, 8.5], [16, 16], [8.5, 23.5], [23.5, 23.5]],
   6: [[8.5, 7.5], [23.5, 7.5], [8.5, 16], [23.5, 16], [8.5, 24.5], [23.5, 24.5]],
 };
+
+const ENDS: End[] = ["left", "right", "up", "down"];
+const ARROW: Record<End, ReactNode> = {
+  left: <ArrowLeft size={15} />,
+  right: <ArrowRight size={15} />,
+  up: <ArrowUp size={15} />,
+  down: <ArrowDown size={15} />,
+};
+const GLYPH: Record<End, string> = { left: "←", right: "→", up: "↑", down: "↓" };
 
 function Half({ n }: { n: number }) {
   return (
@@ -103,48 +112,74 @@ export default function DominoesBoard({ view, mySeat, seats, deadline, onAction 
   const hand = view.you?.hand ?? [];
   const ends = view.ends;
   const fits = (tile: string, end: number) => values(tile).includes(end);
-  const options = (tile: string): Array<"left" | "right"> => {
+  const options = (tile: string): End[] => {
     if (!ends) return view.opening && view.opening !== tile ? [] : ["left"];
-    const out: Array<"left" | "right"> = [];
-    if (fits(tile, ends.left)) out.push("left");
-    if (fits(tile, ends.right)) out.push("right");
-    return out;
+    return ENDS.filter((e) => ends[e] !== undefined && fits(tile, ends[e]!));
   };
   const anyPlayable = hand.some((tile) => options(tile).length > 0);
 
   function play(tile: string) {
     const opts = options(tile);
     if (opts.length === 1) onAction({ type: "play", tile, end: opts[0] });
-    else if (opts.length === 2 && ends && ends.left === ends.right) onAction({ type: "play", tile, end: "left" });
-    else if (opts.length === 2) setChoose(tile);
+    else if (opts.length > 1) setChoose(tile);
   }
 
-  function placeAt(end: "left" | "right") {
+  function placeAt(end: End) {
     if (!choose) return;
     onAction({ type: "play", tile: choose, end });
     setChoose(null);
   }
 
-  // Lay the chain out like on a real table: rows that snake back and forth.
-  const dh = Math.max(18, Math.min(30, Math.floor((chainWidth || 600) / 26)));
-  const gap = 3;
-  const rows: Array<Array<{ p: DominoesView["line"][number]; index: number }>> = [];
-  let row: Array<{ p: DominoesView["line"][number]; index: number }> = [];
-  let used = 0;
-  view.line.forEach((p, index) => {
-    const w = (p.left === p.right ? dh : dh * 2) + gap;
-    if (row.length > 0 && used + w > (chainWidth || 600)) {
-      rows.push(row);
-      row = [];
-      used = 0;
-    }
-    row.push({ p, index });
-    used += w;
-  });
-  if (row.length) rows.push(row);
+  // Size the tiles so the main line fits the table; very long lines scroll inside the table.
+  const units = view.line.reduce((s, p) => s + (p.tile === view.spinner ? 1 : 2) + 0.15, 0);
+  const dh = Math.max(15, Math.min(30, Math.floor(((chainWidth || 600) - 8) / Math.max(units, 8))));
+  const spinnerCol = view.spinner ? view.line.findIndex((p) => p.tile === view.spinner) : -1;
+  const upLen = view.up.length;
+  const mainRow = upLen + 1;
   const lastIndex = view.line.length - 1;
+  const chooseOptions = choose ? options(choose) : [];
+
+  /** Open ends represented by a tile position. */
+  const endsAt = (where: { line?: number; arm?: "up" | "down"; k?: number }): End[] => {
+    if (!ends) return [];
+    const out: End[] = [];
+    if (where.line !== undefined) {
+      if (where.line === 0) out.push("left");
+      if (where.line === lastIndex) out.push("right");
+      if (where.line === spinnerCol) {
+        if (!view.up.length) out.push("up");
+        if (!view.down.length) out.push("down");
+      }
+    } else if (where.arm === "up" && where.k === view.up.length - 1) out.push("up");
+    else if (where.arm === "down" && where.k === view.down.length - 1) out.push("down");
+    return out;
+  };
+
+  function placed(key: string, tile: ReactNode, here: End[], cell: CSSProperties, tileLabel: string) {
+    const tags = here.map((e) => (
+      <span key={e} className="end-tag" data-side={e}>
+        {e === "right" || e === "down" ? `${ends![e]} ${GLYPH[e]}` : `${GLYPH[e]} ${ends![e]}`}
+      </span>
+    ));
+    const targets = choose ? here.filter((e) => chooseOptions.includes(e)) : [];
+    if (targets.length === 1) {
+      return (
+        <button key={key} type="button" className="chain-end is-target" style={cell} aria-label={`${tileLabel} · ${t(`dominoes.${targets[0]}`)}`} onClick={() => placeAt(targets[0]!)}>
+          {tile}
+          {tags}
+        </button>
+      );
+    }
+    return (
+      <span key={key} className={here.length ? "chain-end" : "chain-cell"} style={cell}>
+        {tile}
+        {tags}
+      </span>
+    );
+  }
 
   const meSeat = mySeat ?? 0;
+  const lastScore = view.lastScore;
 
   return (
     <div className="board">
@@ -166,8 +201,8 @@ export default function DominoesBoard({ view, mySeat, seats, deadline, onAction 
 
       {view.lastRound && (
         <div className="notice fade-in">
-          {view.lastRound.blocked ? `${t("dominoes.blocked")} · ` : ""}
-          {view.lastRound.winner !== null ? `${name(view.lastRound.winner)} +${view.lastRound.points}` : "—"}
+          {view.lastRound.blocked ? `${t("dominoes.blocked")} · ` : `${t("dominoes.domino")} · `}
+          {view.lastRound.winner !== null ? `${name(view.lastRound.winner)} +${view.lastRound.points}` : t("bura.draw")}
         </div>
       )}
 
@@ -190,7 +225,7 @@ export default function DominoesBoard({ view, mySeat, seats, deadline, onAction 
                 </div>
               ))}
             {view.variant === "draw" && (
-              <div className="boneyard" title={t("dominoes.boneyard", { n: view.boneyardCount })}>
+              <div className="boneyard" title={`${t("dominoes.boneyard", { n: view.boneyardCount })} · ${t("dominoes.protectedTiles")}`}>
                 <div className="boneyard-stack" aria-hidden="true">
                   {view.boneyardCount > 0 && <span className="domino-back" style={{ left: 14, top: -4 }} />}
                   {view.boneyardCount > 1 && <span className="domino-back" style={{ left: 18, top: 0 }} />}
@@ -201,43 +236,58 @@ export default function DominoesBoard({ view, mySeat, seats, deadline, onAction 
             )}
           </div>
 
-          <div className="relative w-full grid gap-2 min-h-[150px] content-center">
-            <div ref={chainRef} className="domino-chain" style={{ "--dh": `${dh}px` } as CSSProperties} role="group" aria-label={t("ui.openEnds")}>
+          <div className="w-full grid gap-2 min-h-[150px] content-center">
+            <div ref={chainRef} className="domino-scroll" role="group" aria-label={t("ui.openEnds")}>
               {view.line.length === 0 ? (
-                <span className="felt-label text-center !text-[#3a1f0c]/60">{t("games.dominoes.name")}</span>
+                <span className="felt-label block text-center !text-[#3a1f0c]/60">{t("games.dominoes.name")}</span>
               ) : (
-                rows.map((r, ri) => {
-                  const rtl = ri % 2 === 1;
-                  const items = rtl ? [...r].reverse() : r;
-                  return (
-                    <div key={ri} className="domino-row" data-dir={rows.length === 1 ? "center" : rtl ? "rtl" : "ltr"}>
-                      {items.map(({ p, index }) => {
-                        const isLeft = index === 0;
-                        const isRight = index === lastIndex;
-                        const a = rtl ? p.right : p.left;
-                        const b = rtl ? p.left : p.right;
-                        const tile = <Domino a={a} b={b} vertical={p.left === p.right} className="anim-in" />;
-                        const endLabel =
-                          isLeft && ends ? `← ${ends.left}` : isRight && ends ? `${ends.right} →` : undefined;
-                        const target = choose && endLabel ? (isLeft ? "left" : "right") : null;
-                        if (target) {
-                          return (
-                            <button key={p.tile} type="button" className="chain-end" data-label={endLabel} aria-label={`${p.left}-${p.right} · ${t(isLeft ? "dominoes.left" : "dominoes.right")}`} onClick={() => placeAt(target)}>
-                              {tile}
-                            </button>
-                          );
-                        }
-                        return (
-                          <span key={p.tile} className={endLabel ? "chain-end" : undefined} data-label={endLabel}>
-                            {tile}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  );
-                })
+                <div className="domino-cross" style={{ "--dh": `${dh}px` } as CSSProperties}>
+                  {view.up.map((p, k) =>
+                    placed(
+                      `u-${p.tile}`,
+                      <Domino a={p.outer} b={p.inner} vertical className="anim-in" />,
+                      endsAt({ arm: "up", k }),
+                      { gridColumn: spinnerCol + 1, gridRow: upLen - k },
+                      p.tile,
+                    ),
+                  )}
+                  {view.line.map((p, i) =>
+                    placed(
+                      `l-${p.tile}`,
+                      <Domino
+                        a={p.left}
+                        b={p.right}
+                        vertical={p.tile === view.spinner}
+                        className={`anim-in ${p.tile === view.spinner ? "domino-stavka" : ""}`}
+                        label={p.tile === view.spinner ? `${p.tile} · ${t("dominoes.stavka")}` : undefined}
+                      />,
+                      endsAt({ line: i }),
+                      { gridColumn: i + 1, gridRow: mainRow },
+                      p.tile,
+                    ),
+                  )}
+                  {view.down.map((p, k) =>
+                    placed(
+                      `d-${p.tile}`,
+                      <Domino a={p.inner} b={p.outer} vertical className="anim-in" />,
+                      endsAt({ arm: "down", k }),
+                      { gridColumn: spinnerCol + 1, gridRow: mainRow + 1 + k },
+                      p.tile,
+                    ),
+                  )}
+                </div>
               )}
             </div>
+            {view.line.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-2">
+                <span className="amount-tag">{t("dominoes.openSum", { n: view.openSum })}</span>
+                {lastScore && (
+                  <span key={`${lastScore.seat}-${view.scores.join(",")}`} className="win-tag anim-pop">
+                    {t("dominoes.scored", { name: name(lastScore.seat), n: lastScore.points })}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {mySeat !== null && (
@@ -253,10 +303,10 @@ export default function DominoesBoard({ view, mySeat, seats, deadline, onAction 
           {myTurn && choose && (
             <div className="action-bar fade-in">
               <span className="action-title w-full text-center">{t("dominoes.chooseEnd")}</span>
-              {(["left", "right"] as const).map((end) => (
+              {chooseOptions.map((end) => (
                 <button key={end} type="button" className="btn-gold btn-lg px-5" onClick={() => placeAt(end)}>
-                  {end === "left" ? <ArrowLeft size={15} /> : <ArrowRight size={15} />}
-                  {t(`dominoes.${end}`)} ({end === "left" ? ends?.left : ends?.right})
+                  {ARROW[end]}
+                  {t(`dominoes.${end}`)} ({ends?.[end]})
                 </button>
               ))}
               <button type="button" className="btn-ghost btn-sm" onClick={() => setChoose(null)}>
@@ -267,14 +317,17 @@ export default function DominoesBoard({ view, mySeat, seats, deadline, onAction 
 
           {myTurn && !anyPlayable && (
             <div className="action-bar fade-in">
-              {view.variant === "draw" && view.boneyardCount > 0 ? (
+              {view.drawable > 0 ? (
                 <button className="btn-primary btn-lg px-8" onClick={() => onAction({ type: "draw" })}>
                   <Layers size={16} /> {t("dominoes.draw")}
                 </button>
               ) : (
-                <button className="btn-secondary btn-lg px-8" onClick={() => onAction({ type: "pass" })}>
-                  {t("dominoes.pass")}
-                </button>
+                <>
+                  {view.variant === "draw" && view.boneyardCount > 0 && <span className="action-hint w-full text-center">{t("dominoes.protectedTiles")}</span>}
+                  <button className="btn-secondary btn-lg px-8" onClick={() => onAction({ type: "pass" })}>
+                    {t("dominoes.pass")}
+                  </button>
+                </>
               )}
             </div>
           )}

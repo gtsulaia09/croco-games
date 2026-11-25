@@ -10,16 +10,16 @@ Built as a TypeScript monorepo targeting **OWASP ASVS 5.0.0 Level 2** (with Leve
 
 Every game runs as a pure, server-authoritative engine in `packages/game-engine` with cryptographically secure randomness (`crypto.getRandomValues` + rejection sampling), per-seat private card redaction, 3 bot difficulty levels (`easy`, `medium`, `hard`), individual statistics, match history, and dedicated leaderboards:
 
-1. **Joker (`joker`)** — Georgian 4-player classic (standard 24-hand 4-set schedule + Nines variant, dealer bid restriction, high/low jokers, hist penalty, set bonuses)
-2. **Japanese Joker (`japanese_joker`)** — Distinct 2-player Georgian game (open/hidden 5-pile table cards, joker demands, ½-point scoring)
-3. **Bura — Three-Card (`bura3`)** — 36/32-card deck, closed discards, 31+ opening claims, Bura & optional combinations
-4. **Bura — Five-Card (`bura5`)** — Independent 5-card engine played to the last card with Kozel-style penalty scoring
-5. **Texas Hold'em (`holdem`)** — Virtual chips only, blinds/antes, No/Pot/Fixed Limit, side pots, full showdown evaluation
-6. **Short Deck / 6+ Hold'em (`shortdeck`)** — 36-card deck (`6`–`A`), Flush > Full House, `A-6-7-8-9` wheel, configurable Trips > Straight
-7. **Omaha (`omaha`)** — 4 hole cards; strict **exact-2 hole + exact-3 board** evaluation
+1. **Joker (`joker`)** — Georgian 4-player classic (24 deals in four sets, dealer bid restriction, high/low jokers, set bonus; khishti penalty as an option)
+2. **Japanese Joker (`japanese_joker`)** — 2-player Georgian game (open/covered table cards, first card from the hand, suit-demanding joker, trick-difference scoring to 1/3/7/11/21)
+3. **Bura — Three-Card (`bura3`)** — 1 v 1 with 20 cards (10–A): 61 points wins the deal, "var" (31+) right after a won trick, bura of three trumps
+4. **Bura — Five-Card (`bura5`)** — 2 v 2 team game with malutka, bura of five trumps and raises davi … shashi (×2…×6)
+5. **Texas Hold'em (`holdem`)** — 2–10 players, virtual chips only, blinds/antes, No/Pot/Fixed Limit, side pots, full showdown evaluation
+6. **Short Deck / 6+ Hold'em (`shortdeck`)** — 36-card deck (`6`–`A`), Ante + Button Blind, Flush > Full House, `A-6-7-8-9` wheel
+7. **Omaha (`omaha`)** — 4 hole cards; strict **exact-2 hole + exact-3 board** evaluation; Pot-Limit by default
 8. **Omaha Hi-Lo (`omaha_hilo`)** — Split-pot High + qualifying 8-or-better Ace-to-Five Low
-9. **Dominoes (`dominoes`)** — Double-six 28-tile set, Draw & Block variants, blocked-game detection
-10. **Backgammon (`backgammon`)** — 15 checkers, server-rolled dice, bar entry, hitting, bearing off, compulsory-dice rules, doubling cube + Crawford rule
+9. **Dominoes (`dominoes`)** — Georgian online model for 2: stavka (spinner) opening four ways, scoring in fives, protected bazaar, domino / riba rounding
+10. **Long Nardi (`backgammon`)** — გრძელი ნარდი: all stones on the head, no hitting, head rule, six-point block rule, mars = 2 (game id kept for compatibility)
 
 ---
 

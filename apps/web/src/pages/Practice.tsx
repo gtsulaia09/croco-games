@@ -12,7 +12,7 @@ const PRACTICE_PLAYERS: Record<GameType, number> = {
   joker: 4,
   japanese_joker: 2,
   bura3: 2,
-  bura5: 2,
+  bura5: 4,
   holdem: 4,
   shortdeck: 4,
   omaha: 4,
@@ -36,7 +36,10 @@ function useLocalGame(gameType: GameType, version: number) {
       const e = await loadEngine(gameType);
       if (cancelled) return;
       rngRef.current = cryptoRng();
-      const config = e.configSchema.parse(gameType === "bura3" ? { targetPoints: 5 } : gameType === "joker" ? { ruleset: "nines" } : {});
+      // Shorter matches for practice; the rules themselves are the defaults.
+      const config = e.configSchema.parse(
+        gameType === "bura3" || gameType === "bura5" ? { targetPoints: 6 } : gameType === "japanese_joker" ? { targetPoints: 7 } : gameType === "backgammon" ? { matchLength: 1 } : {},
+      );
       setEngine(e);
       setState(e.create(config, PRACTICE_PLAYERS[gameType], { rng: rngRef.current, now: Date.now() }));
       setError(null);

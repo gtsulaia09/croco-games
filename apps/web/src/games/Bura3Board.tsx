@@ -39,9 +39,10 @@ export default function Bura3Board({ view, mySeat, seats, deadline, onAction }: 
   const lastMessage = useMemo(() => {
     if (!view.lastHand) return null;
     const lh = view.lastHand;
-    if (lh.reason === "bura" || lh.reason === "three_aces") return t("bura.bura", { name: name(lh.winner!) });
-    if (lh.reason === "claim") return t("bura.claimTrue", { name: name(lh.claimer!), points: lh.claimedPoints ?? 0 });
-    if (lh.reason === "false_claim") return t("bura.claimFalse", { name: name(lh.claimer!), points: lh.claimedPoints ?? 0 });
+    if (lh.reason === "bura") return t("bura.bura", { name: name(lh.winner!) });
+    if (lh.reason === "var") return t("bura.claimTrue", { name: name(lh.claimer!), points: lh.claimedPoints ?? 0 });
+    if (lh.reason === "false_var") return t("bura.claimFalse", { name: name(lh.claimer!), points: lh.claimedPoints ?? 0 });
+    if (lh.reason === "points" && lh.winner !== null) return t("bura.wonOnPoints", { name: name(lh.winner), points: lh.points[lh.winner] ?? 0 });
     return t("bura.draw");
   }, [view.lastHand, t, name]);
 
@@ -139,15 +140,16 @@ export default function Bura3Board({ view, mySeat, seats, deadline, onAction }: 
                   </button>
                 </>
               )}
-              {(view.phase === "lead" || view.phase === "final") && (view.players[mySeat]?.tricksWon ?? 0) > 0 && (
-                <button className="btn-gold btn-lg px-6" onClick={() => onAction({ type: "claim" })}>
-                  <Flame size={16} /> {t("bura.claim")}
-                </button>
-              )}
-              {view.phase === "final" && (
-                <button className="btn-secondary btn-lg" onClick={() => onAction({ type: "pass" })}>
-                  {t("bura.pass")}
-                </button>
+              {view.phase === "var" && (
+                <>
+                  <span className="action-hint w-full text-center">{t("bura.varHint")}</span>
+                  <button className="btn-gold btn-lg px-7" onClick={() => onAction({ type: "claim" })}>
+                    <Flame size={16} /> {t("bura.claim")}
+                  </button>
+                  <button className="btn-primary btn-lg px-7" onClick={() => onAction({ type: "continue" })}>
+                    {t("bura.continue")}
+                  </button>
+                </>
               )}
             </div>
           )}
@@ -156,7 +158,7 @@ export default function Bura3Board({ view, mySeat, seats, deadline, onAction }: 
             label={t("game.yourHand")}
             size="lg"
             spread="loose"
-            cards={hand.map((c) => ({ card: c, selected: selected.includes(c), onClick: myTurn ? () => toggle(c) : undefined }))}
+            cards={hand.map((c) => ({ card: c, selected: selected.includes(c), onClick: myTurn && view.phase !== "var" ? () => toggle(c) : undefined }))}
           />
         </div>
       )}

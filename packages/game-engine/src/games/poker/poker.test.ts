@@ -219,6 +219,33 @@ describe("betting rules", () => {
   });
 });
 
+describe("handbook defaults", () => {
+  it("6+ Hold'em: everyone antes, the button posts the button blind, action starts left of the button", () => {
+    const s = fixedState(shortDeckEngine, 4);
+    expect(s.config.shortDeckBlinds).toBe("button");
+    const v = shortDeckEngine.view(s, null);
+    expect(v.blindMode).toBe("button");
+    expect(v.blinds).toEqual({ small: 0, big: 10, ante: 5 });
+    // Three players paid the 5 ante; the button paid ante + the 10 button blind.
+    for (const p of s.players) expect(p.total).toBe(p === s.players[s.dealer] ? 15 : 5);
+    expect(s.players[s.dealer]!.street).toBe(10);
+    expect(s.toAct).toBe((s.dealer + 1) % 4);
+    expect(s.currentBet).toBe(10);
+  });
+
+  it("6+ Hold'em ranks a straight above three of a kind unless the house variant is chosen", () => {
+    expect(cfg().tripsBeatStraight).toBe(false);
+  });
+
+  it("Hold'em and Omaha seat up to ten players; 6+ up to six", () => {
+    expect(holdemEngine.seatLimits(cfg())).toEqual({ min: 2, max: 10 });
+    expect(omahaEngine.seatLimits(cfg())).toEqual({ min: 2, max: 10 });
+    expect(omahaHiLoEngine.seatLimits(cfg())).toEqual({ min: 2, max: 10 });
+    expect(shortDeckEngine.seatLimits(cfg())).toEqual({ min: 2, max: 6 });
+    expect(holdemEngine.create(cfg(), 10, testCtx(1)).players).toHaveLength(10);
+  });
+});
+
 describe("private card confidentiality", () => {
   it("never shows opponents' hole cards before showdown", () => {
     const s = fixedState(holdemEngine, 4);

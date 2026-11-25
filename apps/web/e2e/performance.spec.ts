@@ -84,7 +84,7 @@ test.describe("performance and responsiveness", () => {
     // 1. Verify Georgian (ka, default) has native Georgian text, zero English tag leaks, and zero overflow across all 7 viewports.
     await page.goto("./#/");
     await expect(page.locator("html")).toHaveAttribute("lang", "ka");
-    await expect(page.getByText("ტექსას ჰოლდემი")).toBeVisible();
+    await expect(page.getByText("ტეხას ჰოლდემი")).toBeVisible();
     await expect(page.getByText("MULTIPLAYER ARENA")).toHaveCount(0);
     await expect(page.getByText("4P · Trick")).toHaveCount(0);
 

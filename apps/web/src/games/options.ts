@@ -23,44 +23,41 @@ function withDefault(specs: OptionSpec[], key: string, value: string): OptionSpe
 export const GAME_OPTIONS: Record<GameType, OptionSpec[]> = {
   joker: [
     { key: "ruleset", kind: "select", options: ["standard", "nines"], default: "standard" },
-    { key: "hist", kind: "select", options: ["classic", "none"], default: "classic" },
+    { key: "hist", kind: "select", options: ["none", "classic"], default: "none" },
     { key: "setBonus", kind: "select", options: ["simple", "double", "none"], default: "simple" },
     { key: "nineTrump", kind: "select", options: ["lastCard", "choose"], default: "lastCard" },
     { key: "ledJokerTrumped", kind: "select", options: ["trumpWins", "jokerWins"], default: "trumpWins" },
   ],
   japanese_joker: [
-    { key: "targetPoints", kind: "number", min: 5, max: 50, default: 20 },
-    { key: "revealMode", kind: "select", options: ["toHand", "flip"], default: "toHand" },
-    { key: "lastPileToHand", kind: "boolean", default: true },
+    { key: "targetPoints", kind: "select", options: [1, 3, 7, 11, 21], default: 11 },
+    { key: "revealMode", kind: "select", options: ["flip", "toHand"], default: "flip" },
+    { key: "lastPileToHand", kind: "boolean", default: false },
   ],
   bura3: [
-    { key: "targetPoints", kind: "number", min: 3, max: 21, default: 7 },
-    { key: "deck", kind: "select", options: ["36", "32"], default: "36" },
+    { key: "targetPoints", kind: "select", options: [6, 11, 21], default: 11 },
+    { key: "deck", kind: "select", options: ["20", "32", "36"], default: "20" },
     { key: "closedDiscards", kind: "boolean", default: true },
-    { key: "combinations", kind: "boolean", default: false },
-    { key: "threeAcesWin", kind: "boolean", default: false },
     { key: "memoryAid", kind: "boolean", default: false },
   ],
   bura5: [
-    { key: "penaltyLimit", kind: "number", min: 6, max: 24, default: 12 },
-    { key: "deck", kind: "select", options: ["36", "32"], default: "36" },
-    { key: "maxLead", kind: "select", options: [3, 5], default: 3 },
+    { key: "targetPoints", kind: "select", options: [6, 11, 21], default: 11 },
+    { key: "raises", kind: "boolean", default: true },
+    { key: "malutka", kind: "boolean", default: true },
     { key: "closedDiscards", kind: "boolean", default: true },
   ],
   holdem: poker,
-  shortdeck: [...poker, { key: "tripsBeatStraight", kind: "boolean", default: true }],
+  shortdeck: [
+    ...poker,
+    { key: "shortDeckBlinds", kind: "select", options: ["button", "blinds"], default: "button" },
+    { key: "tripsBeatStraight", kind: "boolean", default: false },
+  ],
   omaha: withDefault(poker, "bettingStructure", "pot_limit"),
   omaha_hilo: withDefault(poker, "bettingStructure", "pot_limit"),
   dominoes: [
     { key: "variant", kind: "select", options: ["draw", "block"], default: "draw" },
-    { key: "scoreLimit", kind: "number", min: 50, max: 500, step: 10, default: 100 },
-    { key: "handSize", kind: "number", min: 5, max: 7, default: 7 },
+    { key: "scoreLimit", kind: "number", min: 50, max: 500, step: 5, default: 100 },
   ],
-  backgammon: [
-    { key: "matchLength", kind: "select", options: [1, 3, 5, 7, 9, 11], default: 5 },
-    { key: "doublingCube", kind: "boolean", default: true },
-    { key: "crawford", kind: "boolean", default: true },
-  ],
+  backgammon: [{ key: "matchLength", kind: "select", options: [1, 3, 5, 7], default: 3 }],
 };
 
 export function defaultOptions(game: GameType): Record<string, unknown> {

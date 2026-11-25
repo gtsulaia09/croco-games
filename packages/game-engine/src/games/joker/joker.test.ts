@@ -133,6 +133,10 @@ describe("scoring", () => {
     expect(scoreHand(0, 2, 4)).toBe(20);
   });
 
+  it("has no khishti penalty in the base rules", () => {
+    expect(cfg().hist).toBe("none");
+  });
+
   it("applies the hist penalty (−200 in sets 1/3, −500 in sets 2/4)", () => {
     expect(scoreHand(2, 0, 4, 0, "none")).toBe(0);
     expect(scoreHand(2, 0, 4, 0, "classic")).toBe(-200);
