@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { ShieldCheck } from "lucide-react";
+import { Activity, AlertTriangle, CheckCircle2, Flag, Lock, ShieldAlert, ShieldCheck, Users as UsersIcon } from "lucide-react";
 import type { PlatformSettingsDto as PlatformSettings, PublicUser } from "@croco/shared/client";
 import { api, ApiError, clearStepUp, get, hasStepUp, post, setStepUp } from "../lib/api";
 import { useSession } from "../store/session";
 import { useT } from "../i18n";
-import { EmptyState, ErrorText, Section, Spinner, UserName } from "../components/ui";
+import { AdminBadge, EmptyState, ErrorText, Section, Spinner, UserName } from "../components/ui";
 
 type Tab = "overview" | "users" | "rooms" | "reports" | "integrity" | "audit" | "security" | "settings";
 const STAFF_TABS: Tab[] = ["overview", "users", "rooms", "reports", "integrity"];
@@ -51,16 +51,39 @@ export default function Admin() {
   const tabs = isAdmin ? [...STAFF_TABS, ...ADMIN_TABS] : STAFF_TABS;
   return (
     <div className="grid gap-4 fade-in">
-      <h1 className="text-xl font-bold flex items-center gap-2">
-        <ShieldCheck className="text-primary" /> {t("admin.title")}
-      </h1>
-      <div className="flex gap-1 overflow-x-auto pb-1" role="tablist">
+      <div className="card p-4 sm:p-5 border-gold/40 bg-gradient-to-r from-gold/10 via-surface to-surface flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="size-11 rounded-xl bg-gold/15 border border-gold/40 text-gold flex items-center justify-center">
+            <ShieldCheck size={22} />
+          </span>
+          <div>
+            <h1 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+              {t("admin.title")} {isAdmin && <AdminBadge />}
+            </h1>
+            <p className="text-xs text-muted">{t("ui.staffConsole")}</p>
+          </div>
+        </div>
+        <span className="chip bg-primary/15 text-primary border border-primary/35">
+          <Lock size={11} /> MFA Verified
+        </span>
+      </div>
+
+      <div className="flex gap-1.5 overflow-x-auto pb-1" role="tablist">
         {tabs.map((x) => (
-          <button key={x} role="tab" aria-selected={tab === x} className={`${tab === x ? "btn-secondary" : "btn-ghost"} btn-sm whitespace-nowrap`} onClick={() => setTab(x)}>
+          <button
+            key={x}
+            role="tab"
+            aria-selected={tab === x}
+            className={`h-9 px-3.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
+              tab === x ? "bg-gold text-[#1d1404]" : "bg-surface border border-line text-text-2 hover:border-line-strong"
+            }`}
+            onClick={() => setTab(x)}
+          >
             {t(`admin.tabs.${x}`)}
           </button>
         ))}
       </div>
+
       {tab === "overview" && <Overview guard={guard} />}
       {tab === "users" && <Users guard={guard} isAdmin={isAdmin} />}
       {tab === "rooms" && <Rooms guard={guard} />}
@@ -111,15 +134,15 @@ function MfaGate({ enrolled, onUnlocked }: { enrolled: boolean; onUnlocked(): vo
 
   if (codes)
     return (
-      <div className="card p-5 max-w-md mx-auto grid gap-3">
-        <h1 className="font-bold">{t("admin.recoveryTitle")}</h1>
+      <div className="card p-6 max-w-md mx-auto mt-8 grid gap-4 border-gold/45">
+        <h1 className="font-black text-lg text-white">{t("admin.recoveryTitle")}</h1>
         <p className="text-sm text-text-2">{t("admin.recoveryBody")}</p>
-        <ul className="grid grid-cols-2 gap-1 font-mono text-sm bg-surface-2 rounded-lg p-3">
+        <ul className="grid grid-cols-2 gap-2 font-mono text-sm panel-inset p-3.5 text-gold">
           {codes.map((c) => (
             <li key={c}>{c}</li>
           ))}
         </ul>
-        <button className="btn-primary" onClick={onUnlocked}>
+        <button className="btn-primary h-11" onClick={onUnlocked}>
           {t("common.continue")}
         </button>
       </div>
@@ -127,54 +150,58 @@ function MfaGate({ enrolled, onUnlocked }: { enrolled: boolean; onUnlocked(): vo
 
   return (
     <form
-      className="card p-5 max-w-md mx-auto grid gap-3"
+      className="card overflow-hidden max-w-md mx-auto mt-8 border-gold/40"
       onSubmit={(e) => {
         e.preventDefault();
         void submit();
       }}
     >
-      <h1 className="font-bold flex items-center gap-2">
-        <ShieldCheck size={18} className="text-primary" />
-        {enrolled ? t("admin.stepUpTitle") : t("admin.mfaSetupTitle")}
-      </h1>
-      {!enrolled && (
-        <>
-          <p className="text-sm text-text-2">{t("admin.mfaSetupBody")}</p>
-          {setup ? (
-            <div className="grid gap-1">
-              <span className="label">{t("admin.secret")}</span>
-              <code className="font-mono text-sm break-all bg-surface-2 rounded p-2 select-all">{setup.secret.replace(/(.{4})/g, "$1 ").trim()}</code>
-              <a className="text-xs text-primary underline break-all" href={setup.otpauthUri}>
-                otpauth://
-              </a>
-            </div>
-          ) : (
-            <Spinner />
-          )}
-        </>
-      )}
-      <label>
-        <span className="label">{recovery ? t("admin.recoveryCode") : t("admin.code")}</span>
-        <input
-          className="input font-mono tracking-widest"
-          inputMode={recovery ? "text" : "numeric"}
-          autoComplete="one-time-code"
-          maxLength={recovery ? 19 : 6}
-          pattern={recovery ? "[a-z2-7]{4}(-[a-z2-7]{4}){3}" : "\\d{6}"}
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          required
-        />
-      </label>
-      <ErrorText error={error} />
-      <button className="btn-primary" disabled={busy}>
-        {t("admin.verify")}
-      </button>
-      {enrolled && (
-        <button type="button" className="btn-ghost btn-sm" onClick={() => setRecovery((r) => !r)}>
-          {recovery ? t("admin.code") : t("admin.useRecovery")}
+      <div className="bg-gradient-to-br from-gold/12 via-surface-2 to-surface px-6 py-5 border-b border-line flex items-center gap-3">
+        <span className="size-10 rounded-xl bg-gold/15 border border-gold/40 text-gold flex items-center justify-center">
+          <ShieldCheck size={20} />
+        </span>
+        <h1 className="font-black text-base text-white">{enrolled ? t("admin.stepUpTitle") : t("admin.mfaSetupTitle")}</h1>
+      </div>
+      <div className="p-6 grid gap-4">
+        {!enrolled && (
+          <>
+            <p className="text-sm text-text-2 leading-relaxed">{t("admin.mfaSetupBody")}</p>
+            {setup ? (
+              <div className="grid gap-1.5">
+                <span className="label">{t("admin.secret")}</span>
+                <code className="font-mono text-sm break-all panel-inset p-3 select-all text-gold">{setup.secret.replace(/(.{4})/g, "$1 ").trim()}</code>
+                <a className="text-xs text-primary underline break-all" href={setup.otpauthUri}>
+                  otpauth://
+                </a>
+              </div>
+            ) : (
+              <Spinner />
+            )}
+          </>
+        )}
+        <label>
+          <span className="label">{recovery ? t("admin.recoveryCode") : t("admin.code")}</span>
+          <input
+            className="input font-mono text-center text-lg tracking-[0.25em]"
+            inputMode={recovery ? "text" : "numeric"}
+            autoComplete="one-time-code"
+            maxLength={recovery ? 19 : 6}
+            pattern={recovery ? "[a-z2-7]{4}(-[a-z2-7]{4}){3}" : "\\d{6}"}
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            required
+          />
+        </label>
+        <ErrorText error={error} />
+        <button className="btn-primary h-11" disabled={busy}>
+          {t("admin.verify")}
         </button>
-      )}
+        {enrolled && (
+          <button type="button" className="btn-ghost btn-sm" onClick={() => setRecovery((r) => !r)}>
+            {recovery ? t("admin.code") : t("admin.useRecovery")}
+          </button>
+        )}
+      </div>
     </form>
   );
 }
@@ -190,11 +217,15 @@ function useLoad<T>(guard: Guard, path: string) {
   return { data, error, reload, setError };
 }
 
-function Stat({ label, value }: { label: string; value: ReactNode }) {
+function Stat({ label, value, tone = "default", icon }: { label: string; value: ReactNode; tone?: "default" | "primary" | "danger" | "warning"; icon?: ReactNode }) {
+  const accent = tone === "primary" ? "text-primary" : tone === "danger" ? "text-danger" : tone === "warning" ? "text-warning" : "text-white";
   return (
-    <div className="card p-3">
-      <div className="text-xs text-muted">{label}</div>
-      <div className="text-xl font-bold tabular-nums">{value}</div>
+    <div className="card p-3.5">
+      <div className="flex items-center justify-between text-xs text-muted">
+        <span>{label}</span>
+        {icon}
+      </div>
+      <div className={`text-2xl font-black tabular-nums mt-1 ${accent}`}>{value}</div>
     </div>
   );
 }
@@ -206,25 +237,25 @@ function Overview({ guard }: { guard: Guard }) {
   if (error) return <ErrorText error={error} />;
   if (!data) return <Spinner />;
   return (
-    <div className="grid gap-3">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-        <Stat label={t("admin.users")} value={data.users} />
-        <Stat label={t("admin.activeToday")} value={data.activeToday} />
-        <Stat label={t("admin.online")} value={data.online} />
+    <div className="grid gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+        <Stat label={t("admin.users")} value={data.users} icon={<UsersIcon size={14} />} />
+        <Stat label={t("admin.activeToday")} value={data.activeToday} icon={<Activity size={14} />} />
+        <Stat label={t("admin.online")} value={data.online} tone="primary" />
         <Stat label={t("admin.tabs.rooms")} value={(data.rooms["waiting"] ?? 0) + (data.rooms["playing"] ?? 0)} />
-        <Stat label={t("admin.openReports")} value={data.openReports} />
-        <Stat label={t("admin.openFlags")} value={data.openIntegrityFlags} />
+        <Stat label={t("admin.openReports")} value={data.openReports} tone={data.openReports > 0 ? "danger" : "default"} icon={<Flag size={14} />} />
+        <Stat label={t("admin.openFlags")} value={data.openIntegrityFlags} tone={data.openIntegrityFlags > 0 ? "warning" : "default"} icon={<AlertTriangle size={14} />} />
       </div>
-      <div className="grid lg:grid-cols-2 gap-3">
+      <div className="grid lg:grid-cols-2 gap-4">
         <Section title={t("admin.matchesToday")}>
-          <ul className="grid gap-1 text-sm">
+          <ul className="grid gap-1.5 text-sm">
             {Object.entries(data.matchesToday).map(([g, n]) => (
-              <li key={g} className="flex justify-between">
-                <span>{t(`games.${g}.name`)}</span>
-                <span className="tabular-nums">{n}</span>
+              <li key={g} className="flex justify-between rounded-lg bg-surface-2 px-3 py-2">
+                <span className="text-text-2">{t(`games.${g}.name`)}</span>
+                <span className="tabular-nums font-bold text-white">{n}</span>
               </li>
             ))}
-            {Object.keys(data.matchesToday).length === 0 && <li className="text-muted">—</li>}
+            {Object.keys(data.matchesToday).length === 0 && <li className="text-muted text-xs">—</li>}
           </ul>
         </Section>
         <Section title={t("admin.onlineUsers")}>
@@ -232,12 +263,12 @@ function Overview({ guard }: { guard: Guard }) {
           {!online.data ? (
             <Spinner />
           ) : online.data.items.length === 0 ? (
-            <p className="text-sm text-muted">—</p>
+            <p className="text-xs text-muted">—</p>
           ) : (
             <ul className="grid gap-1.5 text-sm max-h-64 overflow-y-auto">
               {online.data.items.map((o) => (
-                <li key={o.user.id} className="flex items-center gap-2">
-                  <UserName user={o.user} />
+                <li key={o.user.id} className="flex items-center gap-2 rounded-lg bg-surface-2 px-3 py-2">
+                  <UserName user={o.user} className="font-semibold" />
                   <span className="text-xs text-muted">
                     {o.status}
                     {o.gameType ? ` · ${t(`games.${o.gameType}.name`)}` : ""}
@@ -303,35 +334,37 @@ function Users({ guard, isAdmin }: { guard: Guard; isAdmin: boolean }) {
           <EmptyState>—</EmptyState>
         ) : (
           <table className="w-full text-sm">
-            <thead className="text-xs text-muted bg-surface-2">
+            <thead className="text-[11px] uppercase tracking-wider text-muted bg-surface-2 border-b border-line">
               <tr>
-                <th className="p-2 text-left">{t("leaderboard.player")}</th>
-                {isAdmin && <th className="p-2 text-left hidden md:table-cell">Email</th>}
-                <th className="p-2 text-left">{t("admin.status")}</th>
-                <th className="p-2 text-left hidden sm:table-cell">{t("common.lastSeen")}</th>
-                <th className="p-2" />
+                <th className="p-3 text-left">{t("leaderboard.player")}</th>
+                {isAdmin && <th className="p-3 text-left hidden md:table-cell">Email</th>}
+                <th className="p-3 text-left">{t("admin.status")}</th>
+                <th className="p-3 text-left hidden sm:table-cell">{t("common.lastSeen")}</th>
+                <th className="p-3" />
               </tr>
             </thead>
             <tbody>
               {data.items.map((u) => {
                 const target = u.roles.includes("admin");
                 return (
-                  <tr key={u.id} className="table-row">
-                    <td className="p-2">
-                      {u.username ?? <span className="text-muted">({u.id})</span>} {target && <span className="chip bg-primary/20 text-primary">Admin</span>}
-                      {u.roles.includes("moderator") && <span className="chip bg-surface-3 text-text-2 ml-1">Mod</span>}
+                  <tr key={u.id} className="table-row hover:bg-surface-hover/50">
+                    <td className="p-3 font-semibold text-white">
+                      {u.username ?? <span className="text-muted">({u.id})</span>} {target && <AdminBadge />}
+                      {u.roles.includes("moderator") && <span className="chip bg-accent/15 text-accent border border-accent/35 ml-1">Mod</span>}
                     </td>
-                    {isAdmin && <td className="p-2 hidden md:table-cell text-xs text-muted">{u.email ?? "—"}</td>}
-                    <td className="p-2 text-xs">
-                      {u.status}
-                      {u.suspended_until ? ` → ${new Date(u.suspended_until).toLocaleDateString()}` : ""}
+                    {isAdmin && <td className="p-3 hidden md:table-cell text-xs text-muted">{u.email ?? "—"}</td>}
+                    <td className="p-3 text-xs">
+                      <span className={`chip ${u.status === "suspended" ? "bg-danger/15 text-danger" : "bg-primary/15 text-primary"}`}>
+                        {u.status}
+                        {u.suspended_until ? ` → ${new Date(u.suspended_until).toLocaleDateString()}` : ""}
+                      </span>
                     </td>
-                    <td className="p-2 text-xs text-muted hidden sm:table-cell">{new Date(u.last_seen_at).toLocaleString()}</td>
-                    <td className="p-2">
+                    <td className="p-3 text-xs text-muted hidden sm:table-cell tabular-nums">{new Date(u.last_seen_at).toLocaleString()}</td>
+                    <td className="p-3">
                       {!target && u.id !== myId && (
                         <div className="flex flex-wrap gap-1 justify-end">
                           {u.status === "suspended" ? (
-                            <button className="btn-ghost btn-sm" onClick={() => act(post(`/api/admin/users/${u.id}/unsuspend`))}>
+                            <button className="btn-secondary btn-sm" onClick={() => act(post(`/api/admin/users/${u.id}/unsuspend`))}>
                               {t("admin.unsuspend")}
                             </button>
                           ) : (
@@ -362,7 +395,7 @@ function Users({ guard, isAdmin }: { guard: Guard; isAdmin: boolean }) {
       </div>
       {suspend && (
         <form
-          className="card p-3 grid sm:grid-cols-[6rem_1fr_auto_auto] gap-2 items-end"
+          className="card p-4 border-danger/40 grid sm:grid-cols-[6rem_1fr_auto_auto] gap-2.5 items-end"
           onSubmit={(e) => {
             e.preventDefault();
             void act(post(`/api/admin/users/${suspend.id}/suspend`, { days: suspend.days, reason: suspend.reason })).then(() => setSuspend(null));
@@ -400,13 +433,13 @@ function Rooms({ guard }: { guard: Guard }) {
         <table className="w-full text-sm">
           <tbody>
             {data.items.map((r) => (
-              <tr key={r.id} className="table-row">
-                <td className="p-2">{r.name}</td>
-                <td className="p-2 text-xs">{t(`games.${r.game_type}.name`)}</td>
-                <td className="p-2 text-xs text-muted">
+              <tr key={r.id} className="table-row hover:bg-surface-hover/50">
+                <td className="p-3 font-semibold text-white">{r.name}</td>
+                <td className="p-3 text-xs text-text-2">{t(`games.${r.game_type}.name`)}</td>
+                <td className="p-3 text-xs text-muted tabular-nums">
                   {r.players}/{r.max_players} · {r.phase} {r.stage ?? ""} · {r.visibility}
                 </td>
-                <td className="p-2 text-right">
+                <td className="p-3 text-right">
                   <button className="btn-danger btn-sm" onClick={() => guard(post(`/api/admin/rooms/${r.id}/close`)).then(reload).catch(setError)}>
                     {t("admin.closeRoom")}
                   </button>
@@ -424,12 +457,12 @@ function Resolve({ onResolve }: { onResolve(resolution: "dismissed" | "actioned"
   const t = useT();
   const [note, setNote] = useState("");
   return (
-    <div className="flex flex-wrap gap-1 items-center">
-      <input className="input h-8 w-44" maxLength={500} placeholder={t("admin.note")} value={note} onChange={(e) => setNote(e.target.value)} aria-label={t("admin.note")} />
+    <div className="flex flex-wrap gap-1.5 items-center pt-1">
+      <input className="input h-8 w-52 text-xs" maxLength={500} placeholder={t("admin.note")} value={note} onChange={(e) => setNote(e.target.value)} aria-label={t("admin.note")} />
       <button className="btn-ghost btn-sm" onClick={() => onResolve("dismissed", note)}>
         {t("admin.dismiss")}
       </button>
-      <button className="btn-secondary btn-sm" onClick={() => onResolve("actioned", note)}>
+      <button className="btn-primary btn-sm" onClick={() => onResolve("actioned", note)}>
         {t("admin.action")}
       </button>
     </div>
@@ -444,10 +477,10 @@ function Reports({ guard }: { guard: Guard }) {
     `/api/admin/reports?status=${status}`,
   );
   return (
-    <div className="grid gap-2">
-      <div className="flex gap-1">
+    <div className="grid gap-3">
+      <div className="flex gap-1.5">
         {(["open", "closed"] as const).map((s) => (
-          <button key={s} className={status === s ? "btn-secondary btn-sm" : "btn-ghost btn-sm"} onClick={() => setStatus(s)}>
+          <button key={s} className={status === s ? "btn-primary btn-sm" : "btn-secondary btn-sm"} onClick={() => setStatus(s)}>
             {t(`admin.${s}`)}
           </button>
         ))}
@@ -459,15 +492,15 @@ function Reports({ guard }: { guard: Guard }) {
         <EmptyState>—</EmptyState>
       ) : (
         data.items.map((r) => (
-          <div key={r.id} className="card p-3 grid gap-1 text-sm">
+          <div key={r.id} className="card p-4 grid gap-2 text-sm">
             <div className="flex flex-wrap gap-2 items-center">
-              <span className="chip bg-danger/20 text-danger">{r.reason}</span>
-              <UserName user={r.target ?? undefined} />
+              <span className="chip bg-danger/20 text-danger border border-danger/35">{r.reason}</span>
+              <UserName user={r.target ?? undefined} className="font-bold text-white" />
               <span className="text-xs text-muted">
                 ← {r.reporter?.username ?? "—"} · {new Date(r.created_at).toLocaleString()}
               </span>
             </div>
-            {r.message_snapshot && <blockquote className="border-l-2 border-line pl-2 text-text-2 whitespace-pre-wrap break-words">{r.message_snapshot}</blockquote>}
+            {r.message_snapshot && <blockquote className="border-l-2 border-danger/50 pl-3 text-text-2 whitespace-pre-wrap break-words bg-surface-3/60 py-1.5 rounded-r-lg">{r.message_snapshot}</blockquote>}
             {r.details && <p className="text-xs text-muted whitespace-pre-wrap break-words">{r.details}</p>}
             {r.status === "open" && <Resolve onResolve={(resolution, note) => guard(post(`/api/admin/reports/${r.id}/resolve`, { resolution, note })).then(reload).catch(setError)} />}
           </div>
@@ -480,23 +513,23 @@ function Reports({ guard }: { guard: Guard }) {
 function Integrity({ guard }: { guard: Guard }) {
   const { data, error, reload, setError } = useLoad<{ items: Array<{ id: string; match_id: string | null; user: PublicUser | null; kind: string; details: Record<string, unknown>; status: string; created_at: number }> }>(guard, "/api/admin/integrity");
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-3">
       <ErrorText error={error} />
       {!data ? (
         <Spinner />
       ) : data.items.length === 0 ? (
-        <EmptyState>—</EmptyState>
+        <EmptyState icon={<ShieldAlert size={20} />}>—</EmptyState>
       ) : (
         data.items.map((f) => (
-          <div key={f.id} className="card p-3 grid gap-1 text-sm">
+          <div key={f.id} className="card p-4 grid gap-2 text-sm">
             <div className="flex flex-wrap gap-2 items-center">
-              <span className="chip bg-warning/20 text-warning">{f.kind}</span>
-              <UserName user={f.user ?? undefined} />
+              <span className="chip bg-warning/20 text-warning border border-warning/35">{f.kind}</span>
+              <UserName user={f.user ?? undefined} className="font-bold text-white" />
               <span className="text-xs text-muted">
                 {f.status} · {new Date(f.created_at).toLocaleString()}
               </span>
             </div>
-            <pre className="text-xs text-text-2 bg-surface-2 rounded p-2 overflow-x-auto">{JSON.stringify(f.details, null, 2)}</pre>
+            <pre className="text-xs text-text-2 panel-inset p-3 overflow-x-auto">{JSON.stringify(f.details, null, 2)}</pre>
             {f.status === "open" && <Resolve onResolve={(resolution, note) => guard(post(`/api/admin/integrity/${f.id}/resolve`, { resolution, note })).then(reload).catch(setError)} />}
           </div>
         ))
@@ -511,12 +544,17 @@ function Audit({ guard }: { guard: Guard }) {
   const [chain, setChain] = useState<{ checked: number; brokenAt: number | null } | null>(null);
   const [verifyError, setVerifyError] = useState<unknown>(null);
   return (
-    <div className="grid gap-2">
-      <div className="flex gap-2 items-center flex-wrap">
+    <div className="grid gap-3">
+      <div className="flex gap-2.5 items-center flex-wrap">
         <button className="btn-secondary btn-sm" onClick={() => guard(get<{ checked: number; brokenAt: number | null }>("/api/admin/audit/verify")).then(setChain).catch(setVerifyError)}>
-          {t("admin.verifyChain")}
+          <CheckCircle2 size={14} /> {t("admin.verifyChain")}
         </button>
-        {chain && (chain.brokenAt === null ? <span className="text-sm text-primary">{t("admin.chainOk", { n: chain.checked })}</span> : <span className="text-sm text-danger">{t("admin.chainBroken", { id: chain.brokenAt })}</span>)}
+        {chain &&
+          (chain.brokenAt === null ? (
+            <span className="chip bg-primary/15 text-primary border border-primary/35">{t("admin.chainOk", { n: chain.checked })}</span>
+          ) : (
+            <span className="chip bg-danger/20 text-danger border border-danger/40">{t("admin.chainBroken", { id: chain.brokenAt })}</span>
+          ))}
         <ErrorText error={verifyError} />
       </div>
       <ErrorText error={error} />
@@ -527,16 +565,16 @@ function Audit({ guard }: { guard: Guard }) {
           <table className="w-full text-xs">
             <tbody>
               {data.items.map((a) => (
-                <tr key={a.id} className="table-row align-top">
-                  <td className="p-2 tabular-nums">{a.id}</td>
-                  <td className="p-2 whitespace-nowrap">{new Date(a.ts).toLocaleString()}</td>
-                  <td className="p-2 font-medium">{a.action}</td>
-                  <td className="p-2 text-muted">{a.actor_id ?? "system"}</td>
-                  <td className="p-2 text-muted">{a.target_type ? `${a.target_type}:${a.target_id ?? ""}` : ""}</td>
-                  <td className="p-2 font-mono text-[10px] text-muted max-w-60 truncate" title={JSON.stringify(a.details)}>
+                <tr key={a.id} className="table-row align-top hover:bg-surface-hover/40">
+                  <td className="p-2.5 tabular-nums text-muted">#{a.id}</td>
+                  <td className="p-2.5 whitespace-nowrap tabular-nums">{new Date(a.ts).toLocaleString()}</td>
+                  <td className="p-2.5 font-bold text-white">{a.action}</td>
+                  <td className="p-2.5 text-muted">{a.actor_id ?? "system"}</td>
+                  <td className="p-2.5 text-muted">{a.target_type ? `${a.target_type}:${a.target_id ?? ""}` : ""}</td>
+                  <td className="p-2.5 font-mono text-[10px] text-muted max-w-60 truncate" title={JSON.stringify(a.details)}>
                     {JSON.stringify(a.details)}
                   </td>
-                  <td className="p-2 font-mono text-[10px] text-muted">{a.hash.slice(0, 12)}</td>
+                  <td className="p-2.5 font-mono text-[10px] text-gold">{a.hash.slice(0, 12)}</td>
                 </tr>
               ))}
             </tbody>
@@ -551,7 +589,7 @@ function SecurityEvents({ guard }: { guard: Guard }) {
   const [kind, setKind] = useState("");
   const { data, error } = useLoad<{ items: Array<{ id: number; ts: number; kind: string; user_id: string | null; country: string | null; details: unknown }> }>(guard, `/api/admin/security-events${kind ? `?kind=${encodeURIComponent(kind)}` : ""}`);
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-3">
       <input className="input max-w-xs" placeholder="kind, e.g. login.failed" value={kind} onChange={(e) => setKind(e.target.value.replace(/[^a-z_.]/g, ""))} maxLength={40} aria-label="kind" />
       <ErrorText error={error} />
       <div className="card overflow-x-auto">
@@ -561,12 +599,12 @@ function SecurityEvents({ guard }: { guard: Guard }) {
           <table className="w-full text-xs">
             <tbody>
               {data.items.map((e) => (
-                <tr key={e.id} className="table-row align-top">
-                  <td className="p-2 whitespace-nowrap">{new Date(e.ts).toLocaleString()}</td>
-                  <td className="p-2 font-medium">{e.kind}</td>
-                  <td className="p-2 text-muted">{e.user_id ?? "—"}</td>
-                  <td className="p-2 text-muted">{e.country ?? ""}</td>
-                  <td className="p-2 font-mono text-[10px] text-muted max-w-80 truncate" title={JSON.stringify(e.details)}>
+                <tr key={e.id} className="table-row align-top hover:bg-surface-hover/40">
+                  <td className="p-2.5 whitespace-nowrap tabular-nums">{new Date(e.ts).toLocaleString()}</td>
+                  <td className="p-2.5 font-bold text-white">{e.kind}</td>
+                  <td className="p-2.5 text-muted">{e.user_id ?? "—"}</td>
+                  <td className="p-2.5 text-muted">{e.country ?? ""}</td>
+                  <td className="p-2.5 font-mono text-[10px] text-muted max-w-80 truncate" title={JSON.stringify(e.details)}>
                     {JSON.stringify(e.details)}
                   </td>
                 </tr>
@@ -590,7 +628,7 @@ function SettingsTab({ guard }: { guard: Guard }) {
   if (!draft) return error ? <ErrorText error={error} /> : <Spinner />;
   return (
     <form
-      className="card p-4 grid gap-3 max-w-lg"
+      className="card p-5 grid gap-3.5 max-w-lg"
       onSubmit={(e) => {
         e.preventDefault();
         setSaved(false);
@@ -599,12 +637,12 @@ function SettingsTab({ guard }: { guard: Guard }) {
           .catch(setError);
       }}
     >
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={draft.registrationOpen} onChange={(e) => setDraft({ ...draft, registrationOpen: e.target.checked })} />
+      <label className="flex items-center gap-2.5 text-sm rounded-xl bg-surface-2 border border-line px-3.5 py-2.5 cursor-pointer">
+        <input type="checkbox" className="accent-[var(--color-primary)]" checked={draft.registrationOpen} onChange={(e) => setDraft({ ...draft, registrationOpen: e.target.checked })} />
         {t("admin.registrationOpen")}
       </label>
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={draft.roomCreationOpen} onChange={(e) => setDraft({ ...draft, roomCreationOpen: e.target.checked })} />
+      <label className="flex items-center gap-2.5 text-sm rounded-xl bg-surface-2 border border-line px-3.5 py-2.5 cursor-pointer">
+        <input type="checkbox" className="accent-[var(--color-primary)]" checked={draft.roomCreationOpen} onChange={(e) => setDraft({ ...draft, roomCreationOpen: e.target.checked })} />
         {t("admin.roomCreationOpen")}
       </label>
       <label>
@@ -613,12 +651,12 @@ function SettingsTab({ guard }: { guard: Guard }) {
       </label>
       <label>
         <span className="label">{t("admin.maxRooms")}</span>
-        <input className="input w-24" type="number" min={1} max={5} value={draft.maxRoomsPerUser} onChange={(e) => setDraft({ ...draft, maxRoomsPerUser: Number(e.target.value) })} />
+        <input className="input w-28" type="number" min={1} max={5} value={draft.maxRoomsPerUser} onChange={(e) => setDraft({ ...draft, maxRoomsPerUser: Number(e.target.value) })} />
       </label>
       <ErrorText error={error} />
       <div className="flex items-center gap-3">
         <button className="btn-primary">{t("common.save")}</button>
-        {saved && <span className="text-sm text-primary">✓</span>}
+        {saved && <span className="chip bg-primary/15 text-primary">Saved</span>}
       </div>
     </form>
   );

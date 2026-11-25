@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
-import { ArrowLeft, Eye, Info, KeyRound, Lock, Mail, Plus, RefreshCw, Search, Unlock } from "lucide-react";
+import { ArrowLeft, Eye, Globe, Info, KeyRound, Lock, Mail, Plus, RefreshCw, Search, Users } from "lucide-react";
 import { BOT_DIFFICULTIES, GAME_CATALOG, isGameType, type GameType, type RoomSummary } from "@croco/shared/client";
 import { ApiError, get, post } from "../lib/api";
 import { useT } from "../i18n";
-import { EmptyState, ErrorText, Modal, Spinner, UserName } from "../components/ui";
+import { Avatar, EmptyState, ErrorText, Modal, Spinner, UserName } from "../components/ui";
+import { GAME_THEMES, GameArtwork, GameBadgeIcon } from "../components/GameArt";
 import { defaultOptions, GAME_OPTIONS } from "../games/options";
 
 const FILTERS = ["all", "public", "password", "invite", "waiting", "active", "seats"] as const;
@@ -18,6 +19,7 @@ export default function Rooms() {
 function RoomBrowser({ game }: { game: GameType }) {
   const t = useT();
   const navigate = useNavigate();
+  const theme = GAME_THEMES[game];
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
   const [q, setQ] = useState("");
   const [rooms, setRooms] = useState<RoomSummary[] | null>(null);
@@ -56,91 +58,156 @@ function RoomBrowser({ game }: { game: GameType }) {
 
   return (
     <div className="grid gap-4 fade-in">
-      <div className="flex flex-wrap items-center gap-2">
-        <Link to="/" className="btn-ghost btn-sm">
-          <ArrowLeft size={14} /> {t("rooms.backToGames")}
-        </Link>
-        <h1 className="text-lg font-bold">{t("rooms.title", { game: t(`games.${game}.name`) })}</h1>
-        <div className="ml-auto flex gap-2 flex-wrap">
-          <button className="btn-ghost btn-sm" onClick={() => setInviteOpen(true)}>
-            <KeyRound size={14} /> <span className="hidden sm:inline">{t("rooms.joinWithCode")}</span>
-          </button>
-          <button className="btn-ghost btn-sm" onClick={() => void load()}>
-            <RefreshCw size={14} /> {t("common.refresh")}
-          </button>
-          <button className="btn-primary btn-sm" onClick={() => setCreating(true)}>
-            <Plus size={14} /> {t("rooms.create")}
-          </button>
+      {/* Game Server Browser Banner */}
+      <section className={`relative overflow-hidden rounded-2xl border border-line bg-gradient-to-r ${theme.headerBg} p-4 sm:p-5`}>
+        <div className="absolute right-0 top-0 bottom-0 w-56 opacity-40 pointer-events-none hidden sm:block">
+          <GameArtwork game={game} className="w-full h-full" />
         </div>
-      </div>
-      <div className="card p-3 flex flex-wrap gap-2 items-center">
+        <div className="relative z-10 flex flex-wrap items-center gap-3">
+          <Link to="/" className="btn-secondary btn-sm px-2.5">
+            <ArrowLeft size={14} /> {t("rooms.backToGames")}
+          </Link>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <GameBadgeIcon game={game} size={24} />
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-black text-white tracking-tight truncate">{t("rooms.title", { game: t(`games.${game}.name`) })}</h1>
+              <p className="text-xs text-text-2/80 truncate">{t(`games.${game}.desc`)}</p>
+            </div>
+          </div>
+          <div className="ml-auto flex gap-2 flex-wrap">
+            <button className="btn-secondary btn-sm" onClick={() => setInviteOpen(true)}>
+              <KeyRound size={14} /> <span className="hidden sm:inline">{t("rooms.joinWithCode")}</span>
+            </button>
+            <button className="btn-secondary btn-sm" onClick={() => void load()}>
+              <RefreshCw size={14} /> <span className="hidden sm:inline">{t("common.refresh")}</span>
+            </button>
+            <button className="btn-primary btn-sm" onClick={() => setCreating(true)}>
+              <Plus size={14} /> {t("rooms.create")}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Search & Tactical Filter Strip */}
+      <div className="card p-3 flex flex-wrap gap-2.5 items-center">
         <div className="relative w-full sm:w-64">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-          <input className="input pl-8" placeholder={t("rooms.searchPlaceholder")} value={q} maxLength={40} onChange={(e) => setQ(e.target.value)} aria-label={t("common.search")} />
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+          <input className="input pl-9 h-9 text-xs" placeholder={t("rooms.searchPlaceholder")} value={q} maxLength={40} onChange={(e) => setQ(e.target.value)} aria-label={t("common.search")} />
         </div>
         <div className="flex flex-wrap gap-1" role="tablist">
           {FILTERS.map((f) => (
-            <button key={f} role="tab" aria-selected={filter === f} className={filter === f ? "btn-secondary btn-sm" : "btn-ghost btn-sm"} onClick={() => setFilter(f)}>
+            <button
+              key={f}
+              role="tab"
+              aria-selected={filter === f}
+              className={`h-8 px-3 rounded-full text-xs font-semibold transition-colors ${
+                filter === f ? "bg-primary text-[#04180b]" : "bg-surface-2 border border-line text-text-2 hover:border-line-strong hover:text-white"
+              }`}
+              onClick={() => setFilter(f)}
+            >
               {t(`rooms.filters.${f}`)}
             </button>
           ))}
         </div>
       </div>
+
       <ErrorText error={error} />
-      <div className="card overflow-hidden">
+
+      {/* Room Server List */}
+      <div className="card overflow-x-auto">
         {rooms === null ? (
           <Spinner />
         ) : rooms.length === 0 ? (
-          <EmptyState>{t("rooms.empty")}</EmptyState>
+          <EmptyState icon={<Users size={20} />}>{t("rooms.empty")}</EmptyState>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-surface-2 text-muted text-xs uppercase tracking-wide">
+            <thead className="bg-surface-2 text-muted text-[11px] uppercase tracking-wider border-b border-line">
               <tr>
-                <th className="text-left px-3 py-2 w-8" aria-label={t("rooms.cols.access")} />
-                <th className="text-left px-3 py-2">{t("rooms.cols.name")}</th>
-                <th className="text-left px-3 py-2 hidden md:table-cell">{t("rooms.cols.host")}</th>
-                <th className="text-left px-3 py-2">{t("rooms.cols.players")}</th>
-                <th className="text-left px-3 py-2 hidden sm:table-cell">{t("rooms.cols.status")}</th>
-                <th className="text-left px-3 py-2 hidden lg:table-cell">{t("rooms.cols.stage")}</th>
-                <th className="px-3 py-2" />
+                <th className="text-left px-3.5 py-2.5 w-10" aria-label={t("rooms.cols.access")} />
+                <th className="text-left px-3 py-2.5">{t("rooms.cols.name")}</th>
+                <th className="text-left px-3 py-2.5 hidden md:table-cell">{t("rooms.cols.host")}</th>
+                <th className="text-left px-3 py-2.5">{t("rooms.cols.players")}</th>
+                <th className="text-left px-3 py-2.5 hidden sm:table-cell">{t("rooms.cols.status")}</th>
+                <th className="text-left px-3 py-2.5 hidden lg:table-cell">{t("rooms.cols.stage")}</th>
+                <th className="px-3.5 py-2.5" />
               </tr>
             </thead>
             <tbody>
               {rooms.map((r) => {
                 const full = r.players >= r.maxPlayers;
+                const fillPct = Math.min(100, Math.round((r.players / Math.max(1, r.maxPlayers)) * 100));
                 return (
-                  <tr key={r.id} className="table-row hover:bg-surface-2/60">
-                    <td className="px-3 py-2 text-muted">
-                      {r.visibility === "invite" ? <Mail size={14} /> : r.hasPassword ? <Lock size={14} className="text-warning" /> : <Unlock size={14} />}
+                  <tr key={r.id} className="table-row hover:bg-surface-hover/70">
+                    <td className="px-3.5 py-3">
+                      {r.visibility === "invite" ? (
+                        <span className="inline-flex size-7 rounded-lg bg-accent/15 border border-accent/30 text-accent items-center justify-center" title={t("create.invite")}>
+                          <Mail size={13} />
+                        </span>
+                      ) : r.hasPassword ? (
+                        <span className="inline-flex size-7 rounded-lg bg-warning/15 border border-warning/35 text-warning items-center justify-center" title={t("rooms.filters.password")}>
+                          <Lock size={13} />
+                        </span>
+                      ) : (
+                        <span className="inline-flex size-7 rounded-lg bg-primary/12 border border-primary/25 text-primary items-center justify-center" title={t("create.public")}>
+                          <Globe size={13} />
+                        </span>
+                      )}
                     </td>
-                    <td className="px-3 py-2 font-medium max-w-[12rem] truncate">{r.name}</td>
-                    <td className="px-3 py-2 hidden md:table-cell">
-                      <UserName user={r.host} />
+                    <td className="px-3 py-3">
+                      <div className="font-bold text-white max-w-[14rem] truncate">{r.name}</div>
+                      <div className="text-[11px] text-muted md:hidden truncate">{r.host.username}</div>
                     </td>
-                    <td className="px-3 py-2 tabular-nums">
-                      {r.players}/{r.maxPlayers}
-                      {r.spectators > 0 && <span className="text-muted text-xs"> · 👁 {r.spectators}</span>}
+                    <td className="px-3 py-3 hidden md:table-cell">
+                      <div className="flex items-center gap-2">
+                        <Avatar id={r.host.avatar} size={24} />
+                        <UserName user={r.host} className="text-xs font-semibold text-text-2" />
+                      </div>
                     </td>
-                    <td className="px-3 py-2 hidden sm:table-cell">
-                      <span className={`chip ${r.phase === "playing" ? "bg-gold/15 text-gold" : full ? "bg-danger/15 text-danger" : "bg-primary/15 text-primary"}`}>
+                    <td className="px-3 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-white tabular-nums text-xs">
+                          {r.players}/{r.maxPlayers}
+                        </span>
+                        <span className="hidden sm:block w-14 h-1.5 rounded-full bg-surface-3 overflow-hidden border border-line/70">
+                          <span className={`block h-full rounded-full ${full ? "bg-danger" : "bg-primary"}`} style={{ width: `${fillPct}%` }} />
+                        </span>
+                        {r.spectators > 0 && (
+                          <span className="inline-flex items-center gap-1 text-muted text-[11px] tabular-nums">
+                            <Eye size={12} /> {r.spectators}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3 py-3 hidden sm:table-cell">
+                      <span
+                        className={`chip border ${
+                          r.phase === "playing"
+                            ? "bg-gold/15 text-gold border-gold/35"
+                            : full
+                              ? "bg-danger/15 text-danger border-danger/35"
+                              : "bg-primary/15 text-primary border-primary/35"
+                        }`}
+                      >
                         {r.phase === "playing" ? t("rooms.status.playing") : full ? t("rooms.status.full") : t("rooms.status.waiting")}
                       </span>
                     </td>
-                    <td className="px-3 py-2 hidden lg:table-cell text-muted text-xs">{r.stage ?? "—"}</td>
-                    <td className="px-3 py-2 text-right whitespace-nowrap">
-                      <button className="btn-ghost btn-sm" onClick={() => setDetailsFor(r)} title={t("rooms.details")} aria-label={t("rooms.details")}>
-                        <Info size={14} />
-                      </button>
-                      {!full && r.phase === "waiting" && (
-                        <button className="btn-primary btn-sm" onClick={() => (r.hasPassword ? setPasswordFor(r) : void join(r).catch(setError))}>
-                          {t("rooms.join")}
+                    <td className="px-3 py-3 hidden lg:table-cell text-muted text-xs">{r.stage ?? "—"}</td>
+                    <td className="px-3.5 py-3 text-right whitespace-nowrap">
+                      <div className="inline-flex items-center gap-1.5">
+                        <button className="btn-ghost btn-sm size-8 px-0" onClick={() => setDetailsFor(r)} title={t("rooms.details")} aria-label={t("rooms.details")}>
+                          <Info size={14} />
                         </button>
-                      )}
-                      {r.allowSpectators && (
-                        <button className="btn-ghost btn-sm" onClick={() => void join(r, { asSpectator: true }).catch(setError)} title={t("rooms.spectate")}>
-                          <Eye size={14} />
-                        </button>
-                      )}
+                        {r.allowSpectators && (
+                          <button className="btn-secondary btn-sm size-8 px-0" onClick={() => void join(r, { asSpectator: true }).catch(setError)} title={t("rooms.spectate")} aria-label={t("rooms.spectate")}>
+                            <Eye size={14} />
+                          </button>
+                        )}
+                        {!full && r.phase === "waiting" && (
+                          <button className="btn-primary btn-sm" onClick={() => (r.hasPassword ? setPasswordFor(r) : void join(r).catch(setError))}>
+                            {t("rooms.join")}
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -149,6 +216,7 @@ function RoomBrowser({ game }: { game: GameType }) {
           </table>
         )}
       </div>
+
       <PasswordDialog room={passwordFor} onClose={() => setPasswordFor(null)} onJoin={(password) => join(passwordFor!, { password })} />
       <RoomDetailsDialog
         room={detailsFor}
@@ -171,23 +239,23 @@ function RoomDetailsDialog({ room, onClose, onJoin }: { room: RoomSummary | null
   const full = room.players >= room.maxPlayers;
   return (
     <Modal open onClose={onClose} title={t("rooms.details")}>
-      <dl className="grid grid-cols-2 gap-y-2 text-sm mb-4">
-        <dt className="text-muted">{t("rooms.cols.name")}</dt>
-        <dd className="font-medium truncate">{room.name}</dd>
-        <dt className="text-muted">{t("rooms.cols.host")}</dt>
+      <dl className="grid grid-cols-2 gap-y-2.5 text-sm mb-5 panel-inset p-3.5">
+        <dt className="text-muted text-xs">{t("rooms.cols.name")}</dt>
+        <dd className="font-bold text-white truncate">{room.name}</dd>
+        <dt className="text-muted text-xs">{t("rooms.cols.host")}</dt>
         <dd><UserName user={room.host} /></dd>
-        <dt className="text-muted">{t("rooms.cols.players")}</dt>
-        <dd className="tabular-nums">{room.players}/{room.maxPlayers}</dd>
-        <dt className="text-muted">{t("rooms.cols.access")}</dt>
+        <dt className="text-muted text-xs">{t("rooms.cols.players")}</dt>
+        <dd className="tabular-nums font-semibold">{room.players}/{room.maxPlayers}</dd>
+        <dt className="text-muted text-xs">{t("rooms.cols.access")}</dt>
         <dd>{t(`create.${room.visibility}`)}{room.hasPassword ? ` · ${t("rooms.filters.password")}` : ""}</dd>
-        <dt className="text-muted">{t("rooms.cols.status")}</dt>
+        <dt className="text-muted text-xs">{t("rooms.cols.status")}</dt>
         <dd>{t(`rooms.status.${room.phase}`)}</dd>
-        <dt className="text-muted">{t("rooms.cols.stage")}</dt>
+        <dt className="text-muted text-xs">{t("rooms.cols.stage")}</dt>
         <dd>{room.stage ?? "—"}</dd>
       </dl>
       <div className="flex gap-2 justify-end">
         {room.allowSpectators && (
-          <button className="btn-ghost" onClick={() => onJoin(room, true)}>
+          <button className="btn-secondary" onClick={() => onJoin(room, true)}>
             <Eye size={14} /> {t("rooms.spectate")}
           </button>
         )}
@@ -219,7 +287,7 @@ function InviteCodeDialog({ open, onClose, onCode }: { open: boolean; onClose():
       >
         <label className="label" htmlFor="invite-code-input">{t("rooms.enterInviteCode")}</label>
         <input id="invite-code-input" className="input font-mono" value={raw} onChange={(e) => setRaw(e.target.value)} maxLength={200} />
-        <button className="btn-primary" disabled={extracted.length < 22}>
+        <button className="btn-primary h-10" disabled={extracted.length < 22}>
           {t("rooms.join")}
         </button>
       </form>
@@ -243,7 +311,7 @@ function PasswordDialog({ room, onClose, onJoin }: { room: RoomSummary | null; o
         <label className="label" htmlFor="room-password">{t("rooms.enterPassword")}</label>
         <input id="room-password" className="input" type="password" autoComplete="off" maxLength={64} value={password} onChange={(e) => setPassword(e.target.value)} />
         <ErrorText error={error} />
-        <button className="btn-primary" disabled={password.length < 4}>
+        <button className="btn-primary h-10" disabled={password.length < 4}>
           {t("rooms.join")}
         </button>
       </form>
@@ -292,7 +360,9 @@ function CreateRoomDialog({ game, open, onClose, onCreated }: { game: GameType; 
   return (
     <Modal open={open} onClose={onClose} title={t("create.title", { game: t(`games.${game}.name`) })} wide>
       <form onSubmit={(e) => void submit(e)} className="grid gap-4">
-        <div className="grid sm:grid-cols-2 gap-3">
+        {/* Group 1: Room Basics */}
+        <div className="panel-inset p-3.5 grid sm:grid-cols-2 gap-3">
+          <div className="sm:col-span-2 text-xs font-bold uppercase tracking-wider text-primary">{t("ui.roomBasics")}</div>
           <div className="sm:col-span-2">
             <label className="label" htmlFor="room-name">{t("create.name")}</label>
             <input id="room-name" className="input" required minLength={3} maxLength={40} value={form.name} onChange={(e) => set("name", e.target.value)} />
@@ -311,6 +381,11 @@ function CreateRoomDialog({ game, open, onClose, onCreated }: { game: GameType; 
               <input id="create-password" className="input" type="password" autoComplete="new-password" minLength={4} maxLength={64} required={form.visibility === "private"} value={form.password} onChange={(e) => set("password", e.target.value)} />
             </div>
           )}
+        </div>
+
+        {/* Group 2: Seats & Timer */}
+        <div className="panel-inset p-3.5 grid sm:grid-cols-2 gap-3">
+          <div className="sm:col-span-2 text-xs font-bold uppercase tracking-wider text-primary">{t("ui.seatsAndTimer")}</div>
           <div>
             <label className="label" htmlFor="max-players">{t("create.maxPlayers")}</label>
             <select id="max-players" className="input" value={form.maxPlayers} onChange={(e) => set("maxPlayers", Number(e.target.value))}>
@@ -340,21 +415,28 @@ function CreateRoomDialog({ game, open, onClose, onCreated }: { game: GameType; 
             <input id="turn" className="input" type="number" min={10} max={120} value={form.turnSeconds} onChange={(e) => set("turnSeconds", Number(e.target.value))} />
           </div>
         </div>
-        <div className="grid sm:grid-cols-2 gap-2 text-sm">
+
+        {/* Group 3: Table Options */}
+        <div className="panel-inset p-3.5 grid sm:grid-cols-2 gap-2.5 text-sm">
+          <div className="sm:col-span-2 text-xs font-bold uppercase tracking-wider text-primary">{t("ui.roomRules")}</div>
           {(["allowSpectators", "autoStart", "chatEnabled", "allowInvites"] as const).map((k) => (
-            <label key={k} className="flex items-center gap-2">
-              <input type="checkbox" checked={form[k]} onChange={(e) => set(k, e.target.checked)} />
-              {t(`create.${k === "allowSpectators" ? "spectators" : k === "chatEnabled" ? "chat" : k === "allowInvites" ? "invites" : "autoStart"}`)}
+            <label key={k} className="flex items-center gap-2.5 rounded-lg bg-surface-2/70 border border-line/60 px-3 py-2 cursor-pointer">
+              <input type="checkbox" className="accent-[var(--color-primary)]" checked={form[k]} onChange={(e) => set(k, e.target.checked)} />
+              <span className="text-xs font-medium text-text-2">
+                {t(`create.${k === "allowSpectators" ? "spectators" : k === "chatEnabled" ? "chat" : k === "allowInvites" ? "invites" : "autoStart"}`)}
+              </span>
             </label>
           ))}
         </div>
-        <fieldset className="grid sm:grid-cols-2 gap-3 border-t border-line pt-3">
-          <legend className="label px-1">{t("create.gameOptions")}</legend>
+
+        {/* Group 4: Game-Specific Options */}
+        <fieldset className="panel-inset p-3.5 grid sm:grid-cols-2 gap-3">
+          <legend className="text-xs font-bold uppercase tracking-wider text-gold px-1">{t("create.gameOptions")}</legend>
           {GAME_OPTIONS[game].map((opt) => (
             <div key={opt.key}>
               {opt.kind === "boolean" ? (
-                <label className="flex items-center gap-2 text-sm mt-5">
-                  <input type="checkbox" checked={Boolean(gameConfig[opt.key])} onChange={(e) => setGameConfig((g) => ({ ...g, [opt.key]: e.target.checked }))} />
+                <label className="flex items-center gap-2.5 text-xs font-medium text-text-2 mt-4 rounded-lg bg-surface-2/70 border border-line/60 px-3 py-2 cursor-pointer">
+                  <input type="checkbox" className="accent-[var(--color-primary)]" checked={Boolean(gameConfig[opt.key])} onChange={(e) => setGameConfig((g) => ({ ...g, [opt.key]: e.target.checked }))} />
                   {t(`opt.${opt.key}`)}
                 </label>
               ) : (
@@ -388,8 +470,9 @@ function CreateRoomDialog({ game, open, onClose, onCreated }: { game: GameType; 
             </div>
           ))}
         </fieldset>
+
         <ErrorText error={error} />
-        <button className="btn-primary h-11" disabled={busy}>
+        <button className="btn-primary h-11 w-full" disabled={busy}>
           {t("create.submit")}
         </button>
       </form>

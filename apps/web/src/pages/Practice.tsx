@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
-import { GAME_TYPES, isGameType, type GameType, type SeatInfo } from "@croco/shared/client";
+import { ArrowLeft, Dumbbell, Play, RotateCcw, Sparkles, Trophy, Users } from "lucide-react";
+import { GAME_CATALOG, GAME_TYPES, isGameType, type GameType, type SeatInfo } from "@croco/shared/client";
 import type { GameEngine } from "@croco/game-engine";
 import { useT } from "../i18n";
 import { ErrorText, Spinner } from "../components/ui";
+import { GAME_THEMES, GameArtwork, GameBadgeIcon } from "../components/GameArt";
 import { GameBoard } from "../games/GameBoard";
-import { GAME_ICONS } from "./Dashboard";
 
 const PRACTICE_PLAYERS: Record<GameType, number> = {
   joker: 4,
@@ -88,22 +89,52 @@ export default function Practice() {
   const t = useT();
   if (!isGameType(gameType)) {
     return (
-      <div className="grid gap-4 fade-in">
-        <h1 className="text-xl font-bold">{t("practice.title")}</h1>
-        <p className="card p-3 text-sm text-text-2">{t("demo.practiceBanner")}</p>
-        <p className="text-sm text-muted">{t("practice.choose")}</p>
-        <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {GAME_TYPES.map((g) => (
-            <li key={g}>
-              <Link to={`/practice/${g}`} className="card p-4 flex items-center gap-3 hover:border-primary">
-                <span className="size-10 rounded-lg bg-surface-3 flex items-center justify-center text-lg font-bold text-gold">{GAME_ICONS[g]}</span>
-                <span>
-                  <span className="font-semibold block">{t(`games.${g}.name`)}</span>
-                  <span className="text-xs text-muted">{t(`games.${g}.desc`)}</span>
-                </span>
-              </Link>
-            </li>
-          ))}
+      <div className="grid gap-5 fade-in">
+        <div className="rounded-2xl border border-line bg-gradient-to-r from-[#0e3226] via-surface to-surface-2 p-5 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="size-11 rounded-xl bg-primary/15 border border-primary/35 text-primary flex items-center justify-center shrink-0">
+              <Dumbbell size={22} />
+            </span>
+            <div>
+              <h1 className="text-xl font-black tracking-tight text-white">{t("practice.title")}</h1>
+              <p className="text-sm text-muted">{t("practice.choose")}</p>
+            </div>
+          </div>
+          <span className="chip bg-warning/15 text-warning border border-warning/35 h-7 px-3">
+            <Sparkles size={12} /> {t("ui.quickPractice")}
+          </span>
+        </div>
+
+        <p className="rounded-xl border border-warning/35 bg-warning/10 px-4 py-2.5 text-xs sm:text-sm text-text-2">{t("demo.practiceBanner")}</p>
+
+        <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {GAME_TYPES.map((g) => {
+            const theme = GAME_THEMES[g];
+            const info = GAME_CATALOG[g];
+            return (
+              <li key={g} className="game-card">
+                <Link to={`/practice/${g}`} className="flex flex-col flex-1">
+                  <div className={`relative h-24 bg-gradient-to-br ${theme.headerBg} border-b border-line/80 overflow-hidden`}>
+                    <GameArtwork game={g} className="w-full h-full" />
+                    <span className={`chip absolute top-2.5 left-3 ${theme.badgeClass}`}>{theme.badgeText}</span>
+                    <span className="absolute bottom-2 left-3 inline-flex items-center gap-1 text-[11px] font-semibold text-text-2 bg-bg/75 border border-white/10 rounded-full px-2 py-0.5">
+                      <Users size={11} className="text-muted" /> {info.minPlayers === info.maxPlayers ? info.minPlayers : `${info.minPlayers}–${info.maxPlayers}`}
+                    </span>
+                  </div>
+                  <div className="p-4 flex flex-col gap-2 flex-1">
+                    <div className="flex items-center gap-2">
+                      <GameBadgeIcon game={g} size={18} />
+                      <span className="font-extrabold text-white">{t(`games.${g}.name`)}</span>
+                    </div>
+                    <span className="text-xs text-muted leading-relaxed">{t(`games.${g}.desc`)}</span>
+                    <span className="btn-primary btn-sm mt-auto w-full">
+                      <Play size={13} className="fill-current" /> {t("practice.start")}
+                    </span>
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </div>
     );
@@ -121,36 +152,50 @@ function PracticeGame({ gameType }: { gameType: GameType }) {
       ? { seat: 0, occupant: "human", user: { id: "local", username: t("common.you"), avatar: "a01", badges: { admin: false, moderator: false } }, connected: true, botControlled: false, ready: true }
       : { seat: i, occupant: "bot", botName: `#${i}`, botDifficulty: "medium", connected: true, botControlled: false, ready: true },
   );
+
   return (
     <div className="grid gap-3 fade-in">
-      <div className="flex flex-wrap items-center gap-2">
-        <Link to="/practice" className="btn-ghost btn-sm">
-          {t("common.back")}
+      <div className="card px-3.5 py-2.5 flex flex-wrap items-center gap-2.5">
+        <Link to="/practice" className="btn-ghost btn-sm px-2.5">
+          <ArrowLeft size={14} /> {t("common.back")}
         </Link>
-        <h1 className="font-bold">
-          {t("practice.title")}: {t(`games.${gameType}.name`)}
-        </h1>
+        <div className="flex items-center gap-2 min-w-0">
+          <GameBadgeIcon game={gameType} size={20} />
+          <h1 className="font-extrabold text-sm sm:text-base text-white truncate">
+            {t("practice.title")}: {t(`games.${gameType}.name`)}
+          </h1>
+          <span className={`chip hidden sm:inline-flex ${GAME_THEMES[gameType].badgeClass}`}>{GAME_THEMES[gameType].badgeText}</span>
+        </div>
         <button className="btn-secondary btn-sm ml-auto" onClick={() => setVersion((v) => v + 1)}>
-          {t("practice.newGame")}
+          <RotateCcw size={13} /> {t("practice.newGame")}
         </button>
       </div>
-      <p className="card p-2 text-xs text-warning">{t("demo.practiceBanner")}</p>
+
+      <p className="rounded-xl border border-warning/30 bg-warning/8 px-3.5 py-2 text-xs text-warning">{t("demo.practiceBanner")}</p>
+
       {error && <ErrorText error={error} />}
+
       {!engine || state === null ? (
         <Spinner />
       ) : (
         <>
           {humanOut && !engine.isOver(state) && (
-            <div className="card p-3 text-sm flex items-center gap-3">
-              {t("practice.busted")}
+            <div className="card p-4 border-danger/45 bg-danger/10 text-sm flex flex-wrap items-center gap-3">
+              <span className="font-semibold text-white">{t("practice.busted")}</span>
               <button className="btn-primary btn-sm ml-auto" onClick={() => setVersion((v) => v + 1)}>
-                {t("practice.newGame")}
+                <RotateCcw size={13} /> {t("practice.newGame")}
               </button>
             </div>
           )}
           {engine.isOver(state) && (
-            <div className="card p-3 text-sm">
-              {t("game.finished")} — {t("game.placement")}: #{engine.outcome(state).placements[0]} / {players}
+            <div className="card p-4 border-gold/50 bg-gold/10 text-sm flex flex-wrap items-center gap-3">
+              <Trophy size={18} className="text-gold shrink-0" />
+              <span className="font-bold text-white">
+                {t("game.finished")} — {t("game.placement")}: #{engine.outcome(state).placements[0]} / {players}
+              </span>
+              <button className="btn-gold btn-sm ml-auto" onClick={() => setVersion((v) => v + 1)}>
+                <RotateCcw size={13} /> {t("practice.newGame")}
+              </button>
             </div>
           )}
           <GameBoard gameType={gameType} view={engine.view(state, 0)} deadline={null} mySeat={0} seats={seats} onAction={act} practice />

@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import type { InvitationDto, NotificationDto } from "@croco/shared/client";
+import { Bell, CheckCheck, MailOpen } from "lucide-react";
+import type { GameType, InvitationDto, NotificationDto } from "@croco/shared/client";
 import { get, post } from "../lib/api";
 import { useSession } from "../store/session";
 import { useT } from "../i18n";
 import { EmptyState, ErrorText, Section } from "../components/ui";
+import { GameBadgeIcon } from "../components/GameArt";
 
 export default function Notifications() {
   const t = useT();
@@ -36,22 +38,32 @@ export default function Notifications() {
   }
 
   return (
-    <div className="grid gap-4 fade-in">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">{t("notifications.title")}</h1>
-        <button className="btn-ghost btn-sm" onClick={() => void markAll()}>
-          {t("notifications.markAll")}
+    <div className="grid gap-4 fade-in max-w-3xl">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <span className="size-10 rounded-xl bg-primary/15 border border-primary/35 text-primary flex items-center justify-center">
+            <Bell size={20} />
+          </span>
+          <h1 className="text-xl font-black text-white tracking-tight">{t("notifications.title")}</h1>
+        </div>
+        <button className="btn-secondary btn-sm" onClick={() => void markAll()}>
+          <CheckCheck size={14} /> {t("notifications.markAll")}
         </button>
       </div>
+
       <ErrorText error={error} />
+
       {invites.length > 0 && (
-        <Section title={t("room.invite")}>
-          <ul className="grid gap-2">
+        <Section title={t("room.invite")} icon={<MailOpen size={15} />}>
+          <ul className="grid gap-2.5">
             {invites.map((i) => (
-              <li key={i.id} className="flex flex-wrap items-center gap-2 text-sm">
-                <span>{t("notifications.kinds.game_invitation", { name: i.from.username, room: i.room.name })}</span>
-                <span className="text-xs text-muted">{t(`games.${i.room.gameType}.name`)}</span>
-                <div className="ml-auto flex gap-1">
+              <li key={i.id} className="flex flex-wrap items-center gap-3 rounded-xl bg-primary/10 border border-primary/35 px-3.5 py-3 text-sm">
+                <GameBadgeIcon game={i.room.gameType as GameType} size={22} />
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold text-white">{t("notifications.kinds.game_invitation", { name: i.from.username, room: i.room.name })}</div>
+                  <span className="text-xs text-muted">{t(`games.${i.room.gameType}.name`)}</span>
+                </div>
+                <div className="flex gap-1.5">
                   <button
                     className="btn-primary btn-sm"
                     onClick={() =>
@@ -71,23 +83,25 @@ export default function Notifications() {
           </ul>
         </Section>
       )}
-      <div className="card divide-y divide-line">
+
+      <div className="card divide-y divide-line overflow-hidden">
         {items.length === 0 ? (
-          <EmptyState>{t("notifications.empty")}</EmptyState>
+          <EmptyState icon={<Bell size={20} />}>{t("notifications.empty")}</EmptyState>
         ) : (
           items.map((n) => (
-            <div key={n.id} className={`p-3 text-sm flex gap-3 ${n.read ? "text-muted" : ""}`}>
-              {!n.read && <span className="size-2 mt-1.5 rounded-full bg-primary shrink-0" />}
-              <span className="flex-1">
+            <div key={n.id} className={`p-3.5 text-sm flex items-start gap-3 ${n.read ? "text-muted" : "bg-primary/6 text-white"}`}>
+              <span className={`size-2 mt-1.5 rounded-full shrink-0 ${n.read ? "bg-line-strong" : "bg-primary"}`} />
+              <span className="flex-1 leading-snug">
                 {t(`notifications.kinds.${n.kind}`, { name: n.actor?.username ?? "", room: String(n.data["roomName"] ?? ""), placement: String(n.data["placement"] ?? "") })}
               </span>
-              <time className="text-xs text-muted whitespace-nowrap">{new Date(n.createdAt).toLocaleString()}</time>
+              <time className="text-[11px] text-muted whitespace-nowrap tabular-nums">{new Date(n.createdAt).toLocaleString()}</time>
             </div>
           ))
         )}
       </div>
+
       {cursor && (
-        <button className="btn-ghost mx-auto" onClick={() => void load(cursor)}>
+        <button className="btn-secondary mx-auto" onClick={() => void load(cursor)}>
           {t("common.more")}
         </button>
       )}
