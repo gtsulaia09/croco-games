@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { GameType, SeatInfo } from "@croco/shared/client";
 import { useT } from "../i18n";
-import { Avatar, Countdown, suitSymbol } from "../components/ui";
+import { AdminBadge, Avatar, Countdown, suitSymbol } from "../components/ui";
 
 export interface BoardProps<V = unknown> {
   gameType: GameType;
@@ -56,8 +56,9 @@ export function SeatTag({ seat, seats, active, children }: { seat: number; seats
     <div className={`flex items-center gap-2 rounded-lg px-2 py-1.5 border text-xs min-w-0 ${active ? "border-primary bg-primary/10" : "border-line bg-surface-2"}`}>
       {s?.occupant === "human" ? <Avatar id={s.user?.avatar} size={24} /> : <span className="size-6 rounded-full bg-secondary/50 flex items-center justify-center text-[10px]">🤖</span>}
       <div className="min-w-0">
-        <div className="font-semibold text-text-2 truncate max-w-[9rem]">
-          {name} {s?.user?.badges.admin && <span className="text-gold">★</span>}
+        <div className="font-semibold text-text-2 flex items-center gap-1 min-w-0">
+          <span className="truncate max-w-[9rem]">{name}</span>
+          {s?.user?.badges.admin && <AdminBadge />}
         </div>
         <div className="text-muted flex flex-wrap gap-x-2">
           {s && !s.connected && s.occupant === "human" && <span className="text-warning">{t("room.disconnected")}</span>}

@@ -202,6 +202,7 @@ function Stat({ label, value }: { label: string; value: ReactNode }) {
 function Overview({ guard }: { guard: Guard }) {
   const t = useT();
   const { data, error } = useLoad<{ users: number; activeToday: number; online: number; rooms: Record<string, number>; matchesToday: Record<string, number>; openReports: number; openIntegrityFlags: number }>(guard, "/api/admin/overview");
+  const online = useLoad<{ items: Array<{ user: PublicUser; status: string; roomId: string | null; gameType: string | null }> }>(guard, "/api/admin/online");
   if (error) return <ErrorText error={error} />;
   if (!data) return <Spinner />;
   return (
@@ -210,21 +211,55 @@ function Overview({ guard }: { guard: Guard }) {
         <Stat label={t("admin.users")} value={data.users} />
         <Stat label={t("admin.activeToday")} value={data.activeToday} />
         <Stat label={t("admin.online")} value={data.online} />
-        <Stat label={t("rooms.title")} value={(data.rooms["waiting"] ?? 0) + (data.rooms["playing"] ?? 0)} />
+        <Stat label={t("admin.tabs.rooms")} value={(data.rooms["waiting"] ?? 0) + (data.rooms["playing"] ?? 0)} />
         <Stat label={t("admin.openReports")} value={data.openReports} />
         <Stat label={t("admin.openFlags")} value={data.openIntegrityFlags} />
       </div>
-      <Section title={t("admin.matchesToday")}>
-        <ul className="grid sm:grid-cols-2 gap-1 text-sm">
-          {Object.entries(data.matchesToday).map(([g, n]) => (
-            <li key={g} className="flex justify-between">
-              <span>{t(`games.${g}.name`)}</span>
-              <span className="tabular-nums">{n}</span>
-            </li>
-          ))}
-          {Object.keys(data.matchesToday).length === 0 && <li className="text-muted">—</li>}
-        </ul>
-      </Section>
+      <div className="grid lg:grid-cols-2 gap-3">
+        <Section title={t("admin.matchesToday")}>
+          <ul className="grid gap-1 text-sm">
+            {Object.entries(data.matchesToday).map(([g, n]) => (
+              <li key={g} className="flex justify-between">
+                <span>{t(`games.${g}.name`)}</span>
+                <span className="tabular-nums">{n}</span>
+              </li>
+            ))}
+            {Object.keys(data.matchesToday).length === 0 && <li className="text-muted">—</li>}
+          </ul>
+        </Section>
+        <Section title={t("admin.onlineUsers")}>
+          <ErrorText error={online.error} />
+          {!online.data ? (
+            <Spinner />
+          ) : online.data.items.length === 0 ? (
+            <p className="text-sm text-muted">—</p>
+          ) : (
+            <ul className="grid gap-1.5 text-sm max-h-64 overflow-y-auto">
+              {online.data.items.map((o) => (
+                <li key={o.user.id} className="flex items-center gap-2">
+                  <UserName user={o.user} />
+                  <span className="text-xs text-muted">
+                    {o.status}
+                    {o.gameType ? ` · ${t(`games.${o.gameType}.name`)}` : ""}
+                  </span>
+                  {o.roomId && !o.user.badges.admin && (
+                    <button
+                      className="btn-ghost btn-sm text-danger ml-auto"
+                      onClick={() =>
+                        guard(post(`/api/admin/rooms/${o.roomId}/kick`, { userId: o.user.id, reason: "Removed by staff" }))
+                          .then(online.reload)
+                          .catch(online.setError)
+                      }
+                    >
+                      {t("admin.kick")}
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+      </div>
     </div>
   );
 }

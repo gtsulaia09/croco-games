@@ -1,10 +1,20 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Navigate } from "react-router";
 import { AVATAR_IDS, checkUsername } from "@croco/shared/client";
 import { post } from "../lib/api";
+import { config } from "../lib/config";
 import { useSession } from "../store/session";
 import { useLocale, useT } from "../i18n";
 import { Avatar, ErrorText } from "../components/ui";
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render(container: HTMLElement, opts: { sitekey: string; theme?: "dark"; callback: (token: string) => void; "expired-callback"?: () => void }): string;
+      remove(widgetId: string): void;
+    };
+  }
+}
 
 export default function Setup() {
   const t = useT();
@@ -12,8 +22,41 @@ export default function Setup() {
   const { locale, setLocale } = useLocale();
   const [username, setUsername] = useState("");
   const [avatar, setAvatar] = useState("a01");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const siteKey = config.turnstileSiteKey;
+
+  useEffect(() => {
+    if (!siteKey || !turnstileRef.current) return;
+    let widgetId: string | null = null;
+    let cancelled = false;
+    const mount = () => {
+      if (cancelled || !turnstileRef.current || !window.turnstile) return;
+      widgetId = window.turnstile.render(turnstileRef.current, {
+        sitekey: siteKey,
+        theme: "dark",
+        callback: (tok) => setTurnstileToken(tok),
+        "expired-callback": () => setTurnstileToken(null),
+      });
+    };
+    if (window.turnstile) {
+      mount();
+    } else {
+      const script = document.createElement("script");
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      script.async = true;
+      script.defer = true;
+      script.addEventListener("load", mount);
+      document.head.appendChild(script);
+    }
+    return () => {
+      cancelled = true;
+      if (widgetId && window.turnstile) window.turnstile.remove(widgetId);
+    };
+  }, [siteKey]);
+
   if (status !== "needsProfile") return <Navigate to="/" replace />;
 
   const local = checkUsername(username);
@@ -25,7 +68,12 @@ export default function Setup() {
     setBusy(true);
     setError(null);
     try {
-      await post("/api/me/profile", { username: local.value, avatar, locale });
+      await post("/api/me/profile", {
+        username: local.value,
+        avatar,
+        locale,
+        ...(turnstileToken ? { turnstileToken } : {}),
+      });
       await refresh();
     } catch (err) {
       setError(err);
@@ -63,8 +111,9 @@ export default function Setup() {
           ))}
         </div>
       </div>
+      {siteKey && <div ref={turnstileRef} />}
       <ErrorText error={error} />
-      <button className="btn-primary h-11" disabled={busy || !local.ok}>
+      <button className="btn-primary h-11" disabled={busy || !local.ok || Boolean(siteKey && !turnstileToken)}>
         {t("setup.create")}
       </button>
     </form>

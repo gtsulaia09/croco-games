@@ -1,8 +1,6 @@
 # Croco Games — Security Architecture
 
-Status: Phase 0 design, kept in sync with the implementation. Where something is designed but
-not yet implemented, it is marked **(planned)**. Implementation status per control lives in
-`SECURITY_CONTROLS.md` and `ASVS_CHECKLIST.md`.
+Status: **Implemented architecture**, synchronized with the codebase. Per-control implementation status and automated test evidence live in `SECURITY_CONTROLS.md` and `ASVS_CHECKLIST.md`.
 
 ## 1. Architecture overview
 

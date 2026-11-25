@@ -78,5 +78,13 @@ export function App() {
   useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
+  useEffect(() => {
+    const syncVisibility = () => {
+      document.documentElement.dataset["hidden"] = document.hidden ? "true" : "false";
+    };
+    syncVisibility();
+    document.addEventListener("visibilitychange", syncVisibility);
+    return () => document.removeEventListener("visibilitychange", syncVisibility);
+  }, []);
   return <RouterProvider router={router} />;
 }

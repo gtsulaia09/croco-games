@@ -119,6 +119,8 @@ export const ka: Dictionary = {
     passwordPrompt: "ოთახი პაროლით არის დაცული",
     enterPassword: "შეიყვანე ოთახის პაროლი",
     joinWithCode: "მოწვევის კოდით შესვლა",
+    details: "ოთახის დეტალები",
+    enterInviteCode: "ჩასვი მოწვევის კოდი ან ბმული",
   },
   create: {
     title: "{game} — ოთახის შექმნა",
@@ -357,6 +359,7 @@ export const ka: Dictionary = {
   settings: {
     title: "პარამეტრები",
     profile: "პროფილი",
+    playerId: "მოთამაშის ID",
     avatar: "ავატარი",
     language: "ენა",
     showOnline: "სხვებს დავენახო ონლაინ",
@@ -390,6 +393,8 @@ export const ka: Dictionary = {
     users: "მომხმარებლები",
     activeToday: "დღეს აქტიური",
     online: "ონლაინ",
+    onlineUsers: "ონლაინ მომხმარებლები",
+    inRoom: "ოთახშია",
     openReports: "ღია საჩივრები",
     openFlags: "საეჭვო შემთხვევები",
     matchesToday: "დღევანდელი მატჩები",

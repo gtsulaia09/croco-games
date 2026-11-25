@@ -4,7 +4,7 @@ import { api, ApiError, get, post } from "../lib/api";
 import { deleteFirebaseUser, reauthenticate } from "../lib/firebase";
 import { useSession } from "../store/session";
 import { useLocale, useT } from "../i18n";
-import { Avatar, ErrorText, Section } from "../components/ui";
+import { Avatar, ErrorText, Section, UserName } from "../components/ui";
 
 export default function Settings() {
   const t = useT();
@@ -58,6 +58,17 @@ export default function Settings() {
       <ErrorText error={error} />
       <Section title={t("settings.profile")}>
         <div className="grid gap-4">
+          <div className="flex items-center gap-3">
+            <Avatar id={profile.avatar} size={44} />
+            <div className="min-w-0">
+              <div className="font-semibold text-base">
+                <UserName user={profile} />
+              </div>
+              <div className="text-xs text-muted font-mono">
+                {t("settings.playerId")}: {profile.id}
+              </div>
+            </div>
+          </div>
           <div>
             <span className="label">{t("settings.avatar")}</span>
             <div className="grid grid-cols-8 sm:grid-cols-12 gap-2">

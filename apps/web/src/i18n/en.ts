@@ -117,6 +117,8 @@ export const en = {
     passwordPrompt: "This room is password-protected",
     enterPassword: "Enter room password",
     joinWithCode: "Join with invite code",
+    details: "Room details",
+    enterInviteCode: "Paste invite code or link",
   },
   create: {
     title: "Create a {game} room",
@@ -355,6 +357,7 @@ export const en = {
   settings: {
     title: "Settings",
     profile: "Profile",
+    playerId: "Player ID",
     avatar: "Avatar",
     language: "Language",
     showOnline: "Show me as online to others",
@@ -388,6 +391,8 @@ export const en = {
     users: "Users",
     activeToday: "Active today",
     online: "Online",
+    onlineUsers: "Online users",
+    inRoom: "In room",
     openReports: "Open reports",
     openFlags: "Integrity flags",
     matchesToday: "Matches today",

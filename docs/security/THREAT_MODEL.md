@@ -1,6 +1,6 @@
 # Croco Games — Threat Model
 
-Status: **Phase 0 design artifact, maintained alongside the code.** Last reviewed: 2026-11-25.
+Status: **Maintained alongside the implemented codebase.** Last reviewed: 2026-11-25.
 Methodology: **STRIDE** per component plus scenario analysis of every attack listed in the
 project specification (§3). Severity uses a simple likelihood × impact scale
 (Critical / High / Medium / Low). "Test" references point to automated tests in this
@@ -119,16 +119,16 @@ Legend — **Sev**: inherent severity before controls. **Det**: detection. **Rec
 
 | # | Scenario | Component | Impact | Sev | Preventive controls | Det | Test procedure | Rec |
 |---|---|---|---|---|---|---|---|---|
-| 1 | Account takeover | Auth | Full user account control | High | Firebase-managed credentials; app-level session revocation; suspicious login signals (new country/ASN) logged | `security_events` `login.new_device` | `tests/security` session revocation tests | Revoke all sessions, user resets password; IR §1 |
-| 2 | Credential stuffing | Firebase | Mass account takeover | High | Firebase protections + enumeration protection; Turnstile on profile creation; rate limits | Firebase console, security events | Manual (Firebase side) | IR §1 |
+| 1 | Account takeover | Auth | Full user account control | High | Firebase-managed credentials; app-level session revocation; suspicious login signals (`login.new_country`) logged | `security_events` `login.new_country` | `apps/worker/test/auth.test.ts` session revocation tests | Revoke all sessions, user resets password; IR §2.1 |
+| 2 | Credential stuffing | Firebase | Mass account takeover | High | Firebase protections + enumeration protection; Turnstile on profile creation; rate limits | Firebase console, security events | Manual (Firebase side) | IR §2.1 |
 | 3 | Password attacks | Firebase | Weak passwords guessed | Medium | Firebase password policy (operator configures min length 12) | Firebase | Manual | Force reset |
-| 4 | Brute-force (API) | Worker | Resource abuse | Medium | Per-user + per-IP rate limiting | `ratelimit.exceeded` events | `tests/security/ratelimit` | Auto-recovers |
-| 5 | Session theft | Browser | Impersonation | High | Strict CSP (no inline/eval), no tokens in URLs/logs, short-lived ID tokens, revocation | Concurrent sessions list | Header tests; log-redaction tests | Revoke session |
+| 4 | Brute-force (API) | Worker | Resource abuse | Medium | Per-user + per-IP rate limiting | `ratelimit.exceeded` events | `apps/worker/test/admin.test.ts`, `security-hardening.test.ts` | Auto-recovers |
+| 5 | Session theft | Browser | Impersonation | High | Strict CSP (no inline/eval), no tokens in URLs/logs, short-lived ID tokens, revocation | Concurrent sessions list | `perimeter.test.ts`; `packages/security/src/hardening.test.ts` | Revoke session |
 | 6 | Session fixation | Auth | Attacker-chosen session | Low | No server-issued pre-auth session ids; Firebase issues tokens after auth | — | Design review | — |
-| 7 | Authentication bypass | Worker | Unauthenticated access | Critical | Default-deny middleware on `/api/*` except explicit public routes | 401 metrics | Route inventory test: every route either public-allowlisted or rejects missing/forged/expired tokens | Hotfix + regression test |
-| 8 | Broken access control | Worker/DO | Data modification | Critical | Ownership + state checks per handler (AUTHORIZATION_MATRIX) | `authz.denied` events | Authz tests per endpoint | Hotfix |
-| 9 | IDOR/BOLA | Worker | Read/modify others' data | High | Resource lookups always scoped by authenticated user id | `authz.denied` | IDOR tests (friend requests, invitations, notifications, sessions) | Hotfix |
-| 10 | Privilege escalation | Worker | Admin access | Critical | Roles only from D1, no role in any request schema (`.strict()`), admin routes need MFA step-up | `admin.denied` | Mass-assignment tests | IR §2 |
+| 7 | Authentication bypass | Worker | Unauthenticated access | Critical | Default-deny middleware on `/api/*` except explicit public routes | 401 metrics | `apps/worker/test/security-hardening.test.ts` route inventory + `auth.test.ts` | Hotfix + regression test |
+| 8 | Broken access control | Worker/DO | Data modification | Critical | Ownership + state checks per handler (AUTHORIZATION_MATRIX) | `authz.denied` / 403 logs | `apps/worker/test/security-hardening.test.ts`, `admin.test.ts`, `rooms.test.ts` | Hotfix |
+| 9 | IDOR/BOLA | Worker | Read/modify others' data | High | Resource lookups always scoped by authenticated user id | 404/403 | `auth.test.ts` & `social.test.ts` IDOR tests | Hotfix |
+| 10 | Privilege escalation | Worker | Admin access | Critical | Roles only from D1, no role in any request schema (`.strict()`), admin routes need MFA step-up | `admin.denied` | `auth.test.ts`, `admin.test.ts`, `security-hardening.test.ts` | IR §2.2 |
 | 11 | Admin impersonation | UI/chat | Social engineering | Medium | Admin badge from server role only; reserved usernames incl. lookalikes; bots labelled BOT | — | Username validation tests | Rename + suspend |
 | 12 | SQL injection | D1 | Data breach | Critical | Prepared statements only | — | Payload tests on search/username; static check | — |
 | 13 | Stored XSS | UI | Token theft | High | React text rendering, no `dangerouslySetInnerHTML`, CSP `script-src 'self'`, username charset allowlist | CSP reports (if configured) | XSS payload tests in chat/usernames/room names | Purge content |
@@ -160,8 +160,8 @@ Legend — **Sev**: inherent severity before controls. **Det**: detection. **Rec
 | 39 | DoS | Edge | Outage | High | Cloudflare automatic DDoS mitigation (free) | Cloudflare | — | IR §9 (documented free-plan limits) |
 | 40 | Malicious dependency injection | Build | Backdoor | High | Lockfile, OSV, audit, install-script allowlist | CI | CI | IR §10 |
 | 41 | Supply-chain attack (CI) | Actions | Secret theft | High | Actions pinned to SHAs, minimal `permissions`, environments | — | Workflow review | Rotate tokens |
-| 42 | Secret leakage | Repo/bundle | Infra takeover | Critical | No secrets in Vite env (only public Firebase config), Gitleaks, bundle grep test | Gitleaks | CI + `tests/security/bundle-secrets` | IR §3 |
-| 43 | Misconfigured deployment environments | Infra | Demo hits prod | High | Per-environment `wrangler.toml` envs, separate D1 + origins; Worker refuses to start with missing/invalid config (fail closed) | Startup error | Config validation tests | Redeploy |
+| 42 | Secret leakage | Repo/bundle | Infra takeover | Critical | No secrets in Vite env (only public Firebase config), Gitleaks, bundle scan (`scripts/security-checks.mjs`) | Gitleaks | CI + `scripts/security-checks.mjs` | IR §2.3 |
+| 43 | Misconfigured deployment environments | Infra | Demo hits prod | High | Per-environment `wrangler.toml` envs, separate D1 + origins; Worker refuses to start with missing/invalid config (fail closed) | Startup error | `apps/worker/test/security-hardening.test.ts` (`loadConfig`) | Redeploy |
 | 44 | Information disclosure via logs/errors | Worker | Leaks | Medium | Generic error bodies with correlation id; structured logs with redaction of tokens/passwords | — | Error-shape + redaction tests | — |
 
 ## 4. Abuse cases specific to free infrastructure

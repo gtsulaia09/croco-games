@@ -140,6 +140,12 @@ button.pcard:hover:not(:disabled) {
   }
 }
 
+html[data-hidden="true"] *,
+html[data-hidden="true"] *::before,
+html[data-hidden="true"] *::after {
+  animation-play-state: paused !important;
+}
+
 .fade-in {
   animation: fade-in 160ms ease-out;
 }

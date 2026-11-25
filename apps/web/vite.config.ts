@@ -41,8 +41,7 @@ function cspFor(env: Record<string, string>): string {
   ].join("; ");
 }
 
-function securityHeaders(env: Record<string, string>): Plugin {
-  const deployment = env.VITE_DEPLOYMENT ?? "cloudflare-pages";
+function securityHeaders(env: Record<string, string>, deployment: string): Plugin {
   const csp = cspFor(env);
   return {
     name: "croco-security-headers",
@@ -75,9 +74,13 @@ function securityHeaders(env: Record<string, string>): Plugin {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
+  const deployment = env.VITE_DEPLOYMENT ?? (mode === "pages" ? "github-pages" : "cloudflare-pages");
   return {
     base: env.VITE_BASE_PATH || "/",
-    plugins: [react(), tailwindcss(), securityHeaders(env)],
+    define: {
+      "import.meta.env.VITE_DEPLOYMENT": JSON.stringify(deployment),
+    },
+    plugins: [react(), tailwindcss(), securityHeaders(env, deployment)],
     build: {
       target: "es2022",
       sourcemap: false,

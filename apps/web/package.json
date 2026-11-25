@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.json && vite build",
-    "build:pages": "tsc -p tsconfig.json && VITE_DEPLOYMENT=github-pages vite build",
+    "build:pages": "tsc -p tsconfig.json && vite build --mode pages",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",

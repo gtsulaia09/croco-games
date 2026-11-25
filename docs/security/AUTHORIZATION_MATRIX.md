@@ -66,7 +66,7 @@ Legend: **Anon** = no token · **User** = verified token + active profile ·
 |---|---|---|
 | `ping` | any socket | — |
 | `sync` | member/spectator | returns caller's own view only |
-| `chat.send` | seated member or spectator (if room allows spectator chat) | chat enabled; not muted; ≤ 300 chars; 5 / 10 s |
+| `chat.send` | room member or spectator | chat enabled; not muted; ≤ 300 chars; 5 / 10 s |
 | `room.ready` | seated member | phase = waiting |
 | `room.start` | host | phase = waiting; min players satisfied (bots count) |
 | `room.addBot` / `room.removeBot` | host | phase = waiting; bots allowed; seat free |

@@ -21,7 +21,7 @@ import { ApiError } from "../http/errors";
 import { rateLimit } from "../http/ratelimit";
 import { lobbyStub } from "../notify";
 import { getSettings } from "../settings";
-import { publicUser } from "../users";
+import { isBlockedEitherWay, publicUser } from "../users";
 
 export const roomRoutes = new Hono<AppEnv>();
 
@@ -214,6 +214,12 @@ roomRoutes.post("/rooms/:id/join", requireVerified, async (c) => {
   await rateLimit(c, "write", "room_join", user.id);
   const id = roomId(c);
   const input = await readJson(c, joinRoomSchema);
+  // Enforce host-block policy before accepting join or consuming invite link uses.
+  const hostRow = await one<{ host_id: string; phase: string }>(c.env.DB, "SELECT host_id, phase FROM rooms WHERE id = ?", id);
+  if (!hostRow || hostRow.phase === "closed") throw new ApiError("room_closed");
+  if (hostRow.host_id !== user.id && (await isBlockedEitherWay(c.env.DB, hostRow.host_id, user.id))) {
+    throw new ApiError("forbidden");
+  }
   let inviteGrant = false;
   if (input.inviteCode) {
     const res = await run(

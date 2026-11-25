@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router";
 import { Bell, Dumbbell, Home, LogOut, Settings, Shield, Trophy, Users } from "lucide-react";
 import { useSession } from "../store/session";
 import { backendConfigured } from "../lib/config";
+import { get } from "../lib/api";
 import { useLocale, useT } from "../i18n";
 import { Avatar } from "./ui";
 
@@ -38,7 +39,19 @@ export function AppShell() {
   const t = useT();
   const navigate = useNavigate();
   const { me, unread, status, signOut } = useSession();
+  const [maintenance, setMaintenance] = useState<string | null>(null);
   const isStaff = Boolean(me?.roles.length);
+
+  useEffect(() => {
+    if (!backendConfigured) return;
+    let cancelled = false;
+    void get<{ maintenanceMessage: string | null }>("/api/config/public")
+      .then((r) => !cancelled && setMaintenance(r.maintenanceMessage || null))
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const links = [
     { to: "/", icon: Home, label: t("nav.dashboard"), end: true },
     { to: "/leaderboards", icon: Trophy, label: t("nav.leaderboards") },
@@ -93,6 +106,11 @@ export function AppShell() {
         </div>
       </header>
       <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-5 py-4 pb-24 md:pb-6">
+        {maintenance && (
+          <div role="status" className="card p-3 mb-4 border-warning/50 bg-warning/10 text-sm text-text-2">
+            {maintenance}
+          </div>
+        )}
         <Outlet />
       </main>
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-surface-2 border-t border-line grid grid-cols-5" aria-label="mobile">

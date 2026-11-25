@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
-import { ArrowLeft, Eye, Lock, Mail, Plus, RefreshCw, Search, Unlock } from "lucide-react";
+import { ArrowLeft, Eye, Info, KeyRound, Lock, Mail, Plus, RefreshCw, Search, Unlock } from "lucide-react";
 import { BOT_DIFFICULTIES, GAME_CATALOG, isGameType, type GameType, type RoomSummary } from "@croco/shared/client";
 import { ApiError, get, post } from "../lib/api";
 import { useT } from "../i18n";
@@ -24,6 +24,8 @@ function RoomBrowser({ game }: { game: GameType }) {
   const [error, setError] = useState<unknown>(null);
   const [creating, setCreating] = useState(false);
   const [passwordFor, setPasswordFor] = useState<RoomSummary | null>(null);
+  const [detailsFor, setDetailsFor] = useState<RoomSummary | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
@@ -59,7 +61,10 @@ function RoomBrowser({ game }: { game: GameType }) {
           <ArrowLeft size={14} /> {t("rooms.backToGames")}
         </Link>
         <h1 className="text-lg font-bold">{t("rooms.title", { game: t(`games.${game}.name`) })}</h1>
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex gap-2 flex-wrap">
+          <button className="btn-ghost btn-sm" onClick={() => setInviteOpen(true)}>
+            <KeyRound size={14} /> <span className="hidden sm:inline">{t("rooms.joinWithCode")}</span>
+          </button>
           <button className="btn-ghost btn-sm" onClick={() => void load()}>
             <RefreshCw size={14} /> {t("common.refresh")}
           </button>
@@ -123,6 +128,9 @@ function RoomBrowser({ game }: { game: GameType }) {
                     </td>
                     <td className="px-3 py-2 hidden lg:table-cell text-muted text-xs">{r.stage ?? "—"}</td>
                     <td className="px-3 py-2 text-right whitespace-nowrap">
+                      <button className="btn-ghost btn-sm" onClick={() => setDetailsFor(r)} title={t("rooms.details")} aria-label={t("rooms.details")}>
+                        <Info size={14} />
+                      </button>
                       {!full && r.phase === "waiting" && (
                         <button className="btn-primary btn-sm" onClick={() => (r.hasPassword ? setPasswordFor(r) : void join(r).catch(setError))}>
                           {t("rooms.join")}
@@ -142,8 +150,80 @@ function RoomBrowser({ game }: { game: GameType }) {
         )}
       </div>
       <PasswordDialog room={passwordFor} onClose={() => setPasswordFor(null)} onJoin={(password) => join(passwordFor!, { password })} />
+      <RoomDetailsDialog
+        room={detailsFor}
+        onClose={() => setDetailsFor(null)}
+        onJoin={(r, asSpectator) => {
+          setDetailsFor(null);
+          if (!asSpectator && r.hasPassword) setPasswordFor(r);
+          else void join(r, { asSpectator }).catch(setError);
+        }}
+      />
+      <InviteCodeDialog open={inviteOpen} onClose={() => setInviteOpen(false)} onCode={(code) => navigate(`/invite/${encodeURIComponent(code)}`)} />
       <CreateRoomDialog game={game} open={creating} onClose={() => setCreating(false)} onCreated={(id) => navigate(`/room/${id}`)} />
     </div>
+  );
+}
+
+function RoomDetailsDialog({ room, onClose, onJoin }: { room: RoomSummary | null; onClose(): void; onJoin(room: RoomSummary, asSpectator: boolean): void }) {
+  const t = useT();
+  if (!room) return null;
+  const full = room.players >= room.maxPlayers;
+  return (
+    <Modal open onClose={onClose} title={t("rooms.details")}>
+      <dl className="grid grid-cols-2 gap-y-2 text-sm mb-4">
+        <dt className="text-muted">{t("rooms.cols.name")}</dt>
+        <dd className="font-medium truncate">{room.name}</dd>
+        <dt className="text-muted">{t("rooms.cols.host")}</dt>
+        <dd><UserName user={room.host} /></dd>
+        <dt className="text-muted">{t("rooms.cols.players")}</dt>
+        <dd className="tabular-nums">{room.players}/{room.maxPlayers}</dd>
+        <dt className="text-muted">{t("rooms.cols.access")}</dt>
+        <dd>{t(`create.${room.visibility}`)}{room.hasPassword ? ` · ${t("rooms.filters.password")}` : ""}</dd>
+        <dt className="text-muted">{t("rooms.cols.status")}</dt>
+        <dd>{t(`rooms.status.${room.phase}`)}</dd>
+        <dt className="text-muted">{t("rooms.cols.stage")}</dt>
+        <dd>{room.stage ?? "—"}</dd>
+      </dl>
+      <div className="flex gap-2 justify-end">
+        {room.allowSpectators && (
+          <button className="btn-ghost" onClick={() => onJoin(room, true)}>
+            <Eye size={14} /> {t("rooms.spectate")}
+          </button>
+        )}
+        {!full && room.phase === "waiting" && (
+          <button className="btn-primary" onClick={() => onJoin(room, false)}>
+            {t("rooms.join")}
+          </button>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+function InviteCodeDialog({ open, onClose, onCode }: { open: boolean; onClose(): void; onCode(code: string): void }) {
+  const t = useT();
+  const [raw, setRaw] = useState("");
+  const extracted = raw.trim().replace(/^.*#\/invite\//, "").replace(/[^A-Za-z0-9_-]/g, "");
+  return (
+    <Modal open={open} onClose={onClose} title={t("rooms.joinWithCode")}>
+      <form
+        className="grid gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (extracted.length >= 22) {
+            onClose();
+            onCode(extracted);
+          }
+        }}
+      >
+        <label className="label" htmlFor="invite-code-input">{t("rooms.enterInviteCode")}</label>
+        <input id="invite-code-input" className="input font-mono" value={raw} onChange={(e) => setRaw(e.target.value)} maxLength={200} />
+        <button className="btn-primary" disabled={extracted.length < 22}>
+          {t("rooms.join")}
+        </button>
+      </form>
+    </Modal>
   );
 }
 

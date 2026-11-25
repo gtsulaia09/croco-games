@@ -10,12 +10,14 @@
  * Exits non-zero on any finding.
  */
 import { readdirSync, readFileSync, statSync, existsSync } from "node:fs";
-import { join, relative, extname } from "node:path";
+import { basename, join, relative, extname } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const ROOT = new URL("..", import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const SKIP_DIRS = new Set(["node_modules", ".git", "dist", ".wrangler", "coverage", "playwright-report", "test-results"]);
 const TEXT_EXT = new Set([".ts", ".tsx", ".js", ".mjs", ".cjs", ".json", ".toml", ".yml", ".yaml", ".md", ".sql", ".html", ".css"]);
 const findings = [];
+const norm = (p) => relative(ROOT, p).replace(/\\/g, "/");
 
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
@@ -36,19 +38,19 @@ for (const f of files) {
   const text = readFileSync(f, "utf8");
   const lines = text.split("\n");
   lines.forEach((line, i) => {
-    if (DANGEROUS.test(line)) findings.push(`${relative(ROOT, f)}:${i + 1} contains bidi/invisible control characters (use \\u escapes)`);
+    if (DANGEROUS.test(line)) findings.push(`${norm(f)}:${i + 1} contains bidi/invisible control characters (use \\u escapes)`);
   });
 }
 
 // 2. Dynamic SQL in the Worker
 const SQL_CALL = /\b(?:prepare|one|all|run|stmt)(?:<[^>]*>)?\(\s*(?:[\w.]+,\s*)?`([\s\S]*?)`/g;
-for (const f of files.filter((p) => p.includes(`${"apps/worker/src"}`) && p.endsWith(".ts"))) {
+for (const f of files.filter((p) => norm(p).startsWith("apps/worker/src/") && p.endsWith(".ts"))) {
   const text = readFileSync(f, "utf8");
   for (const m of text.matchAll(SQL_CALL)) {
     for (const expr of m[1].matchAll(/\$\{([^}]*)\}/g)) {
       if (!/^\s*[A-Z][A-Z0-9_]*\s*$/.test(expr[1])) {
         const line = text.slice(0, m.index).split("\n").length;
-        findings.push(`${relative(ROOT, f)}:${line} interpolates "${expr[1].trim()}" into SQL — use bound parameters`);
+        findings.push(`${norm(f)}:${line} interpolates "${expr[1].trim()}" into SQL — use bound parameters`);
       }
     }
   }
@@ -64,12 +66,12 @@ const SECRET_PATTERNS = [
   [/\bsk_live_[A-Za-z0-9]{16,}/, "live API secret"],
 ];
 for (const f of files) {
-  if (f.endsWith("security-checks.mjs")) continue;
+  if (norm(f) === "scripts/security-checks.mjs") continue;
   const text = readFileSync(f, "utf8");
-  for (const [re, label] of SECRET_PATTERNS) if (re.test(text)) findings.push(`${relative(ROOT, f)} matches secret pattern: ${label}`);
+  for (const [re, label] of SECRET_PATTERNS) if (re.test(text)) findings.push(`${norm(f)} matches secret pattern: ${label}`);
 }
-for (const f of files.filter((p) => /\.env(\.|$)/.test(p.split("/").pop()) && !p.endsWith(".env.example"))) {
-  findings.push(`${relative(ROOT, f)} is an env file and must not be committed`);
+for (const f of files.filter((p) => /\.env(\.|$)/.test(basename(p)) && basename(p) !== ".env.example")) {
+  findings.push(`${norm(f)} is an env file and must not be committed`);
 }
 
 // 4. Frontend env allowlist (Vite exposes VITE_* to the browser — public values only)
@@ -83,22 +85,26 @@ const ALLOWED_VITE = new Set([
   "VITE_DEPLOYMENT",
   "VITE_BASE_PATH",
 ]);
-for (const f of files.filter((p) => p.includes("apps/web/"))) {
+for (const f of files.filter((p) => norm(p).startsWith("apps/web/"))) {
   const text = readFileSync(f, "utf8");
-  for (const m of text.matchAll(/\bVITE_[A-Z0-9_]+/g)) if (!ALLOWED_VITE.has(m[0])) findings.push(`${relative(ROOT, f)} uses non-allowlisted ${m[0]}`);
+  for (const m of text.matchAll(/\bVITE_[A-Z0-9_]+/g)) if (!ALLOWED_VITE.has(m[0])) findings.push(`${norm(f)} uses non-allowlisted ${m[0]}`);
 }
 
 // 5. Built bundle scan
 const dist = join(ROOT, "apps/web/dist");
 if (existsSync(dist)) {
   const FORBIDDEN_IN_BUNDLE = [/MFA_ENCRYPTION_KEY/, /RECOVERY_CODE_PEPPER/, /IP_HASH_KEY/, /ADMIN_FIREBASE_UID/, /TURNSTILE_SECRET/, /-----BEGIN/, /"d"\s*:\s*"[A-Za-z0-9_-]{40,}"/, /\.map$/];
-  for (const f of walk(dist).concat(readdirSync(join(dist, "assets"), { withFileTypes: true }).filter((d) => d.name.endsWith(".map")).map((d) => join(dist, "assets", d.name)))) {
+  const assetsDir = join(dist, "assets");
+  const maps = existsSync(assetsDir)
+    ? readdirSync(assetsDir, { withFileTypes: true }).filter((d) => d.name.endsWith(".map")).map((d) => join(assetsDir, d.name))
+    : [];
+  for (const f of walk(dist).concat(maps)) {
     if (f.endsWith(".map")) {
-      findings.push(`${relative(ROOT, f)}: source maps must not be published`);
+      findings.push(`${norm(f)}: source maps must not be published`);
       continue;
     }
     const text = readFileSync(f, "utf8");
-    for (const re of FORBIDDEN_IN_BUNDLE) if (re.test(text)) findings.push(`${relative(ROOT, f)} bundle contains forbidden material (${re})`);
+    for (const re of FORBIDDEN_IN_BUNDLE) if (re.test(text)) findings.push(`${norm(f)} bundle contains forbidden material (${re})`);
   }
 }
 

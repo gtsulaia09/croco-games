@@ -32,6 +32,8 @@ function useLocalGame(gameType: GameType, version: number) {
 
   useEffect(() => {
     let cancelled = false;
+    setEngine(null);
+    setState(null);
     void (async () => {
       const [{ loadEngine }, { cryptoRng }] = await Promise.all([import("@croco/game-engine/registry"), import("@croco/game-engine/rng")]);
       const e = await loadEngine(gameType);
@@ -106,7 +108,7 @@ export default function Practice() {
       </div>
     );
   }
-  return <PracticeGame gameType={gameType} />;
+  return <PracticeGame key={gameType} gameType={gameType} />;
 }
 
 function PracticeGame({ gameType }: { gameType: GameType }) {

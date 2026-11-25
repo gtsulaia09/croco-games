@@ -5,7 +5,7 @@ import { GAME_CATALOG, GAME_TYPES, type FriendDto, type GameLeaderDto, type Game
 import { get } from "../lib/api";
 import { useSession } from "../store/session";
 import { useT } from "../i18n";
-import { Avatar, Section, UserName } from "../components/ui";
+import { AdminBadge, Avatar, Section, UserName } from "../components/ui";
 
 export const GAME_ICONS: Record<GameType, string> = {
   joker: "🃏",
@@ -62,7 +62,11 @@ export default function Dashboard() {
         <div className="flex items-center gap-3">
           <Avatar id={me.profile.avatar} size={44} />
           <div>
-            <h1 className="text-xl font-bold">{t("dashboard.hello", { name: me.profile.username })}</h1>
+            <h1 className="text-xl font-bold flex items-center gap-2 flex-wrap">
+              <span>{t("dashboard.hello", { name: me.profile.username })}</span>
+              {me.profile.badges.admin && <AdminBadge />}
+              {!me.profile.badges.admin && me.profile.badges.moderator && <span className="chip bg-accent/15 text-accent">{t("common.moderator")}</span>}
+            </h1>
             <p className="text-sm text-muted">{t("app.tagline")}</p>
           </div>
         </div>

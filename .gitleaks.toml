@@ -1,0 +1,16 @@
+title = "Croco Games Gitleaks Configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allow placeholder example files and deterministic test-only fixtures"
+paths = [
+  '''^\.env\.example$''',
+  '''^docs/security/sbom\.cdx\.json$''',
+  '''^pnpm-lock\.yaml$''',
+]
+regexes = [
+  '''REPLACE_WITH_[A-Z0-9_]+''',
+  '''test-only-[a-z0-9-]+''',
+]

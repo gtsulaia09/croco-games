@@ -42,8 +42,8 @@
 ## 4. Dependencies in the trust chain
 
 Runtime: `hono`, `zod`, `jose`, `@oslojs/otp` (+ `@oslojs/crypto`, `@oslojs/encoding`,
-`@oslojs/binary`), `react`, `react-dom`, `react-router`, `zustand`, `firebase`, `lucide-react`.
-Everything else is development-only. See `DEPENDENCY_AUDIT.md` and the SBOM.
+`@oslojs/binary`), `react`, `react-dom`, `react-router`, `zustand`, `@firebase/app`, `@firebase/auth`, `lucide-react`.
+Everything else is development-only. See `DEPENDENCY_AUDIT.md` and `sbom.cdx.json`.
 
 ## 5. Out of scope / not present
 
