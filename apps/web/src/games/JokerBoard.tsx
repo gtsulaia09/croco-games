@@ -1,11 +1,33 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { ClipboardList, Crown, Sparkles } from "lucide-react";
 import type { JokerView } from "@croco/game-engine/games/joker";
 import { useT } from "../i18n";
-import { Modal, PlayingCard, SuitIcon, suitSymbol } from "../components/ui";
-import { MiniCardCount, opponentsOrder, SeatTag, TrumpBadge, TurnBar, useSeatName, type BoardProps } from "./common";
+import { Modal, SuitIcon, suitSymbol } from "../components/ui";
+import { CardHand, PlayingCard } from "./cards";
+import { sortHand } from "./cardOrder";
+import { GameTable, HudChip, isRedSuit, MiniCardCount, opponentsOrder, SeatStat, SeatTag, SuitPicker, SUITS, tiltFor, TrumpBadge, TurnBar, useSeatName, type BoardProps } from "./common";
 
-const SUITS = ["S", "H", "D", "C"] as const;
+type Pos = "n" | "w" | "e" | "s";
+const FROM: Record<Pos, CSSProperties> = {
+  n: { "--from-x": "0px", "--from-y": "-70px" } as CSSProperties,
+  s: { "--from-x": "0px", "--from-y": "70px" } as CSSProperties,
+  w: { "--from-x": "-70px", "--from-y": "0px" } as CSSProperties,
+  e: { "--from-x": "70px", "--from-y": "0px" } as CSSProperties,
+};
+
+/** Bid as rings, tricks taken as filled pips; tricks over the bid turn red. */
+function BidPips({ bid, won }: { bid: number | null | undefined; won: number }) {
+  if (bid === null || bid === undefined) return null;
+  const total = Math.max(bid, won);
+  if (total === 0) return null;
+  return (
+    <span className="bid-pips" aria-hidden="true">
+      {Array.from({ length: Math.min(total, 9) }, (_, i) => (
+        <span key={i} className="bid-pip" data-won={i < won ? "true" : "false"} data-over={i >= bid ? "true" : "false"} />
+      ))}
+    </span>
+  );
+}
 
 export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: BoardProps<JokerView>) {
   const t = useT();
@@ -26,33 +48,59 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
   const northSeat = opps[1]!;
   const eastSeat = opps[2]!;
   const southSeat = mySeat ?? opps[3]!;
-  const tableOrder = [westSeat, northSeat, eastSeat, southSeat];
+  const posOf: Record<number, Pos> = { [westSeat]: "w", [northSeat]: "n", [eastSeat]: "e", [southSeat]: "s" };
 
-  const trickBySeat = new Map(view.trick.map((p) => [p.seat, p]));
-
-  function renderSeat(s: number, compact = false) {
+  function renderSeat(s: number, compact = true) {
     const bid = view.bids[s];
     const won = view.tricks[s] ?? 0;
-    const matched = bid !== null && bid !== undefined && won === bid;
-    const exceeded = bid !== null && bid !== undefined && won > bid;
-    const statusCls = exceeded
-      ? "bg-danger/20 text-danger border border-danger/40"
-      : matched
-        ? "bg-primary/20 text-primary border border-primary/40"
-        : "bg-white/8 text-text-2 border border-white/12";
+    const tone = bid === null || bid === undefined ? undefined : won > bid ? "bad" : won === bid ? "good" : undefined;
     return (
-      <SeatTag key={s} seat={s} seats={seats} active={view.toAct === s} dealer={view.dealer === s} compact={compact}>
-        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold tabular-nums ${statusCls}`}>
-          {compact ? `${won}/${bid ?? "—"}` : `${t("joker.tricks")} ${won} / ${bid ?? "—"}`}
-        </span>
+      <SeatTag seat={s} seats={seats} active={view.toAct === s} dealer={view.dealer === s} compact={compact}>
+        <SeatStat label={t("joker.bid")} value={`${won}/${bid ?? "—"}`} tone={tone} />
+        <BidPips bid={bid} won={won} />
         {s !== mySeat && <MiniCardCount count={view.handCounts[s] ?? 0} />}
-        <span className="text-gold font-extrabold tabular-nums">{view.totals[s]}</span>
+        <SeatStat value={view.totals[s]} tone="gold" />
       </SeatTag>
     );
   }
 
+  const hand = view.you ? sortHand(view.you.hand, { trump: view.trump }) : [];
+
+  // Trump and bid choices sit on the felt in the empty centre, right next to the turned trump card.
+  const actionPanel =
+    mySeat !== null && view.you ? (
+      <>
+      {myTurn && view.phase === "trump" && (
+        <div className="action-bar fade-in" role="group" aria-label={t("joker.chooseTrump")}>
+          <span className="action-title w-full sm:w-auto text-center">{t("joker.chooseTrump")}</span>
+          <SuitPicker onPick={(s) => onAction({ type: "trump", suit: s })} />
+          <button type="button" className="btn-gold h-[50px] px-5" onClick={() => onAction({ type: "trump", suit: "none" })}>
+            {t("game.noTrump")}
+          </button>
+        </div>
+      )}
+
+      {myTurn && view.phase === "bid" && (
+        <div className="action-bar fade-in" role="group" aria-label={t("joker.chooseBid")}>
+          <span className="action-title w-full text-center">{t("joker.chooseBid")}</span>
+          <div className="flex flex-wrap gap-2 justify-center">
+            {Array.from({ length: view.cards + 1 }, (_, n) => n).map((n) => {
+              const forbidden = n === view.you!.forbiddenBid;
+              return (
+                <button key={n} type="button" className="bid-btn" disabled={forbidden} onClick={() => onAction({ type: "bid", value: n })} aria-label={String(n)}>
+                  {n}
+                </button>
+              );
+            })}
+          </div>
+          {view.you.forbiddenBid !== null && <span className="action-hint w-full text-center text-[#ff9c97]">{t("joker.forbidden", { n: view.you.forbiddenBid })}</span>}
+        </div>
+      )}
+      </>
+    ) : null;
+
   return (
-    <div className="table-arena felt-emerald">
+    <div className="board">
       <TurnBar
         toAct={view.toAct}
         mySeat={mySeat}
@@ -60,184 +108,115 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
         seats={seats}
         extra={
           <>
-            <span className="chip bg-white/8 border border-white/14 text-white">{t("game.hand", { n: `${view.handNumber}/${view.totalHands}` })}</span>
-            <span className="chip bg-white/8 border border-white/14 text-text-2">{t("joker.set", { n: view.set })}</span>
+            <HudChip>{t("game.hand", { n: `${view.handNumber}/${view.totalHands}` })}</HudChip>
+            <HudChip>{t("joker.set", { n: view.set })}</HudChip>
             <TrumpBadge card={view.trumpCard} suit={view.trump} />
-            <button className="btn-secondary btn-sm h-7 px-2.5 text-[11px]" onClick={() => setSheet(true)}>
-              <ClipboardList size={12} /> {t("joker.sheet")}
+            <button type="button" className="hud-chip" onClick={() => setSheet(true)}>
+              <ClipboardList size={13} /> {t("joker.sheet")}
             </button>
           </>
         }
       />
 
-      {/* Curved 3-Opponent Arena Arc (North top + West/East on mobile; West — North — East arc on >=640px) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-3 items-start pt-0.5 min-w-0">
-        <div className="min-w-0 sm:translate-y-2">{renderSeat(westSeat, true)}</div>
-        <div className="min-w-0 col-span-2 order-first sm:col-span-1 sm:order-none sm:-translate-y-0.5">{renderSeat(northSeat, true)}</div>
-        <div className="min-w-0 sm:translate-y-2">{renderSeat(eastSeat, true)}</div>
-      </div>
+      <GameTable rail="walnut" felt="joker" print={t("games.joker.name")}>
+        {view.trumpCard && view.trick.length > 0 && (
+          <div className="corner-tl grid justify-items-center gap-1">
+            <PlayingCard card={view.trumpCard} size="xs" />
+            <span className="felt-label">{t("game.trump")}</span>
+          </div>
+        )}
+        <div className="seat-ring">
+          <div data-area="n">{renderSeat(northSeat)}</div>
+          <div data-area="w">{renderSeat(westSeat)}</div>
+          <div data-area="e">{renderSeat(eastSeat)}</div>
 
-      {/* Sculpted Stadium Center Trick Stage — Full-Size High-Visibility Cards */}
-      <div className="table-well min-h-40 sm:min-h-44 flex flex-col items-center justify-center gap-2.5">
-        {view.trick.length > 0 ? (
-          <div className="flex flex-wrap items-end justify-center gap-2.5 sm:gap-5">
-            {tableOrder.map((s) => {
-              const p = trickBySeat.get(s);
-              if (!p) {
-                return (
-                  <div key={s} className="hidden sm:flex flex-col items-center gap-1.5 opacity-45">
-                    <span className="pcard-slot" aria-hidden="true" />
-                    <span className="text-[11px] font-semibold text-white/55 truncate max-w-22">{name(s)}</span>
+          <div data-area="c" className="grid place-items-center min-h-[150px] w-full">
+            {view.trick.length > 0 ? (
+              <div className="trick-cross" style={{ "--cw": "clamp(48px, 4.2vw + 20px, 72px)" } as CSSProperties}>
+                {view.trick.map((p) => {
+                  const pos = posOf[p.seat] ?? "s";
+                  return (
+                    <div key={`${p.seat}-${p.card}`} className="trick-card" data-pos={pos}>
+                      <PlayingCard card={p.card} size="sm" animate="play" style={{ ...FROM[pos], "--tilt": tiltFor(p.card) } as CSSProperties} />
+                      {p.joker ? (
+                        <span className="trick-tag" data-tone="gold">
+                          {t(`joker.${p.joker.mode}`)} {p.joker.suit ? suitSymbol(p.joker.suit) : ""}
+                        </span>
+                      ) : null}
+                    </div>
+                  );
+                })}
+                <span className="trick-spacer" aria-hidden="true" />
+              </div>
+            ) : (
+              <div className="row-center">
+                {view.trumpCard && (
+                  <div className="grid justify-items-center gap-1.5">
+                    <PlayingCard card={view.trumpCard} size="sm" animate="flip" />
+                    <span className="felt-label">{t("game.trump")}</span>
                   </div>
-                );
-              }
-              return (
-                <div key={s} className="flex flex-col items-center gap-1.5 card-enter">
-                  <PlayingCard card={p.card} size="md" />
-                  <span className="text-[11px] font-bold text-white bg-[#070e17]/90 border border-white/15 rounded-full px-2.5 py-0.5 max-w-26 truncate">
-                    {name(s)}
-                  </span>
-                  {p.joker && (
-                    <span className="chip bg-gold/25 text-gold border border-gold/50 h-5 px-2 text-[10px] font-extrabold">
-                      {t(`joker.${p.joker.mode}`)} {p.joker.suit ? suitSymbol(p.joker.suit) : ""}
+                )}
+                {actionPanel}
+                <div className="grid justify-items-center gap-2 text-center">
+                  {view.lastTrick && (
+                    <span className="amount-tag">
+                      <Crown size={13} className="text-[#e2c27a]" /> {t("game.lastTrick")}: {name(view.lastTrick.winner)}
                     </span>
                   )}
                 </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 py-1">
-            {view.trumpCard && (
-              <div className="flex flex-col items-center gap-1">
-                <PlayingCard card={view.trumpCard} size="sm" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gold/90">{t("game.trump")}</span>
               </div>
             )}
-            <div className="flex flex-col items-center gap-1.5 text-center">
-              {view.lastTrick ? (
-                <span className="chip bg-[#070e17]/90 border border-gold/45 text-gold h-7 px-3 text-xs font-bold">
-                  <Crown size={13} /> {t("game.lastTrick")}: {name(view.lastTrick.winner)}
-                </span>
-              ) : (
-                <span className="text-sm font-extrabold tracking-wide text-white/40 uppercase">{t("games.joker.name")}</span>
-              )}
-              {myTurn && view.phase === "play" && (
-                <span className="text-xs text-primary font-bold">{t("joker.playHint")}</span>
-              )}
-            </div>
           </div>
-        )}
-      </div>
 
-      {/* High-Contrast Hero Player Station & Jumbo Hand */}
+          <div data-area="s">{renderSeat(southSeat, false)}</div>
+        </div>
+      </GameTable>
+
       {mySeat !== null && view.you && (
-        <div className="hero-hand-tray" data-my-turn={myTurn ? "true" : "false"}>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="w-full sm:w-auto sm:min-w-68">{renderSeat(mySeat)}</div>
-            {myTurn && view.phase === "play" && (
-              <span className="chip bg-primary/18 text-primary border border-primary/40 font-bold">{t("joker.playHint")}</span>
-            )}
-          </div>
-
-          {/* Choose Trump Controls (White Card-Stock Suit Tiles) */}
-          {myTurn && view.phase === "trump" && (
-            <div className="action-dock flex flex-wrap gap-2.5 items-center justify-center fade-in" role="group" aria-label={t("joker.chooseTrump")}>
-              <span className="text-xs sm:text-sm font-extrabold text-white mr-1">{t("joker.chooseTrump")}:</span>
-              {SUITS.map((s) => {
-                const red = s === "H" || s === "D";
-                return (
-                  <button
-                    key={s}
-                    type="button"
-                    className={`suit-card-btn ${red ? "text-[#e11d48]" : "text-[#0f172a]"}`}
-                    onClick={() => onAction({ type: "trump", suit: s })}
-                  >
-                    <SuitIcon suit={s} size={22} />
-                    <span className="sr-only">{suitSymbol(s)}</span>
-                  </button>
-                );
-              })}
-              <button type="button" className="btn-gold h-11 px-4" onClick={() => onAction({ type: "trump", suit: "none" })}>
-                {t("game.noTrump")}
-              </button>
+        <div className="dock">
+          {myTurn && view.phase === "play" && (
+            <div className="flex justify-center">
+              <span className="hint-pill">{t("joker.playHint")}</span>
             </div>
           )}
 
-          {/* Bidding Strip */}
-          {myTurn && view.phase === "bid" && (
-            <div className="action-dock flex flex-wrap gap-2 items-center justify-center fade-in" role="group" aria-label={t("joker.chooseBid")}>
-              <span className="text-xs sm:text-sm font-extrabold text-white w-full sm:w-auto text-center">{t("joker.chooseBid")}</span>
-              <div className="flex flex-wrap gap-1.5 justify-center">
-                {Array.from({ length: view.cards + 1 }, (_, n) => n).map((n) => {
-                  const forbidden = n === view.you!.forbiddenBid;
-                  return (
-                    <button
-                      key={n}
-                      type="button"
-                      className={`h-10 min-w-10 px-3 rounded-xl font-black text-sm transition-all ${
-                        forbidden ? "bg-surface-3 border border-danger/45 text-muted/45 line-through" : "btn-primary"
-                      }`}
-                      disabled={forbidden}
-                      onClick={() => onAction({ type: "bid", value: n })}
-                    >
-                      {n}
-                    </button>
-                  );
-                })}
-              </div>
-              {view.you.forbiddenBid !== null && (
-                <span className="chip bg-danger/20 text-danger border border-danger/45 w-full sm:w-auto justify-center font-bold">
-                  {t("joker.forbidden", { n: view.you.forbiddenBid })}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Jumbo High-Visibility Player Hand */}
-          <div className="flex flex-wrap gap-1.5 sm:gap-2.5 justify-center pt-1 pb-0.5" role="group" aria-label={t("game.yourHand")}>
-            {view.you.hand.map((c) => {
-              const canPlay = myTurn && view.phase === "play" && playable.has(c);
-              return (
-                <PlayingCard
-                  key={c}
-                  card={c}
-                  size="md"
-                  playable={!myTurn || view.phase !== "play" || playable.has(c)}
-                  onClick={canPlay ? () => play(c) : undefined}
-                />
-              );
+          <CardHand
+            label={t("game.yourHand")}
+            size="md"
+            dealKey={view.handNumber}
+            cards={hand.map((c) => {
+              const active = myTurn && view.phase === "play";
+              const canPlay = active && playable.has(c);
+              return { card: c, playable: !active || canPlay, onClick: canPlay ? () => play(c) : undefined };
             })}
-          </div>
+          />
         </div>
       )}
 
-      {/* Joker High/Low Modal */}
+      {/* Joker: high or low (and the suit when leading) */}
       <Modal open={jokerCard !== null} onClose={() => setJokerCard(null)} title={leading ? t("joker.jokerLead") : t("joker.jokerFollow")}>
         <div className="grid gap-3">
           {(["high", "low"] as const).map((mode) => (
             <div key={mode} className="panel-inset p-3.5 flex flex-wrap items-center gap-2.5">
-              <span className="w-24 text-sm font-extrabold text-gold flex items-center gap-1.5">
+              <span className="w-24 text-sm font-extrabold text-[#e2c27a] flex items-center gap-1.5">
                 <Sparkles size={15} /> {t(`joker.${mode}`)}
               </span>
               {leading ? (
-                SUITS.map((s) => {
-                  const red = s === "H" || s === "D";
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      className={`suit-card-btn !h-10 !min-w-11 ${red ? "text-[#e11d48]" : "text-[#0f172a]"}`}
-                      onClick={() => {
-                        onAction({ type: "play", card: jokerCard, joker: { mode, suit: s } });
-                        setJokerCard(null);
-                      }}
-                    >
-                      <SuitIcon suit={s} size={19} />
-                      <span className="sr-only">{suitSymbol(s)}</span>
-                    </button>
-                  );
-                })
+                SUITS.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    className="suit-tile !h-11 !min-w-11"
+                    data-red={isRedSuit(s) ? "true" : "false"}
+                    onClick={() => {
+                      onAction({ type: "play", card: jokerCard, joker: { mode, suit: s } });
+                      setJokerCard(null);
+                    }}
+                  >
+                    <SuitIcon suit={s} size={20} />
+                    <span className="sr-only">{suitSymbol(s)}</span>
+                  </button>
+                ))
               ) : (
                 <button
                   type="button"
@@ -255,7 +234,7 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
         </div>
       </Modal>
 
-      {/* Score Sheet Modal */}
+      {/* Score sheet */}
       <Modal open={sheet} onClose={() => setSheet(false)} title={t("joker.sheet")} wide>
         <div className="overflow-x-auto">
           <table className="w-full text-xs tabular-nums">
@@ -263,7 +242,9 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
               <tr>
                 <th className="text-left p-2.5">#</th>
                 {[0, 1, 2, 3].map((s) => (
-                  <th key={s} className="text-right p-2.5 font-bold text-white">{name(s)}</th>
+                  <th key={s} className="text-right p-2.5 font-bold text-white">
+                    {name(s)}
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -283,7 +264,9 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
               <tr className="font-extrabold text-sm bg-surface-2 border-t border-line-strong">
                 <td className="p-2.5 text-gold">{t("joker.total")}</td>
                 {view.totals.map((v, s) => (
-                  <td key={s} className="p-2.5 text-right text-white">{v}</td>
+                  <td key={s} className="p-2.5 text-right text-white">
+                    {v}
+                  </td>
                 ))}
               </tr>
             </tbody>

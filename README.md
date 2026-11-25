@@ -30,7 +30,7 @@ Every game runs as a pure, server-authoritative engine in `packages/game-engine`
 - **Social & Rooms**: Counter-Strike 1.6-style room browser with filters/search/details/password/invite-code join, friends & requests, blocking, live presence (`online` / `away` / `in_game` / `offline`), direct invitations & expiring invite links, real-time notifications, room-isolated chat with emojis/mute/report.
 - **Disconnect & Cross-Device Recovery**: grace-period bot takeover during disconnects, automatic return to the original human seat on reconnect from any device, single-socket seat ownership (`4001` supersede).
 - **Internationalization**: Georgian (`ka`, default) and English (`en`) with automated parity tests.
-- **Low-End Office PC & Mobile First**: ~120 KB gzipped initial JS, ~6.7 KB gzipped CSS, lazy-loaded per-game engines and boards, pure CSS cards, hidden-tab animation pausing, responsive desktop/tablet/mobile layouts, shell-only PWA offline support for Practice Mode.
+- **Low-End Office PC & Mobile First**: ~129 KB gzipped initial JS, ~10 KB gzipped CSS, lazy-loaded per-game engines and boards, realistic tables drawn with CSS materials and one small SVG per card (no images, no WebGL; ~7 KB gz of table CSS loads only with a game), hidden-tab animation pausing, responsive desktop/tablet/mobile layouts, shell-only PWA offline support for Practice Mode.
 
 ---
 
@@ -80,6 +80,7 @@ pnpm --filter @croco/web dev        # Frontend SPA on http://127.0.0.1:5173
 - [`docs/games/GAME_RULES.md`](docs/games/GAME_RULES.md) — Complete rules, variations, scoring, and bots for all 10 games
 - [`docs/deployment/DEPLOYMENT.md`](docs/deployment/DEPLOYMENT.md) — 14-step Cloudflare production/staging & GitHub Pages deployment guide
 - [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) — Bundle budgets and measured 4x-CPU low-end office PC profiling
+- [`docs/DESIGN.md`](docs/DESIGN.md) — Table materials per game, cards, hand order, interaction states, brand palette
 - [`docs/TESTING.md`](docs/TESTING.md) — Unit, security, integration, E2E, and performance test guide
 
 ### Cybersecurity Audit Package

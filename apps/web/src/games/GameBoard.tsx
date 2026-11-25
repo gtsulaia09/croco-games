@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { GAME_CATALOG } from "@croco/shared/client";
 import { Spinner } from "../components/ui";
 import type { BoardProps } from "./common";
+import "./table.css";
 
 // Each game's UI is a separate lazy chunk: only the selected game is downloaded.
 const JokerBoard = lazy(() => import("./JokerBoard"));

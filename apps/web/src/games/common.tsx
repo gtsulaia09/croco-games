@@ -1,8 +1,8 @@
-import type { ReactNode } from "react";
-import { Bot } from "lucide-react";
+import type { CSSProperties, ReactNode } from "react";
+import { Bot, WifiOff } from "lucide-react";
 import type { GameType, SeatInfo } from "@croco/shared/client";
 import { useT } from "../i18n";
-import { AdminBadge, Avatar, Countdown, SuitIcon } from "../components/ui";
+import { AdminBadge, Avatar, Countdown, SuitIcon, suitSymbol } from "../components/ui";
 
 export interface BoardProps<V = unknown> {
   gameType: GameType;
@@ -14,6 +14,9 @@ export interface BoardProps<V = unknown> {
   practice?: boolean;
 }
 
+export const SUITS = ["S", "H", "D", "C"] as const;
+export const isRedSuit = (s: string | null | undefined) => s === "H" || s === "D";
+
 export function useSeatName(seats: SeatInfo[]) {
   const t = useT();
   return (seat: number) => {
@@ -24,6 +27,7 @@ export function useSeatName(seats: SeatInfo[]) {
   };
 }
 
+/** Other seats in play order starting left of `mySeat` (spectators see everyone from seat 0). */
 export function opponentsOrder(count: number, mySeat: number | null): number[] {
   const me = mySeat ?? -1;
   const out: number[] = [];
@@ -34,54 +38,87 @@ export function opponentsOrder(count: number, mySeat: number | null): number[] {
   return mySeat === null ? Array.from({ length: count }, (_, i) => i) : out;
 }
 
-/** Sleek floating top arena HUD bar — replaces boxy borders with clean status pills. */
+/** Small stable tilt for a card lying on the table, so tricks look hand-placed. */
+export function tiltFor(card: string, max = 6): string {
+  let h = 0;
+  for (let i = 0; i < card.length; i++) h = (h * 31 + card.charCodeAt(i)) % 997;
+  return `${((h % (max * 20 + 1)) / 10 - max).toFixed(1)}deg`;
+}
+
+/** Status strip above the table: whose turn it is, the timer and the game facts. */
 export function TurnBar({ toAct, mySeat, deadline, seats, extra }: { toAct: number | null; mySeat: number | null; deadline: number | null; seats: SeatInfo[]; extra?: ReactNode }) {
   const t = useT();
   const name = useSeatName(seats);
   const mine = toAct !== null && toAct === mySeat;
+  const state = toAct === null ? "over" : mine ? "mine" : "wait";
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-[#080f18]/88 border border-white/12 px-3 py-2 text-xs sm:text-sm" aria-live="polite">
-      <span
-        className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-extrabold ${
-          toAct === null
-            ? "bg-gold/20 text-gold border border-gold/40"
-            : mine
-              ? "bg-primary text-[#031a0b] shadow-[0_0_16px_rgba(0,217,95,0.35)]"
-              : "bg-surface-hover text-text-2 border border-white/10"
-        }`}
-      >
-        <span className={`size-2 rounded-full shrink-0 ${toAct === null ? "bg-gold" : mine ? "bg-[#031a0b] turn-dot" : "bg-muted"}`} aria-hidden="true" />
-        <span>{toAct === null ? t("game.finished") : mine ? t("game.yourTurn") : t("game.waitingFor", { name: name(toAct) })}</span>
+    <div className="hud" aria-live="polite">
+      <span className="turn-pill" data-state={state}>
+        {toAct === null ? t("game.finished") : mine ? t("game.yourTurn") : t("game.waitingFor", { name: name(toAct) })}
       </span>
       <Countdown deadline={deadline} />
-      <div className="ml-auto flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-text-2">{extra}</div>
+      <div className="hud-info">{extra}</div>
     </div>
   );
 }
 
-/** Mini fanned card-back visual badge showing opponent card count. */
-export function MiniCardCount({ count }: { count: number }) {
+export function HudChip({ children, tone, title }: { children: ReactNode; tone?: "gold" | "danger" | "brand"; title?: string }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-white/8 border border-white/12 px-2 py-0.5 text-[11px] font-bold text-white tabular-nums">
-      <span className="inline-flex -space-x-1" aria-hidden="true">
-        <span className="inline-block w-2.5 h-3.5 rounded-[2px] bg-[#1c3d5a] border border-gold/55 -rotate-6" />
-        <span className="inline-block w-2.5 h-3.5 rounded-[2px] bg-[#13293d] border border-gold/55 rotate-6" />
-      </span>
-      <span>{count}</span>
+    <span className="hud-chip" data-tone={tone} title={title}>
+      {children}
     </span>
   );
 }
 
-export function ChipIcon({ size = 14, color = "#ffc845" }: { size?: number; color?: string }) {
+/** Face-down counter: how many cards (or tiles) a player still holds. */
+export function MiniCardCount({ count }: { count: number }) {
+  return (
+    <span className="back-count" aria-label={String(count)}>
+      <span aria-hidden="true" className="inline-flex">
+        <i />
+        <i />
+      </span>
+      {count}
+    </span>
+  );
+}
+
+export function ChipIcon({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true" className="shrink-0">
-      <circle cx="10" cy="10" r="8" fill={color} stroke="#fff" strokeWidth="1.8" strokeDasharray="3.2 2.4" />
-      <circle cx="10" cy="10" r="4" fill="#060b11" fillOpacity="0.7" />
+      <circle cx="10" cy="10" r="8.5" fill="#d9a520" stroke="#3a2a05" strokeWidth="1" />
+      <circle cx="10" cy="10" r="8.5" stroke="#fff6dc" strokeWidth="2.2" strokeDasharray="3.1 3.6" />
+      <circle cx="10" cy="10" r="4.6" fill="#b9860f" stroke="#fff6dc" strokeWidth="0.8" />
     </svg>
   );
 }
 
-/** Modern floating capsule player pod (GGPoker / Aurora style). */
+const DENOMS = [1000, 500, 100, 25, 5, 1] as const;
+
+/** A short stack of casino chips that roughly represents an amount (at most 6 chips). */
+export function ChipStack({ amount, max = 6 }: { amount: number; max?: number }) {
+  const chips: number[] = [];
+  let left = Math.max(0, Math.round(amount));
+  for (const d of DENOMS) {
+    while (left >= d && chips.length < max) {
+      chips.push(d);
+      left -= d;
+    }
+  }
+  if (chips.length === 0) return null;
+  return (
+    <span className="chip-stack" aria-hidden="true">
+      {chips.map((d, i) => (
+        <span key={i} className="pchip" data-v={d} />
+      ))}
+    </span>
+  );
+}
+
+/**
+ * A player's plate at the table: avatar, name, Admin badge, bot/offline flags and the
+ * game-specific numbers passed as children.
+ */
 export function SeatTag({
   seat,
   seats,
@@ -89,7 +126,10 @@ export function SeatTag({
   dealer,
   dimmed,
   compact,
+  layout = "row",
   children,
+  className = "",
+  style,
 }: {
   seat: number;
   seats: SeatInfo[];
@@ -97,43 +137,48 @@ export function SeatTag({
   dealer?: boolean;
   dimmed?: boolean;
   compact?: boolean;
+  layout?: "row" | "stack";
   children?: ReactNode;
+  className?: string;
+  style?: CSSProperties;
 }) {
   const t = useT();
   const s = seats[seat];
   const name = useSeatName(seats)(seat);
+  const size = compact ? 32 : 38;
+  const offline = Boolean(s && !s.connected && s.occupant === "human");
   return (
-    <div
-      className={`seat-pod flex items-center gap-2.5 min-w-0 ${
-        compact ? "px-2.5 py-1.5 text-[11px]" : "px-3 py-2 text-xs"
-      } ${active ? "seat-active" : ""} ${dimmed ? "opacity-50" : ""}`}
-    >
-      <div className="relative shrink-0">
+    <div className={`seat ${className}`} data-active={active ? "true" : "false"} data-dimmed={dimmed ? "true" : "false"} data-offline={offline ? "true" : "false"} data-layout={layout} style={style}>
+      <div className="seat-avatar">
         {s?.occupant === "human" ? (
-          <Avatar id={s.user?.avatar} size={compact ? 30 : 36} ring={active ? "primary" : "none"} />
+          <Avatar id={s.user?.avatar} size={size} />
         ) : (
-          <span
-            className={`rounded-full bg-[#17283b] border flex items-center justify-center text-accent shadow-inner ${
-              compact ? "size-7.5" : "size-9"
-            } ${active ? "border-primary ring-2 ring-primary/40" : "border-white/15"}`}
-          >
-            <Bot size={compact ? 14 : 17} />
+          <span className="rounded-full flex items-center justify-center text-[#8fd3ff] border border-white/15" style={{ width: size, height: size, background: "#0e3a4c" }}>
+            <Bot size={compact ? 16 : 18} />
           </span>
         )}
         {dealer && (
-          <span className="dealer-disc absolute -bottom-1 -right-1 !size-4.5 !text-[9px]" title={t("ui.dealer")}>
+          <span className="seat-badge !bg-[#f3efe4] !text-[#111] text-[9px] font-black" title={t("ui.dealer")}>
             D
           </span>
         )}
       </div>
-      <div className="min-w-0 flex-1">
-        <div className="font-bold text-white flex items-center gap-1.5 min-w-0 leading-tight">
-          <span className="truncate max-w-[8.5rem]">{name}</span>
+      <div className="seat-body">
+        <div className="seat-name">
+          <span>{name}</span>
           {s?.user?.badges.admin && <AdminBadge />}
         </div>
-        <div className="text-text-2/85 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-0.5 leading-tight">
-          {s && !s.connected && s.occupant === "human" && <span className="text-warning font-semibold">{t("room.disconnected")}</span>}
-          {s?.botControlled && <span className="text-accent font-semibold">{t("room.botControlled")}</span>}
+        <div className="seat-meta">
+          {offline && (
+            <span className="seat-flag" data-tone="warn">
+              <WifiOff size={10} /> {t("room.disconnected")}
+            </span>
+          )}
+          {s?.botControlled && (
+            <span className="seat-flag" data-tone="info">
+              <Bot size={10} /> {t("room.botControlled")}
+            </span>
+          )}
           {children}
         </div>
       </div>
@@ -141,21 +186,76 @@ export function SeatTag({
   );
 }
 
-/** High-visibility Trump pill with bright white card badge for suit legibility. */
+export function SeatStat({ label, value, tone }: { label?: string; value: ReactNode; tone?: "gold" | "good" | "bad" }) {
+  return (
+    <span className="seat-stat" data-tone={tone}>
+      {label && <span>{label}</span>}
+      <b>{value}</b>
+    </span>
+  );
+}
+
+/** Trump shown as a small white card-stock tile in the HUD. */
 export function TrumpBadge({ card, suit }: { card?: string | null; suit: string | null }) {
   const t = useT();
-  const red = suit === "H" || suit === "D";
   return (
-    <span className="chip bg-[#0e1926] border border-white/18 text-white gap-1.5">
-      <span className="text-muted">{t("game.trump")}:</span>
+    <span className="hud-chip">
+      <span>{t("game.trump")}:</span>
       {suit ? (
-        <span className={`inline-flex items-center justify-center size-4.5 rounded bg-white ${red ? "text-[#e11d48]" : "text-[#0f172a]"}`}>
-          <SuitIcon suit={suit} size={12} />
+        <span className={`inline-flex items-center justify-center size-5 rounded-[5px] bg-[#fbf9f3] ${isRedSuit(suit) ? "text-[#c8102e]" : "text-[#161b24]"}`}>
+          <SuitIcon suit={suit} size={13} />
+          <span className="sr-only">{suitSymbol(suit)}</span>
         </span>
       ) : (
-        <span className="text-gold font-bold">{t("game.noTrump")}</span>
+        <b className="text-[#e2c27a]">{t("game.noTrump")}</b>
       )}
-      {card && card.startsWith("X") && <span className="text-gold font-black">JK</span>}
+      {card && card.startsWith("X") && <b className="text-[#e2c27a]">{t("ui.jokerCard")}</b>}
     </span>
+  );
+}
+
+/** Wooden / leather rail with a felt (or table-top) surface inside. */
+export function GameTable({
+  rail,
+  felt,
+  print,
+  className = "",
+  feltClassName = "",
+  children,
+  style,
+}: {
+  rail: "walnut" | "mahogany" | "oak" | "lacquer" | "leather";
+  felt: string;
+  print?: string;
+  className?: string;
+  feltClassName?: string;
+  children: ReactNode;
+  style?: CSSProperties;
+}) {
+  return (
+    <div className={`gt ${className}`} data-rail={rail} style={style}>
+      <div className={`gt-felt ${feltClassName}`} data-felt={felt}>
+        {print && (
+          <div className="felt-print" aria-hidden="true">
+            {print}
+          </div>
+        )}
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** Four suit tiles (plus an optional extra button) for trump or joker choices. */
+export function SuitPicker({ onPick, size = "md", labelFor }: { onPick(suit: string): void; size?: "md" | "sm"; labelFor?: (suit: string) => string }) {
+  return (
+    <>
+      {SUITS.map((s) => (
+        <button key={s} type="button" className={`suit-tile ${size === "sm" ? "!h-11 !min-w-11" : ""}`} data-red={isRedSuit(s) ? "true" : "false"} onClick={() => onPick(s)}>
+          <SuitIcon suit={s} size={size === "sm" ? 18 : 24} />
+          {labelFor ? <span className="text-xs">{labelFor(s)}</span> : <span className="sr-only">{suitSymbol(s)}</span>}
+        </button>
+      ))}
+    </>
   );
 }

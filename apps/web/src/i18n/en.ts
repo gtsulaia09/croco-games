@@ -229,11 +229,11 @@ export const en = {
     high: "High",
     low: "Low",
     jokerLead: "Lead Joker: choose High or Low and a suit",
-    jokerFollow: "Play Joker as",
+    jokerFollow: "How do you play the Joker?",
     set: "Set {n}",
     total: "Total",
     sheet: "Scoreboard",
-    playHint: "Click any highlighted card to play",
+    playHint: "Tap a raised card to play it",
   },
   jj: {
     myTable: "My table cards",

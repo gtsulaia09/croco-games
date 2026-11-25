@@ -1,55 +1,51 @@
 @import "tailwindcss";
 
 /* ============================================================================
- * CROCO GAMES — NEO-ARENA DESIGN SYSTEM (2026)
- * Deep midnight-carbon studio surfaces, electric Croco emerald accents,
- * sculpted cushioned tabletop rails, and JUMBO-INDEX high-visibility cards.
+ * CROCO GAMES — design tokens (Crocobet brand palette, 2026)
+ * Deep teal-navy surfaces (#00141e family), Croco green (#189541 / #27b654),
+ * secondary blue (#0e5276), champagne gold accents, pill-shaped controls.
+ * Game tables (felt, wood, cards) live in src/games/table.css and load with a game.
  * ============================================================================ */
 @theme {
-  /* Midnight-Carbon Layered Surfaces */
-  --color-bg: #060b11;
-  --color-bg-elevated: #0b131e;
-  --color-surface: #101b29;
-  --color-surface-2: #0c1520;
-  --color-surface-3: #080f18;
-  --color-surface-hover: #172638;
+  /* Surfaces */
+  --color-bg: #00141e;
+  --color-bg-elevated: #001e28;
+  --color-surface: #04232e;
+  --color-surface-2: #001b25;
+  --color-surface-3: #00101a;
+  --color-surface-hover: #093948;
 
-  /* Crisp Subtle Hairlines */
-  --color-line: #1d2d40;
-  --color-line-strong: #2b425c;
+  /* Hairlines */
+  --color-line: #0f3a47;
+  --color-line-strong: #1d4552;
 
-  /* Electric Crocobet Emerald */
-  --color-primary: #00d95f;
-  --color-primary-hover: #14eb71;
-  --color-primary-active: #00b850;
-  --color-primary-soft: #072e19;
+  /* Croco green */
+  --color-primary: #27b654;
+  --color-primary-hover: #34c862;
+  --color-primary-active: #189541;
+  --color-primary-soft: #0b413a;
 
-  /* Secondary / Cyber Cyan */
-  --color-secondary: #1b3652;
-  --color-secondary-hover: #24476b;
-  --color-accent: #38bdf8;
+  /* Secondary blue */
+  --color-secondary: #0e5276;
+  --color-secondary-hover: #1e77a6;
+  --color-accent: #2aa7d6;
 
-  /* High-Contrast Typography */
-  --color-text: #f8fafc;
-  --color-text-2: #dce6f2;
-  --color-muted: #8da2b8;
+  /* Text */
+  --color-text: #ffffff;
+  --color-text-2: #d9e3ef;
+  --color-muted: #a3acb7;
 
-  /* Gaming Semantic Accents */
-  --color-gold: #ffc845;
+  /* Accents */
+  --color-gold: #e2c27a;
   --color-silver: #cbd5e1;
   --color-bronze: #e08e55;
-  --color-danger: #f43f5e;
+  --color-danger: #ef5b55;
   --color-warning: #f59e0b;
 
-  /* Modern Studio Table Felts */
-  --color-felt: #0c5239;
-  --color-felt-2: #06291d;
-
-  /* Georgian + Modern Geometric Sans Stack */
   --font-sans: "Noto Sans Georgian", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
 
-  --radius-card: 14px;
-  --radius-panel: 18px;
+  --radius-card: 16px;
+  --radius-panel: 20px;
 }
 
 @layer base {
@@ -60,15 +56,13 @@
   }
 
   html[lang="ka"] {
-    line-height: 1.54;
+    line-height: 1.55;
   }
 
   body {
     @apply bg-bg text-text font-sans antialiased;
     min-height: 100dvh;
-    background-image:
-      radial-gradient(ellipse 90% 50% at 50% -15%, rgba(0, 217, 95, 0.09), transparent 65%),
-      radial-gradient(ellipse 70% 45% at 50% 110%, rgba(56, 189, 248, 0.05), transparent 65%);
+    background-image: radial-gradient(ellipse 90% 45% at 50% -12%, rgba(24, 149, 65, 0.1), transparent 65%);
   }
 
   :focus-visible {
@@ -85,35 +79,50 @@
   }
 
   ::selection {
-    background: rgba(0, 217, 95, 0.32);
+    background: rgba(39, 182, 84, 0.32);
     color: #fff;
   }
 }
 
 @layer components {
-  /* ---- Modern Tactile Gaming Buttons ---- */
+  /* ---- Pill buttons (Crocobet style) ---- */
   .btn,
   .btn-primary,
   .btn-secondary,
   .btn-ghost,
   .btn-danger,
   .btn-gold {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 h-10 text-sm font-bold tracking-[0.01em] transition-all duration-150 select-none disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 h-10 text-sm font-bold tracking-[0.01em] transition-[background-color,box-shadow,translate,opacity] duration-150 select-none disabled:opacity-40 disabled:pointer-events-none active:translate-y-px;
   }
 
   .btn-primary {
-    @apply bg-primary text-[#031a0b] hover:bg-primary-hover;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 4px 14px rgba(0, 217, 95, 0.25);
+    @apply text-white;
+    background: linear-gradient(180deg, #1fa64b 0%, #168a3d 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 4px 14px rgba(24, 149, 65, 0.3);
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(180deg, #27b654 0%, #189541 100%);
   }
 
   .btn-secondary {
-    @apply bg-[#18283b] text-white border border-[#2b4360] hover:bg-[#20354d] hover:border-[#3c5c82];
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    @apply text-white;
+    background: linear-gradient(180deg, #13618a 0%, #0e5276 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+
+  .btn-secondary:hover {
+    background: linear-gradient(180deg, #1e77a6 0%, #13618a 100%);
   }
 
   .btn-gold {
-    @apply bg-gold text-[#1f1402] hover:bg-[#ffd469];
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 4px 14px rgba(255, 200, 69, 0.25);
+    @apply text-[#1b1405];
+    background: linear-gradient(180deg, #f3d996 0%, #d0ad62 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 4px 14px rgba(192, 171, 125, 0.25);
+  }
+
+  .btn-gold:hover {
+    background: linear-gradient(180deg, #f8e3ad 0%, #dcbb72 100%);
   }
 
   .btn-ghost {
@@ -121,26 +130,31 @@
   }
 
   .btn-danger {
-    @apply bg-danger text-white hover:bg-[#fb5673];
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 4px 14px rgba(244, 63, 94, 0.25);
+    @apply text-white;
+    background: linear-gradient(180deg, #cc3a36 0%, #a82626 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 14px rgba(187, 44, 44, 0.3);
+  }
+
+  .btn-danger:hover {
+    background: linear-gradient(180deg, #db4843 0%, #bb2c2c 100%);
   }
 
   .btn-sm {
-    @apply h-8 px-3 text-xs rounded-lg;
+    @apply h-8 px-3.5 text-xs;
   }
 
   .btn-lg {
-    @apply h-11 px-5 text-sm rounded-xl;
+    @apply h-12 px-6 text-[15px];
   }
 
-  /* ---- Modern Panels & Inputs ---- */
+  /* ---- Panels & inputs ---- */
   .card {
     @apply bg-surface rounded-[var(--radius-card)] border border-line/80;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.32);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   }
 
   .panel-inset {
-    @apply bg-surface-3 rounded-xl border border-line/70;
+    @apply bg-surface-3 rounded-2xl border border-line/70;
   }
 
   .input {
@@ -159,378 +173,21 @@
     @apply border-b border-line/55 last:border-0 transition-colors;
   }
 
-  /* ---- Lobby Game Tiles ---- */
+  /* ---- Lobby game tiles ---- */
   .game-card {
-    @apply relative overflow-hidden rounded-2xl bg-surface border border-line/80 flex flex-col transition-all duration-150;
+    @apply relative overflow-hidden rounded-2xl bg-surface border border-line/80 flex flex-col transition-[border-color,box-shadow,translate] duration-150;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
   }
 
   .game-card:hover {
-    border-color: rgba(0, 217, 95, 0.55);
-    transform: translateY(-2px);
-    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 217, 95, 0.2);
-  }
-
-  /* ==========================================================================
-   * MODERN SCULPTED GAME ARENA STAGES (GGPoker / Aurora Inspired)
-   * Cushioned carbon-leather outer rail + inner accent rim + studio cloth
-   * ========================================================================== */
-  .table-arena {
-    @apply relative rounded-[26px] p-3 sm:p-4 grid gap-3 overflow-hidden min-w-0;
-    border: 6px solid #141e2b;
-    box-shadow:
-      inset 0 0 0 1.5px rgba(255, 255, 255, 0.1),
-      inset 0 24px 64px rgba(0, 0, 0, 0.48),
-      0 18px 44px rgba(0, 0, 0, 0.55);
-  }
-
-  .table-arena > * {
-    min-width: 0;
-  }
-
-  @media (max-width: 639px) {
-    .table-arena {
-      border-width: 4px;
-      border-radius: 20px;
-      padding: 0.625rem;
-    }
-  }
-
-  .felt,
-  .felt-emerald {
-    background:
-      radial-gradient(ellipse 72% 62% at 50% 46%, #136b4a 0%, #0b4430 56%, #07261c 100%);
-  }
-
-  .felt-jade {
-    background:
-      radial-gradient(ellipse 72% 62% at 50% 46%, #115e6e 0%, #0b3c49 58%, #07222b 100%);
-  }
-
-  .felt-bura {
-    background:
-      radial-gradient(ellipse 72% 62% at 50% 46%, #156347 0%, #0c3d2b 58%, #072218 100%);
-  }
-
-  .felt-bura5 {
-    background:
-      radial-gradient(ellipse 72% 62% at 50% 46%, #165954 0%, #0d3836 58%, #071f1f 100%);
-  }
-
-  .felt-poker {
-    background:
-      radial-gradient(ellipse 70% 60% at 50% 46%, #126647 0%, #0a402c 58%, #062318 100%);
-  }
-
-  .felt-shortdeck {
-    background:
-      radial-gradient(ellipse 70% 60% at 50% 46%, #521d30 0%, #30111d 60%, #190910 100%);
-  }
-
-  .felt-omaha {
-    background:
-      radial-gradient(ellipse 70% 60% at 50% 46%, #154c73 0%, #0c2f4a 60%, #071b2b 100%);
-  }
-
-  .felt-omaha-hilo {
-    background:
-      radial-gradient(ellipse 70% 60% at 50% 46%, #26436b 0%, #152742 60%, #0b1526 100%);
-  }
-
-  .felt-dominoes {
-    background:
-      radial-gradient(ellipse 74% 64% at 50% 46%, #154c59 0%, #0c303a 60%, #071b21 100%);
-  }
-
-  /* Sculpted Center Felt Well (replaces boxy borders inside tables) */
-  .table-well {
-    @apply relative rounded-3xl px-3 py-3.5 sm:px-6 sm:py-4;
-    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.14) 0%, rgba(0, 0, 0, 0.32) 100%);
-    border: 1.5px solid rgba(255, 255, 255, 0.12);
-    box-shadow: inset 0 6px 24px rgba(0, 0, 0, 0.32);
-  }
-
-  /* Commercial Oval Poker Table */
-  .poker-oval {
-    position: relative;
-    border-radius: 9999px;
-    border: 8px solid #182230;
-    background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.28) 100%);
-    box-shadow:
-      inset 0 0 0 2px rgba(255, 200, 69, 0.28),
-      inset 0 14px 36px rgba(0, 0, 0, 0.42),
-      0 10px 28px rgba(0, 0, 0, 0.38);
-  }
-
-  @media (max-width: 639px) {
-    .poker-oval {
-      border-radius: 26px;
-      border-width: 5px;
-    }
-  }
-
-  /* Hero Player Hand Dock (high-contrast dark carbon tray so white cards pop) */
-  .hero-hand-tray {
-    @apply rounded-2xl border border-white/12 px-3 py-2.5 sm:px-4 sm:py-3 grid gap-2.5 transition-colors min-w-0;
-    background: linear-gradient(180deg, rgba(8, 15, 24, 0.72) 0%, rgba(6, 11, 17, 0.92) 100%);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 10px 26px rgba(0, 0, 0, 0.36);
-  }
-
-  .hero-hand-tray > * {
-    min-width: 0;
-  }
-
-  .hero-hand-tray[data-my-turn="true"] {
-    border-color: rgba(0, 217, 95, 0.5);
-    background:
-      radial-gradient(ellipse 70% 80% at 50% 100%, rgba(0, 217, 95, 0.12), transparent 70%),
-      linear-gradient(180deg, rgba(8, 15, 24, 0.78) 0%, rgba(6, 11, 17, 0.95) 100%);
-    box-shadow:
-      inset 0 1px 0 rgba(0, 217, 95, 0.22),
-      0 0 0 1px rgba(0, 217, 95, 0.18),
-      0 12px 30px rgba(0, 0, 0, 0.45);
-  }
-
-  /* Floating Action Dock at Bottom of Game Tables */
-  .action-dock {
-    @apply rounded-2xl bg-[#09111b]/95 border border-white/15 px-3.5 py-2.5 shadow-[0_12px_30px_rgba(0,0,0,0.5)];
-  }
-
-  /* White Card-Stock Suit Picker Button (for Trump / Demand selection) */
-  .suit-card-btn {
-    @apply inline-flex items-center justify-center rounded-xl h-11 min-w-12 px-3 font-black transition-all duration-150 select-none active:scale-95;
-    background: linear-gradient(175deg, #ffffff 0%, #eef2f6 100%);
-    border: 1.5px solid #cbd5e1;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 #ffffff;
-  }
-
-  .suit-card-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.5), 0 0 0 2px var(--color-primary);
-  }
-
-  /* ==========================================================================
-   * JUMBO-INDEX HIGH-VISIBILITY PLAYING CARDS (4-Size System)
-   * Pure crisp white card stock, deep contrast shadow, oversized jumbo rank,
-   * vivid suit color coding, unmistakable playability & selection feedback.
-   * ========================================================================== */
-  .pcard {
-    --card-w: 4.85rem; /* 78px x 110px default — bold & readable */
-    width: var(--card-w);
-    height: calc(var(--card-w) * 1.4);
-    border-radius: 10px;
-    background: linear-gradient(175deg, #ffffff 0%, #f8fafc 78%, #eef2f6 100%);
-    color: #0f172a;
-    border: 1.5px solid #cbd5e1;
-    box-shadow:
-      0 6px 16px rgba(0, 0, 0, 0.48),
-      0 2px 4px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 #ffffff;
-    display: inline-flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 5px 7px;
-    font-weight: 900;
-    line-height: 1;
-    user-select: none;
-    position: relative;
-    overflow: hidden;
-    transition: transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 140ms ease, opacity 140ms ease;
-    flex: none;
-  }
-
-  .pcard-xs {
-    --card-w: 2.55rem; /* 41px x 57px — showdown mini reveal */
-    border-radius: 6px;
-    padding: 3px 4px;
-  }
-
-  .pcard-sm {
-    --card-w: 4.15rem; /* 66px x 93px — table / trick cards (clear & readable!) */
-    border-radius: 9px;
-    padding: 4px 6px;
-  }
-
-  .pcard-lg {
-    --card-w: 5.65rem; /* 90px x 126px — hero 3-card / 2-card hands */
-    border-radius: 12px;
-    padding: 6px 8px;
-  }
-
-  @media (max-width: 639px) {
-    .pcard {
-      --card-w: 3.65rem; /* 58px x 82px on mobile */
-      border-radius: 8px;
-      padding: 4px 5px;
-    }
-    .pcard-lg {
-      --card-w: 4.35rem; /* 70px x 98px on mobile */
-      border-radius: 9px;
-      padding: 5px 6px;
-    }
-    .pcard-sm {
-      --card-w: 3.25rem; /* 52px x 73px on mobile */
-      border-radius: 7px;
-      padding: 3px 4.5px;
-    }
-  }
-
-  .pcard[data-red="true"] {
-    color: #e11d48;
-  }
-
-  .pcard-joker {
-    background: linear-gradient(160deg, #fffbeb 0%, #fde68a 58%, #fcd34d 100%);
-    color: #78350f;
-    border-color: #f59e0b;
-  }
-
-  .pcard-back {
-    background:
-      radial-gradient(circle at 50% 50%, rgba(0, 217, 95, 0.24) 0%, transparent 62%),
-      repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.07) 0 3px, transparent 3px 7px),
-      linear-gradient(155deg, #13293d 0%, #091522 100%);
-    border: 1.5px solid #3b5978;
-    box-shadow:
-      0 5px 14px rgba(0, 0, 0, 0.45),
-      inset 0 0 0 3px #0d1d2e,
-      inset 0 0 0 4px rgba(255, 200, 69, 0.4);
-  }
-
-  .pcard-slot {
-    --card-w: 4.85rem;
-    width: var(--card-w);
-    height: calc(var(--card-w) * 1.4);
-    border-radius: 10px;
-    border: 1.5px dashed rgba(255, 255, 255, 0.22);
-    background: rgba(6, 11, 17, 0.28);
-    flex: none;
-  }
-
-  .pcard-slot-sm {
-    --card-w: 4.15rem;
-    border-radius: 9px;
-  }
-
-  @media (max-width: 639px) {
-    .pcard-slot {
-      --card-w: 3.65rem;
-      border-radius: 8px;
-    }
-    .pcard-slot-sm {
-      --card-w: 3.25rem;
-      border-radius: 7px;
-    }
-  }
-
-  /* Playable interactive card cue: glowing neon-emerald edge + stepped-up elevation */
-  button.pcard:not(:disabled) {
-    border-color: #ffffff;
-    transform: translateY(-3px);
-    box-shadow:
-      0 10px 22px rgba(0, 0, 0, 0.55),
-      0 0 0 2.5px rgba(0, 217, 95, 0.88),
-      0 0 16px rgba(0, 217, 95, 0.3);
-  }
-
-  button.pcard:hover:not(:disabled) {
-    transform: translateY(-11px) scale(1.03);
-    box-shadow:
-      0 16px 28px rgba(0, 0, 0, 0.62),
-      0 0 0 3px var(--color-primary),
-      0 0 22px rgba(0, 217, 95, 0.45);
-    z-index: 4;
-  }
-
-  .pcard[data-selected="true"] {
-    transform: translateY(-14px) scale(1.03);
-    box-shadow:
-      0 16px 28px rgba(0, 0, 0, 0.62),
-      0 0 0 3px var(--color-gold),
-      0 0 22px rgba(255, 200, 69, 0.48);
-    z-index: 5;
-  }
-
-  /* Unplayable cards ONLY during an active choice: keep crisp silver-white & 100% legible, gently recessed */
-  .pcard[data-playable="false"] {
-    background: linear-gradient(175deg, #e2e8f0 0%, #cbd5e1 100%);
-    border-color: #94a3b8;
-    opacity: 0.86;
-    transform: translateY(4px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
-  }
-
-  /* ---- Glossy 3D Ivory Domino Tiles ---- */
-  .domino-tile {
-    background: linear-gradient(170deg, #ffffff 0%, #f5f2e8 78%, #e6dfd0 100%);
-    border: 1.5px solid #cbd5e1;
-    box-shadow:
-      0 5px 14px rgba(0, 0, 0, 0.45),
-      inset 0 1px 0 #ffffff,
-      inset 0 -3px 0 rgba(15, 23, 42, 0.12);
-    position: relative;
-    transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
-  }
-
-  button.domino-tile:not(:disabled) {
-    box-shadow:
-      0 7px 16px rgba(0, 0, 0, 0.5),
-      0 0 0 2px rgba(0, 217, 95, 0.78);
-  }
-
-  button.domino-tile:hover:not(:disabled) {
-    transform: translateY(-7px) scale(1.03);
-    box-shadow:
-      0 12px 22px rgba(0, 0, 0, 0.56),
-      0 0 0 2.5px var(--color-primary);
-  }
-
-  .domino-tile[data-active="true"] {
-    transform: translateY(-10px) scale(1.04);
-    box-shadow:
-      0 14px 24px rgba(0, 0, 0, 0.6),
-      0 0 0 3px var(--color-gold);
-  }
-
-  .domino-tile[data-playable="false"] {
-    opacity: 0.46;
-    transform: translateY(2px);
-  }
-
-  /* ---- Dealer & Blind Tokens ---- */
-  .dealer-disc {
-    @apply inline-flex items-center justify-center size-5 rounded-full text-[10px] font-black select-none shrink-0;
-    background: linear-gradient(145deg, #fffbeb 0%, #ffc845 70%, #d99b16 100%);
-    color: #1c1202;
-    border: 1.5px solid #ffffff;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-  }
-
-  .blind-disc {
-    @apply inline-flex items-center justify-center h-5 px-1.5 rounded-full text-[10px] font-extrabold tracking-tight shrink-0;
-  }
-
-  /* ---- Floating Capsule Player Pod ---- */
-  .seat-pod {
-    @apply rounded-2xl border border-white/14 bg-[#0b131e]/90 backdrop-blur-none transition-all;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.38);
-  }
-
-  .seat-active {
-    border-color: var(--color-primary) !important;
-    background: linear-gradient(135deg, rgba(0, 217, 95, 0.2), rgba(11, 19, 30, 0.95)) !important;
-    box-shadow: 0 0 0 1.5px rgba(0, 217, 95, 0.45), 0 8px 22px rgba(0, 0, 0, 0.48);
+    border-color: rgba(39, 182, 84, 0.55);
+    translate: 0 -2px;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(39, 182, 84, 0.2);
   }
 }
 
 .fade-in {
   animation: fade-in 150ms ease-out;
-}
-
-.card-enter {
-  animation: card-enter 170ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .turn-dot {
@@ -541,17 +198,6 @@
   from {
     opacity: 0;
     transform: translateY(3px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes card-enter {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.95);
   }
   to {
     opacity: 1;
@@ -576,6 +222,7 @@
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
   }
 }

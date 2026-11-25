@@ -287,153 +287,6 @@ export function SuitIcon({ suit, size = 16, className = "" }: { suit: string; si
   }
 }
 
-/** Royal emblem for J / Q / K court cards so face cards are unmistakably distinct at a glance. */
-function CourtCrown({ rank, size }: { rank: string; size: number }) {
-  if (rank === "K") {
-    return (
-      <svg width={size} height={size} viewBox="0 0 28 28" fill="currentColor" aria-hidden="true">
-        <path d="M14 4L18 11.5L25 7.5L22 20H6L3 7.5L10 11.5L14 4Z" />
-        <rect x="6" y="21.5" width="16" height="3" rx="1.5" fill="#f59e0b" />
-      </svg>
-    );
-  }
-  if (rank === "Q") {
-    return (
-      <svg width={size} height={size} viewBox="0 0 28 28" fill="currentColor" aria-hidden="true">
-        <path d="M14 4.5L17.2 12L24 9L20.8 20H7.2L4 9L10.8 12L14 4.5Z" />
-        <circle cx="14" cy="3.2" r="2" fill="#f59e0b" />
-        <rect x="7" y="21.5" width="14" height="2.8" rx="1.4" fill="#f59e0b" />
-      </svg>
-    );
-  }
-  return (
-    <svg width={size} height={size} viewBox="0 0 28 28" fill="currentColor" aria-hidden="true">
-      <path d="M14 3.5L22 7.2V14C22 19 18.6 22.6 14 24.5C9.4 22.6 6 19 6 14V7.2L14 3.5Z" />
-      <path d="M14 7.5L18.5 9.6V13.8C18.5 16.8 16.6 19.2 14 20.4V7.5Z" fill="#ffffff" opacity="0.35" />
-    </svg>
-  );
-}
-
-/**
- * JUMBO-INDEX High-Visibility PlayingCard (GGPoker / Modern Arena style):
- *  - Large unmistakable top-left rank + vivid suit pip
- *  - Bold oversized bottom-right / center suit or royal court emblem
- *  - Crisp pure-white card stock that pops off dark gaming tables
- */
-export function PlayingCard({
-  card,
-  onClick,
-  selected,
-  playable = true,
-  small,
-  size,
-  back,
-  title,
-  animate,
-}: {
-  card?: string;
-  onClick?: () => void;
-  selected?: boolean;
-  playable?: boolean;
-  small?: boolean;
-  size?: "xs" | "sm" | "md" | "lg";
-  back?: boolean;
-  title?: string;
-  animate?: boolean;
-}) {
-  const resolvedSize = size ?? (small ? "sm" : "md");
-  const sizeClass = resolvedSize === "xs" ? "pcard-xs" : resolvedSize === "sm" ? "pcard-sm" : resolvedSize === "lg" ? "pcard-lg" : "";
-  const animClass = animate ? "card-enter" : "";
-
-  if (back || !card) {
-    return (
-      <span className={`pcard pcard-back ${sizeClass} ${animClass} items-center justify-center`} aria-label="hidden card">
-        <span className="size-4 rounded-sm border border-gold/55 rotate-45 bg-primary/30" aria-hidden="true" />
-      </span>
-    );
-  }
-
-  const joker = card === "X1" || card === "X2";
-  const isRedJoker = card === "X1";
-  const rank = RANK_LABEL[card[0]!] ?? card[0]!;
-  const suit = card[1] ?? "";
-  const red = joker ? isRedJoker : suit === "H" || suit === "D";
-  const isFace = rank === "J" || rank === "Q" || rank === "K";
-
-  const rankFont =
-    resolvedSize === "xs"
-      ? "text-[13px]"
-      : resolvedSize === "sm"
-        ? "text-[18px] sm:text-[21px]"
-        : resolvedSize === "lg"
-          ? "text-[24px] sm:text-[29px]"
-          : "text-[21px] sm:text-[25px]";
-
-  const tenTight = rank === "10" ? "tracking-[-0.09em]" : "tracking-tighter";
-  const cornerPip = resolvedSize === "xs" ? 10 : resolvedSize === "sm" ? 14 : resolvedSize === "lg" ? 18 : 16;
-  const bigArt = resolvedSize === "xs" ? 15 : resolvedSize === "sm" ? 27 : resolvedSize === "lg" ? 40 : 34;
-
-  const content = joker ? (
-    <>
-      <span className="flex items-center justify-between w-full leading-none">
-        <span className={`font-black tracking-tighter ${resolvedSize === "xs" ? "text-[11px]" : "text-xs sm:text-sm"} ${isRedJoker ? "text-[#b91c1c]" : "text-[#1e293b]"}`}>
-          JOKER
-        </span>
-      </span>
-      <span className="self-end mt-auto">
-        <svg width={bigArt + 4} height={bigArt + 4} viewBox="0 0 32 32" fill="none" aria-hidden="true">
-          <path d="M16 5L20 14L28 10L24 23H8L4 10L12 14L16 5Z" fill={isRedJoker ? "#dc2626" : "#0f172a"} />
-          <circle cx="16" cy="3.8" r="2.3" fill="#d97706" />
-          <circle cx="4" cy="8.5" r="2" fill="#00d95f" />
-          <circle cx="28" cy="8.5" r="2" fill="#00d95f" />
-          <rect x="8" y="24.8" width="16" height="3.2" rx="1.6" fill="#92400e" />
-        </svg>
-      </span>
-    </>
-  ) : (
-    <>
-      {isFace && resolvedSize !== "xs" && (
-        <span className="pointer-events-none absolute inset-[3px] rounded-[7px] border border-amber-500/35 bg-amber-50/25" aria-hidden="true" />
-      )}
-      {/* Jumbo Top-Left Index: Rank + Vivid Mini Suit */}
-      <span className="relative z-[1] flex items-start justify-between w-full leading-none">
-        <span className={`font-black leading-[0.9] ${tenTight} ${rankFont}`}>{rank}</span>
-        {resolvedSize !== "xs" && <SuitIcon suit={suit} size={cornerPip} className="mt-0.5 shrink-0" />}
-      </span>
-
-      {/* Bold Oversized Lower-Right / Center Suit or Royal Emblem */}
-      <span className="relative z-[1] self-end mt-auto flex items-end justify-end leading-none">
-        {isFace && resolvedSize !== "xs" ? (
-          <CourtCrown rank={rank} size={bigArt} />
-        ) : (
-          <SuitIcon suit={suit} size={rank === "A" && resolvedSize !== "xs" ? bigArt + 3 : bigArt} />
-        )}
-      </span>
-    </>
-  );
-
-  const common = {
-    className: `pcard ${sizeClass} ${animClass} ${joker ? "pcard-joker" : ""}`,
-    "data-red": red,
-    "data-selected": selected ? "true" : "false",
-    "data-playable": playable ? "true" : "false",
-    title: title ?? cardLabel(card),
-  };
-
-  if (onClick) {
-    return (
-      <button type="button" {...common} onClick={onClick} disabled={!playable} aria-pressed={selected} aria-label={cardLabel(card)}>
-        {content}
-      </button>
-    );
-  }
-  return (
-    <span {...common} aria-label={cardLabel(card)}>
-      {content}
-    </span>
-  );
-}
-
 /** Seconds remaining until a server deadline. Ticks only while the tab is visible. */
 export function useCountdown(deadline: number | null): number | null {
   const [now, setNow] = useState(() => Date.now());
@@ -452,10 +305,9 @@ export function Countdown({ deadline }: { deadline: number | null }) {
   const s = useCountdown(deadline);
   const t = useT();
   if (s === null) return null;
-  const urgent = s <= 5;
   return (
-    <span className={`chip tabular-nums ${urgent ? "bg-danger/25 text-danger border border-danger/50" : "bg-surface-3 text-text-2 border border-line"}`}>
-      <Clock size={11} /> {t("game.seconds", { s })}
+    <span className="hud-chip tabular-nums" data-tone={s <= 5 ? "danger" : undefined}>
+      <Clock size={12} /> {t("game.seconds", { s })}
     </span>
   );
 }
