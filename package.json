@@ -1,0 +1,30 @@
+{
+  "name": "croco-games",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Security-first multiplayer card and board game platform",
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r --workspace-concurrency=1 typecheck",
+    "test": "pnpm -r --workspace-concurrency=1 test",
+    "build": "pnpm --filter @croco/web build",
+    "build:pages-demo": "pnpm --filter @croco/web build:pages",
+    "lint": "eslint .",
+    "check:security": "node scripts/security-checks.mjs",
+    "sbom": "node scripts/generate-sbom.mjs",
+    "ci": "pnpm lint && pnpm typecheck && pnpm check:security && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.15.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.14.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.74.0",
+    "vitest": "4.1.12"
+  }
+}

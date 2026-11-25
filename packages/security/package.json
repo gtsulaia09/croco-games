@@ -1,0 +1,23 @@
+{
+  "name": "@croco/security",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@oslojs/encoding": "1.1.0",
+    "@oslojs/otp": "1.1.0",
+    "jose": "6.2.18"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.7",
+    "typescript": "6.0.3",
+    "vitest": "4.1.12"
+  }
+}
