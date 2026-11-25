@@ -34,6 +34,11 @@ export default tseslint.config(
     },
   },
   {
+    // Tests may use loosely-typed protocol fixtures.
+    files: ["**/test/**/*.ts", "**/*.test.ts", "tests/**/*.ts"],
+    rules: { "@typescript-eslint/no-explicit-any": "off" },
+  },
+  {
     files: ["apps/web/src/**/*.{ts,tsx}"],
     plugins: { "react-hooks": reactHooks },
     rules: {
