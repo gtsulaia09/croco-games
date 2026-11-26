@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { BOT_CHAT_LINES, botChatDelay, BOT_CHAT_TIMER } from "@croco/shared/client";
 import { en } from "./en";
 import { ka } from "./ka";
 
@@ -53,5 +54,24 @@ describe("translations", () => {
     expect(used.size).toBeGreaterThan(100);
     const missing = [...used].filter((k) => !enKeys.has(k));
     expect(missing).toEqual([]);
+  });
+});
+
+describe("bot table talk", () => {
+  it("has a Georgian and an English text for every line the server can send", () => {
+    const enKeys = new Map(flat(en as unknown as Tree));
+    const kaKeys = new Map(flat(ka as unknown as Tree));
+    expect(BOT_CHAT_LINES).toHaveLength(65);
+    for (const key of BOT_CHAT_LINES) {
+      expect(enKeys.get(`botChat.${key}`), key).toBeTruthy();
+      expect(kaKeys.get(`botChat.${key}`), key).toMatch(/[\u10D0-\u10FF]/);
+    }
+  });
+
+  it("posts rarely: one line every 5 to 10 minutes", () => {
+    expect(botChatDelay(() => 0)).toBe(BOT_CHAT_TIMER.minMs);
+    expect(botChatDelay((n) => n - 1)).toBe(BOT_CHAT_TIMER.maxMs);
+    expect(BOT_CHAT_TIMER.minMs).toBe(5 * 60_000);
+    expect(BOT_CHAT_TIMER.maxMs).toBe(10 * 60_000);
   });
 });

@@ -273,9 +273,15 @@ export interface PlayingCardProps {
   style?: CSSProperties;
   /** Extra state hooks for styling (e.g. "winner", "latest"). */
   highlight?: "winner" | "latest" | false;
+  /**
+   * Always render a button (disabled while it cannot be clicked). Cards in the hand use this so
+   * the element never switches between <span> and <button> when the turn changes: a switch
+   * remounts the card and replays its deal animation.
+   */
+  asButton?: boolean;
 }
 
-export function PlayingCard({ card, onClick, selected, playable = true, size = "md", back, title, animate, className = "", style, highlight }: PlayingCardProps) {
+export function PlayingCard({ card, onClick, selected, playable = true, size = "md", back, title, animate, className = "", style, highlight, asButton }: PlayingCardProps) {
   const anim = animate ? `pc-anim-${animate}` : "";
   if (back || !card) {
     return (
@@ -294,9 +300,9 @@ export function PlayingCard({ card, onClick, selected, playable = true, size = "
     title: title ?? cardLabel(card),
     style,
   };
-  if (onClick) {
+  if (onClick || asButton) {
     return (
-      <button type="button" {...common} onClick={onClick} disabled={!playable} aria-pressed={selected} aria-label={cardLabel(card)}>
+      <button type="button" {...common} onClick={onClick} disabled={!onClick || !playable} aria-pressed={selected} aria-label={cardLabel(card)}>
         <CardFace card={card} />
       </button>
     );

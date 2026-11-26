@@ -851,6 +851,40 @@
   rotate: -4deg;
 }
 
+/* A declared trump (nine-card deals): the suit, or ბეზი, in place of a turned card */
+.pj-declared-trump {
+  display: grid;
+  place-items: center;
+  width: var(--cw-pile);
+  aspect-ratio: 5 / 7;
+  border-radius: 10px;
+  font: 800 13px/1.1 system-ui, sans-serif;
+  text-align: center;
+  color: #141a24;
+  background: linear-gradient(165deg, #ffffff, #efebe2);
+  box-shadow:
+    0 0 0 2px rgba(217, 181, 109, 0.85),
+    0 10px 22px -6px rgba(0, 0, 0, 0.6);
+  animation: rise-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.pj-declared-trump[data-red="true"] {
+  color: #c8102e;
+}
+
+.pj-declared-trump b {
+  padding: 0 4px;
+  color: #6b4a10;
+}
+
+.pj-declared-trump[data-pending="true"] {
+  font-size: 26px;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.25);
+  animation: none;
+}
+
 .pj-plaque-label {
   font-size: 10.5px;
   font-weight: 800;
@@ -1110,6 +1144,15 @@
     0 10px 20px -4px rgba(0, 0, 0, 0.55);
 }
 
+.psuit-named {
+  flex-direction: column;
+  gap: 2px;
+  min-width: 62px;
+  height: 62px;
+  font-size: 10.5px;
+  font-weight: 800;
+}
+
 .psuit-wide {
   min-width: 96px;
   color: #2a1d06;
@@ -1209,7 +1252,7 @@
   --hand-natural: 12px;
 }
 
-.phand-wrap[data-live="true"] .phand > button.pcard {
+.phand-wrap[data-live="true"] .phand > button.pcard:not(:disabled) {
   translate: 0 calc(var(--fan-y, 0px) - 7px);
   box-shadow:
     0 0 0 1px rgba(15, 22, 34, 0.2),
@@ -1220,7 +1263,7 @@
 }
 
 @media (hover: hover) {
-  .phand > button.pcard:hover {
+  .phand > button.pcard:not(:disabled):hover {
     translate: 0 calc(var(--fan-y, 0px) - 24px);
     scale: 1.04;
     z-index: 60 !important;

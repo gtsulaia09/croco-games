@@ -233,3 +233,45 @@ describe("authoritative game play", () => {
     expect((await A.h.next((m) => m.type === "error" && m.code === "rate_limited")).code).toBe("rate_limited");
   });
 });
+
+describe("bot table talk", () => {
+  it("bots post a quote or joke on the default timer (every 5–10 minutes) while the chat is on", async () => {
+    const host = await player("bt_host");
+    const roomId = await createRoom(host, { bots: 1 });
+    const { h } = await connect(host, roomId);
+    h.send({ type: "room.start", id: msgId() });
+    await h.next((m) => m.type === "game");
+    const stub = env.ROOM.get(env.ROOM.idFromName(roomId));
+    const scheduled = await runInDurableObject(stub, async (instance) => {
+      const game = (instance as unknown as { game: { botChatAt: number | null } }).game;
+      const at = game.botChatAt;
+      game.botChatAt = Date.now() - 1; // due now
+      return at;
+    });
+    // Bots are rare: the first line comes 5–10 minutes after the deal.
+    expect(scheduled).toBeGreaterThan(Date.now() + 4.5 * 60_000);
+    expect(scheduled).toBeLessThanOrEqual(Date.now() + 10 * 60_000);
+    await runInDurableObject(stub, async (instance) => (instance as unknown as { alarm(): Promise<void> }).alarm());
+    const talk = await h.next((m) => m.type === "chat" && m.message.kind === "bot");
+    expect(talk.message.key).toMatch(/^[qj]\d{2}$/);
+    expect(talk.message.text).toBe("");
+    expect(talk.message.bot.seat).toBe(1);
+    const next = await runInDurableObject(stub, async (instance) => (instance as unknown as { game: { botChatAt: number } }).game.botChatAt);
+    expect(next).toBeGreaterThan(Date.now() + 4.5 * 60_000); // next line in 5–10 minutes
+  });
+
+  it("stays quiet when the table chat is turned off", async () => {
+    const host = await player("bt_quiet");
+    const roomId = await createRoom(host, { bots: 1, chatEnabled: false });
+    const { h } = await connect(host, roomId);
+    h.send({ type: "room.start", id: msgId() });
+    await h.next((m) => m.type === "game");
+    const stub = env.ROOM.get(env.ROOM.idFromName(roomId));
+    await runInDurableObject(stub, async (instance) => {
+      (instance as unknown as { game: { botChatAt: number } }).game.botChatAt = Date.now() - 1;
+      await (instance as unknown as { alarm(): Promise<void> }).alarm();
+    });
+    await new Promise((r) => setTimeout(r, 150));
+    expect(h.messages.some((m) => m.type === "chat" && m.message.kind === "bot")).toBe(false);
+  });
+});

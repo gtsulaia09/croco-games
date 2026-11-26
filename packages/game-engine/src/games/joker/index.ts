@@ -28,8 +28,11 @@ export const jokerConfigSchema = z.strictObject({
    * their highest deal. Legacy values: "simple" (no erasing), "double" (= eraseHighest), "none".
    */
   setBonus: z.enum(["eraseLast", "eraseHighest", "simple", "double", "none"]).default("eraseLast"),
-  /** Nine-card hands: dealer's last card shows trump, or the player left of the dealer chooses after three cards. */
-  nineTrump: z.enum(["lastCard", "choose"]).default("lastCard"),
+  /**
+   * Nine-card hands: the player after the dealer declares trump (or no trump) after seeing three
+   * cards — the rule of gogo.ge / parabura.ge and the default — or the dealer's last card shows it.
+   */
+  nineTrump: z.enum(["lastCard", "choose"]).default("choose"),
   /** When a high joker is led naming a non-trump suit and someone trumps: does the trump win? */
   ledJokerTrumped: z.enum(["trumpWins", "jokerWins"]).default("trumpWins"),
 });
@@ -90,6 +93,8 @@ export interface JokerState {
   pendingDeal: Card[][] | null;
   trumpCard: Card | null;
   trump: Suit | null;
+  /** Seat that declared this deal's trump (nine-card "choose" deals); null when a card shows it. */
+  trumpBy?: number | null;
   phase: "trump" | "bid" | "play" | "over";
   bids: Array<number | null>;
   tricks: number[];
@@ -112,6 +117,8 @@ export interface JokerView {
   dealer: number;
   trumpCard: Card | null;
   trump: Suit | null;
+  /** Seat that declared this deal's trump, or null when a turned card shows it. */
+  trumpBy: number | null;
   toAct: number | null;
   leader: number;
   bids: Array<number | null>;
@@ -145,6 +152,7 @@ function startHand(state: JokerState, ctx: EngineContext, events: PublicEvent[])
   // trick being collected before the new cards arrive. It never affects play or scoring.
   state.trumpCard = null;
   state.trump = null;
+  state.trumpBy = null;
   state.pendingDeal = null;
   const dealOrder = [1, 2, 3, 4].map((k) => seatAfter(state.dealer, k));
   if (state.cards === 9 && state.config.nineTrump === "choose") {
@@ -393,6 +401,7 @@ export const jokerEngine: GameEngine<JokerState, JokerAction, JokerConfig, Joker
     if (action.type === "trump") {
       if (next.phase !== "trump") return fail("not_trump_phase");
       next.trump = action.suit === "none" ? null : action.suit;
+      next.trumpBy = seat;
       for (let s = 0; s < PLAYERS; s++) next.hands[s]!.push(...next.pendingDeal![s]!);
       next.pendingDeal = null;
       next.phase = "bid";
@@ -455,6 +464,7 @@ export const jokerEngine: GameEngine<JokerState, JokerAction, JokerConfig, Joker
       dealer: state.dealer,
       trumpCard: state.trumpCard,
       trump: state.trump,
+      trumpBy: state.trumpBy ?? null,
       toAct: state.phase === "over" ? null : state.toAct,
       leader: state.leader,
       bids: [...state.bids],

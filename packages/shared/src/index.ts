@@ -3,3 +3,4 @@ export * from "./limits";
 export * from "./validation";
 export * from "./protocol";
 export * from "./api";
+export * from "./botChat";

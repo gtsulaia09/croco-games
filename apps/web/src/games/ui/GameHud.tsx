@@ -50,12 +50,15 @@ export function HudFact({ label, value, tone, title, optional }: { label?: React
 }
 
 /** Trump suit as a small card-stock tile (or "no trump"). */
-export function TrumpFact({ suit, joker }: { suit: string | null; joker?: boolean }) {
+export function TrumpFact({ suit, joker, pending }: { suit: string | null; joker?: boolean; pending?: boolean }) {
   const t = useT();
   return (
     <span className="phud-chip" data-tone="gold">
       <span className="phud-chip-label">{t("game.trump")}</span>
-      {suit ? (
+      {pending ? (
+        // Not declared yet (nine-card deals): never show "no trump" before anyone said it.
+        <b aria-label={t("joker.trumpPending")}>?</b>
+      ) : suit ? (
         <span className="suit-chip" data-red={isRedSuit(suit) ? "true" : "false"}>
           <SuitIcon suit={suit} size={14} />
           <span className="sr-only">{suitSymbol(suit)}</span>

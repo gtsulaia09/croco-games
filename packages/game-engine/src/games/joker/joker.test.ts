@@ -232,6 +232,57 @@ describe("premia (set bonus)", () => {
   });
 });
 
+describe("trump declaration (nine-card deals)", () => {
+  it("by default the player after the dealer declares trump after seeing three cards", () => {
+    expect(cfg().nineTrump).toBe("choose");
+    const s = jokerEngine.create(cfg({ ruleset: "nines" }), 4, testCtx(3));
+    const chooser = (s.dealer + 1) % 4;
+    expect(s.phase).toBe("trump");
+    expect(s.toAct).toBe(chooser);
+    expect(s.hands.every((h) => h.length === 3)).toBe(true);
+    expect(jokerEngine.legalActions(s, chooser)).toEqual([
+      { type: "trump", suit: "S" },
+      { type: "trump", suit: "H" },
+      { type: "trump", suit: "D" },
+      { type: "trump", suit: "C" },
+      { type: "trump", suit: "none" },
+    ]);
+    // Nobody else may declare.
+    expect(jokerEngine.apply(s, s.dealer, { type: "trump", suit: "H" }, testCtx())).toEqual({ ok: false, error: "not_your_turn" });
+    const r = jokerEngine.apply(s, chooser, { type: "trump", suit: "H" }, testCtx());
+    if (!r.ok) throw new Error(r.error);
+    expect(r.state.trump).toBe("H");
+    expect(r.state.trumpBy).toBe(chooser);
+    expect(r.state.trumpCard).toBeNull();
+    expect(r.state.hands.every((h) => h.length === 9)).toBe(true);
+    expect(r.state.phase).toBe("bid");
+    expect(r.state.toAct).toBe(chooser);
+    expect(jokerEngine.view(r.state, 0).trumpBy).toBe(chooser);
+  });
+
+  it("can declare no trump (ბეზი)", () => {
+    const s = jokerEngine.create(cfg({ ruleset: "nines" }), 4, testCtx(5));
+    const r = jokerEngine.apply(s, s.toAct, { type: "trump", suit: "none" }, testCtx());
+    if (!r.ok) throw new Error(r.error);
+    expect(r.state.trump).toBeNull();
+    expect(r.state.trumpBy).toBe(s.toAct);
+  });
+
+  it("keeps the dealer's last card as trump in the lastCard variant", () => {
+    const s = jokerEngine.create(cfg({ ruleset: "nines", nineTrump: "lastCard" }), 4, testCtx(3));
+    expect(s.phase).toBe("bid");
+    expect(s.trumpCard).not.toBeNull();
+    expect(jokerEngine.view(s, 0).trumpBy).toBeNull();
+  });
+
+  it("short deals still turn the next card of the pack", () => {
+    const s = jokerEngine.create(cfg(), 4, testCtx(3));
+    expect(s.cards).toBe(1);
+    expect(s.phase).toBe("bid");
+    expect(s.trumpCard).not.toBeNull();
+  });
+});
+
 describe("full Joker matches", () => {
   it.each(["standard", "nines"] as const)("%s ruleset plays to the end with legal bot moves", (ruleset) => {
     for (const seed of [1, 2]) {

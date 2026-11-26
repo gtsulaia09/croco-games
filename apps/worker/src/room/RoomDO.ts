@@ -21,6 +21,7 @@ import {
   TokenBucket,
 } from "@croco/security";
 import {
+  botChatDelay,
   clientRoomMessageSchema,
   GAME_CATALOG,
   LIMITS,
@@ -40,6 +41,7 @@ import {
   type RoomVisibility,
   type SeatInfo,
   type ServerRoomMessage,
+  pickBotLine,
 } from "@croco/shared";
 import { securityEvent } from "../audit";
 import { run, stmt } from "../db";
@@ -98,6 +100,8 @@ interface GameData {
   turnKey: string;
   deadline: number | null;
   botActAt: number | null;
+  /** Next bot table-talk line (default timer); optional in games saved before bot chat. */
+  botChatAt?: number | null;
   startedAt: number;
   processed: string[];
 }
@@ -607,7 +611,18 @@ export class RoomDO extends DurableObject<Env> {
     const state = engine.create(config, occupied.length, { rng: cryptoRng(), now });
     room.phase = "playing";
     room.matchNumber += 1;
-    this.game = { matchId: randomId("m"), state, rev: 0, turnKey: "", deadline: null, botActAt: null, startedAt: now, processed: [] };
+    const rng = cryptoRng();
+    this.game = {
+      matchId: randomId("m"),
+      state,
+      rev: 0,
+      turnKey: "",
+      deadline: null,
+      botActAt: null,
+      botChatAt: room.seats.some((s) => s.kind === "bot") ? now + botChatDelay((n) => rng.int(n)) : null,
+      startedAt: now,
+      processed: [],
+    };
     this.events = [];
     this.rescheduleTurn(false);
     this.systemChat("match_started", { number: room.matchNumber });
@@ -862,6 +877,7 @@ export class RoomDO extends DurableObject<Env> {
     }
     if (this.game?.deadline) times.push(this.game.deadline);
     if (this.game?.botActAt) times.push(this.game.botActAt);
+    if (this.game?.botChatAt && room.phase === "playing") times.push(this.game.botChatAt);
     if (room.phase === "playing") times.push(room.lastHumanSeenAt + ABANDON_AFTER_MS);
     if (!times.length) {
       await this.ctx.storage.deleteAlarm();
@@ -895,6 +911,10 @@ export class RoomDO extends DurableObject<Env> {
       }
     }
     const game = this.game;
+    if (game && room.phase === "playing" && game.botChatAt && game.botChatAt <= now) {
+      this.botTableTalk(game, now);
+      await this.save({ chat: true, game: true });
+    }
     if (game && room.phase === "playing") {
       const engine = this.engine();
       const actor = engine.actors(game.state)[0];
@@ -989,6 +1009,28 @@ export class RoomDO extends DurableObject<Env> {
     this.chat.push(message);
     if (this.chat.length > LIMITS.chat.historySize) this.chat.splice(0, this.chat.length - LIMITS.chat.historySize);
     for (const ws of this.ctx.getWebSockets()) this.send(ws, { type: "chat", seq: ++this.seq, message });
+  }
+
+  /**
+   * Bot table talk on the default timer: a random bot seat posts a random quote or joke (sent as
+   * a line key, never free text). Only while the table chat is on and a human is connected.
+   */
+  private botTableTalk(game: GameData, now: number): void {
+    const room = this.room!;
+    const rng = cryptoRng();
+    const bots = room.seats.filter((s) => s.kind === "bot");
+    game.botChatAt = bots.length ? now + botChatDelay((n) => rng.int(n)) : null;
+    const watched = room.seats.some((s) => s.kind === "human" && s.connected);
+    if (!bots.length || !room.settings.chatEnabled || !watched) return;
+    const bot = bots[rng.int(bots.length)]!;
+    this.pushChat({
+      id: randomId("m", 16),
+      ts: now,
+      kind: "bot",
+      bot: { seat: bot.seat, name: bot.botName ?? `#${bot.seat + 1}` },
+      text: "",
+      key: pickBotLine((n) => rng.int(n)),
+    });
   }
 
   private systemChat(key: string, params: Record<string, string | number>): void {

@@ -81,6 +81,7 @@ export function PlayerHand({
               playable={!live || legal}
               selected={Boolean(c.selected) || armedCard === c.card}
               onClick={live && legal ? (e) => click(c.card, e) : undefined}
+              asButton
               animate="deal"
               style={vars}
             />

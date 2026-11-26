@@ -77,6 +77,8 @@ Legend: **Anon** = no token · **User** = verified token + active profile ·
 | `game.action` | the seat owner (human, not bot-controlled) | engine says it is this seat's turn; `rev` matches; action id unseen; action legal |
 | `room.leave` | member | during match: seat becomes bot-controlled until match end (no forfeit of others) |
 
+Bot table talk (`kind: "bot"`) is produced by the RoomDO alarm only; clients cannot send it, and it carries a line key from `BOT_CHAT_LINES`, never free text.
+
 ## GameChatDO messages (one chat room per game type)
 
 | Message | Who | Rule |

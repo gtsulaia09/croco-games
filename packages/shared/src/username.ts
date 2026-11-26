@@ -5,12 +5,21 @@ import { LIMITS } from "./limits";
  * and by the browser bundle (client.ts), which must stay small.
  */
 
-/** Remove C0/C1 control characters, bidi overrides and zero-width characters. */
+/**
+ * Remove C0/C1 control characters, bidi overrides and zero-width characters. U+200D (zero-width
+ * joiner) is handled separately below.
+ */
 // eslint-disable-next-line no-control-regex
-const CONTROL_CHARS = /[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF]/g;
+const CONTROL_CHARS = /[\u0000-\u001F\u007F-\u009F\u200B\u200C\u200E\u200F\u202A-\u202E\u2060-\u2069\uFEFF]/g;
+/**
+ * A zero-width joiner survives only inside an emoji sequence (🤷‍♂️, ❤️‍🔥, 👩‍💻): an emoji — or its
+ * variation selector / skin tone — before it and an emoji after it. Anywhere else it is removed,
+ * so it cannot hide inside names or ordinary words.
+ */
+const STRAY_ZWJ = /(?<!\p{Extended_Pictographic}|\p{Emoji_Modifier}|\u{FE0F})\u200D|\u200D(?!\p{Extended_Pictographic})/gu;
 
 export function sanitizeText(input: string): string {
-  return input.normalize("NFC").replace(CONTROL_CHARS, "").replace(/\s+/g, " ").trim();
+  return input.normalize("NFC").replace(CONTROL_CHARS, "").replace(STRAY_ZWJ, "").replace(/\s+/g, " ").trim();
 }
 
 /** Latin letters, digits, underscore and Georgian Mkhedruli letters (no punctuation from the block). */

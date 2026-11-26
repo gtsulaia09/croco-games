@@ -1,6 +1,6 @@
 import { Play, ScrollText } from "lucide-react";
 import { useT } from "../i18n";
-import { JOKER_KHISHTI, JOKER_PREMIA, type JokerKhishti, type JokerPremia } from "./options";
+import { JOKER_KHISHTI, JOKER_NINE_TRUMP, JOKER_PREMIA, type JokerKhishti, type JokerNineTrump, type JokerPremia } from "./options";
 
 export type JokerRuleset = "standard" | "nines";
 
@@ -8,9 +8,11 @@ export interface JokerTableRules {
   ruleset: JokerRuleset;
   setBonus: JokerPremia;
   hist: JokerKhishti;
+  /** Nine-card deals: the player after the dealer declares trump, or the dealer's last card shows it. */
+  nineTrump: JokerNineTrump;
 }
 
-export const DEFAULT_JOKER_RULES: JokerTableRules = { ruleset: "standard", setBonus: "eraseLast", hist: "perCard" };
+export const DEFAULT_JOKER_RULES: JokerTableRules = { ruleset: "standard", setBonus: "eraseLast", hist: "perCard", nineTrump: "choose" };
 
 /** Reads table rules from URL parameters, falling back to the defaults for anything unknown. */
 export function jokerRulesFromParams(params: URLSearchParams): JokerTableRules {
@@ -19,6 +21,7 @@ export function jokerRulesFromParams(params: URLSearchParams): JokerTableRules {
     ruleset: pick(params.get("ruleset"), ["standard", "nines"] as const, DEFAULT_JOKER_RULES.ruleset),
     setBonus: pick(params.get("premia"), JOKER_PREMIA, DEFAULT_JOKER_RULES.setBonus),
     hist: pick(params.get("khishti"), JOKER_KHISHTI, DEFAULT_JOKER_RULES.hist),
+    nineTrump: pick(params.get("trump"), JOKER_NINE_TRUMP, DEFAULT_JOKER_RULES.nineTrump),
   };
 }
 
@@ -27,6 +30,7 @@ export function jokerRulesToParams(rules: JokerTableRules): Record<string, strin
   if (rules.ruleset !== DEFAULT_JOKER_RULES.ruleset) out.ruleset = rules.ruleset;
   if (rules.setBonus !== DEFAULT_JOKER_RULES.setBonus) out.premia = rules.setBonus;
   if (rules.hist !== DEFAULT_JOKER_RULES.hist) out.khishti = rules.hist;
+  if (rules.nineTrump !== DEFAULT_JOKER_RULES.nineTrump) out.trump = rules.nineTrump;
   return out;
 }
 
@@ -49,7 +53,7 @@ function Choice<T extends string>({ name, legend, value, options, label, hint, o
 
 /**
  * Before a Joker practice game: the player chooses the format, the premia rule (ბოლო იშლება /
- * ბოლო არ იშლება) and the ხიშტი, as a table creator does when opening a room.
+ * ბოლო არ იშლება), who sets trump in nine-card deals and the ხიშტი, as a table creator does.
  */
 export function JokerSetup({ rules, onChange, onStart }: { rules: JokerTableRules; onChange(patch: Partial<JokerTableRules>): void; onStart(): void }) {
   const t = useT();
@@ -86,6 +90,15 @@ export function JokerSetup({ rules, onChange, onStart }: { rules: JokerTableRule
         label={(v) => t(`opt.values.${v}`)}
         hint={(v) => t(`opt.hints.${v}`)}
         onChange={(setBonus) => onChange({ setBonus })}
+      />
+      <Choice
+        name="nineTrump"
+        legend={t("opt.nineTrump")}
+        value={rules.nineTrump}
+        options={JOKER_NINE_TRUMP}
+        label={(v) => t(`opt.values.${v}`)}
+        hint={(v) => t(`opt.hints.${v}`)}
+        onChange={(nineTrump) => onChange({ nineTrump })}
       />
       <Choice
         name="khishti"

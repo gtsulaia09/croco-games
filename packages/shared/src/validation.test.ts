@@ -41,6 +41,15 @@ describe("text sanitization", () => {
     expect(sanitizeText("  hi\u0000\u202E there \n\n ok ")).toBe("hi there ok");
   });
 
+  it("keeps emoji sequences joined with U+200D but removes a joiner anywhere else", () => {
+    for (const emoji of ["🤷‍♂️", "❤️‍🔥", "👩‍💻", "🐻‍❄️", "🏳️‍🌈", "🙋🏽‍♀️"]) expect(sanitizeText(`gg ${emoji}`)).toBe(`gg ${emoji}`);
+    expect(sanitizeText("ad\u200Dmin")).toBe("admin");
+    expect(sanitizeText("😀\u200D")).toBe("😀");
+    expect(sanitizeText("\u200D😀")).toBe("😀");
+    expect(sanitizeText("a\u200B\u200Cb")).toBe("ab");
+    expect(chatTextSchema.parse("🇬🇪 🃏 ♠️♥️♦️♣️")).toBe("🇬🇪 🃏 ♠️♥️♦️♣️");
+  });
+
   it("keeps HTML as literal text (rendering is escaped by React)", () => {
     expect(chatTextSchema.parse("<img src=x onerror=alert(1)>")).toBe("<img src=x onerror=alert(1)>");
   });

@@ -47,6 +47,7 @@ croco-games/
    - Each room has a dedicated SQLite-backed Durable Object (`idFromName(roomId)`), providing a single-threaded, strongly consistent authority for seats, chat, turn timers, bot scheduling, and game state.
    - Clients authenticate WebSocket upgrades with a single-use 30-second ticket via `Sec-WebSocket-Protocol: croco.v1, t.<ticket>`.
    - Zero-CPU Hibernation API auto-responds to `{"type":"hb"}` heartbeats.
+   - Bot table talk (funny philosopher lines and gambler jokes): during a match with bot seats, the room alarm posts a `kind: "bot"` chat line on a default timer — one line every 5–10 minutes (`packages/shared/src/botChat.ts`). Only a line key from a fixed list is sent — never free text — and nothing is posted while the table chat is off or no human is connected.
 4. **Presence & Push Notifications (`LobbyDO`)**:
    - Singleton Durable Object tracks authenticated online/away/in-game sockets per user (capped at 5 tabs/devices), pushes persisted and ephemeral notifications, and fans out presence updates exclusively to friends of users with `showOnline = true`.
 5. **Game Chat Rooms (`GameChatDO`)**:

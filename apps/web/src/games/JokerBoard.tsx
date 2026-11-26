@@ -140,7 +140,23 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
       : null;
   const trickNotice: TableNotice | null =
     stage === "won" && winner !== null ? { id: `trick-${plays.map((p) => p.card).join("")}`, tone: winner === mySeat ? "win" : "info", icon: <Crown size={15} />, text: t("table.takesTrick", { name: name(winner) }) } : null;
-  const notice = trickNotice ?? handNotice;
+  // Nine-card deals: the player after the dealer declares trump; the table is told who and what.
+  const trumpBy = view.trumpBy ?? null;
+  const declaringTrump = view.phase === "trump";
+  const byMe = trumpBy !== null && trumpBy === mySeat;
+  const declaredText =
+    trumpBy === null
+      ? null
+      : view.trump
+        ? byMe
+          ? t("joker.trumpDeclaredYou", { suit: suitSymbol(view.trump) })
+          : t("joker.trumpDeclared", { name: name(trumpBy), suit: suitSymbol(view.trump) })
+        : byMe
+          ? t("joker.noTrumpDeclaredYou")
+          : t("joker.noTrumpDeclared", { name: name(trumpBy) });
+  const trumpNotice: TableNotice | null =
+    declaredText && view.phase === "bid" && view.bids.every((b) => b === null) ? { id: `trump-${view.handNumber}`, tone: "gold", icon: <Sparkles size={15} />, text: declaredText } : null;
+  const notice = trickNotice ?? trumpNotice ?? handNotice;
 
   const closeJoker = useCallback(() => setJokerCard(null), []);
   const closeSheet = useCallback(() => setSheet(false), []);
@@ -186,12 +202,23 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
   let centre;
   if (myTurn && view.phase === "trump" && view.you) {
     centre = (
-      <div className="pdecide" role="group" aria-label={t("joker.chooseTrump")}>
-        <div className="pdecide-title">{t("joker.chooseTrump")}</div>
+      <div className="pdecide" role="group" aria-label={t("joker.declareTrump")}>
+        <div className="pdecide-title">{t("joker.declareTrump")}</div>
+        <div className="pdecide-meta">
+          <span>{t("joker.declareTrumpHint")}</span>
+        </div>
         <div className="pdecide-row">
           {SUITS.map((s) => (
-            <button key={s} type="button" className="psuit" data-red={isRedSuit(s) ? "true" : "false"} onClick={() => onAction({ type: "trump", suit: s })} aria-label={suitSymbol(s)}>
-              <SuitIcon suit={s} size={26} />
+            <button
+              key={s}
+              type="button"
+              className="psuit psuit-named"
+              data-red={isRedSuit(s) ? "true" : "false"}
+              onClick={() => onAction({ type: "trump", suit: s })}
+              aria-label={`${t(`joker.suitNames.${s}`)} ${suitSymbol(s)}`}
+            >
+              <SuitIcon suit={s} size={24} />
+              <span>{t(`joker.suitNames.${s}`)}</span>
             </button>
           ))}
           <button type="button" className="psuit psuit-wide" onClick={() => onAction({ type: "trump", suit: "none" })}>
@@ -257,7 +284,7 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
             {view.ruleset === "nines" && <HudFact value={t("joker.ninesShort")} tone="teal" optional />}
             <HudFact label={t("joker.set", { n: view.set })} value={t("game.hand", { n: `${view.handNumber}/${view.totalHands}` })} />
             <HudFact label={t("table.cardsLabel")} value={view.cards} optional />
-            <TrumpFact suit={view.trump} joker={Boolean(view.trumpCard?.startsWith("X"))} />
+            <TrumpFact suit={view.trump} joker={Boolean(view.trumpCard?.startsWith("X"))} pending={declaringTrump} />
           </>
         }
         actions={
@@ -288,13 +315,30 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
             <div data-area="w">{renderSeat(westSeat, "column")}</div>
             <div data-area="e">{renderSeat(eastSeat, "column")}</div>
             <div data-area="c" className="pj-center">
-              <div className="pj-trump" aria-label={t("game.trump")}>
+              <div className="pj-trump" aria-label={declaredText ?? t("game.trump")}>
                 {view.trumpCard ? (
                   <PlayingCard key={`${view.handNumber}-${view.trumpCard}`} card={view.trumpCard} size="pile" animate={mounted ? "flip" : false} />
+                ) : trumpBy !== null ? (
+                  // A declared trump: the suit (or ბეზი) and who declared it.
+                  <span key={`${view.handNumber}-declared`} className="pj-declared-trump" data-red={view.trump && isRedSuit(view.trump) ? "true" : "false"}>
+                    {view.trump ? <SuitIcon suit={view.trump} size={34} /> : <b>{t("game.noTrump")}</b>}
+                  </span>
+                ) : declaringTrump ? (
+                  <span className="pj-declared-trump" data-pending="true">
+                    ?
+                  </span>
                 ) : (
                   <span className="pc-slot" data-size="pile" />
                 )}
-                <span className="pj-plaque-label">{t("game.trump")}</span>
+                <span className="pj-plaque-label">
+                  {trumpBy !== null
+                    ? t("joker.declaredBy", { name: name(trumpBy) })
+                    : declaringTrump && view.toAct !== null
+                      ? view.toAct === mySeat
+                        ? t("joker.declaringYou")
+                        : t("joker.declaring", { name: name(view.toAct) })
+                      : t("game.trump")}
+                </span>
               </div>
 
               <div className="pj-stage">

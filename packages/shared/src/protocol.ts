@@ -109,10 +109,13 @@ export interface RoomSnapshot {
 export interface ChatMessage {
   id: string;
   ts: number;
-  kind: "user" | "system";
+  /** "bot": table talk from a bot seat — `key` names a line from BOT_CHAT_LINES. */
+  kind: "user" | "system" | "bot";
   user?: PublicUser;
+  /** For bot messages: which bot said it. */
+  bot?: { seat: number; name: string };
   text: string;
-  /** For system messages: an i18n key and params instead of free text. */
+  /** For system and bot messages: an i18n key and params instead of free text. */
   key?: string;
   params?: Record<string, string | number>;
 }

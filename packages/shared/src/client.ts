@@ -7,4 +7,5 @@ export * from "./limits";
 export * from "./constants";
 export * from "./username";
 export * from "./api";
+export * from "./botChat";
 export type * from "./protocol";

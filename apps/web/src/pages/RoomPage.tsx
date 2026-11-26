@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { ArrowLeft, Bot, CheckCircle2, Clock, Copy, Crown, Eye, LogOut, MessageSquare, Play, Trophy, UserMinus, UserPlus, VolumeX, Wifi, WifiOff } from "lucide-react";
 import { BOT_DIFFICULTIES, WS_CLOSE, type FriendDto, type MatchResult, type RoomSnapshot, type SeatInfo } from "@croco/shared/client";
@@ -10,12 +10,31 @@ import { Avatar, BotBadge, ErrorText, Modal, Spinner, StatusDot, UserName } from
 import { GAME_THEMES, GameBadgeIcon } from "../components/GameArt";
 import { ChatPanel } from "../components/ChatPanel";
 import { GameBoard } from "../games/GameBoard";
+import { ChatFab, ChatWindow, GameChatContext, UnreadBadge } from "../games/ui/gameChat";
+import { useUnread } from "../hooks/useUnread";
 
 export function seatName(seats: SeatInfo[], seat: number, t: TFunction): string {
   const s = seats[seat];
   if (!s) return `#${seat + 1}`;
   if (s.occupant === "bot") return `${t("common.bot")} ${s.botName ?? ""}`;
   return s.user?.username ?? t("room.emptySeat");
+}
+
+/** Whether an element is on screen (false while it is hidden or not rendered). */
+function useInView(ref: RefObject<HTMLElement | null>, mountKey: unknown): boolean {
+  const [inView, setInView] = useState(true);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) {
+      setInView(false);
+      return;
+    }
+    if (typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([entry]) => setInView(Boolean(entry?.isIntersecting)), { threshold: 0.15 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ref, mountKey]);
+  return inView;
 }
 
 export default function RoomPage() {
@@ -25,9 +44,18 @@ export default function RoomPage() {
   const me = useSession((s) => s.me);
   const refresh = useSession((s) => s.refresh);
   const conn = useRoom(roomId, me?.profile?.id);
-  const [chatOpen, setChatOpen] = useState(false);
+  // The table chat. While waiting it sits beside the seats on wide screens (it can be hidden
+  // there) and below them on phones. During a match it opens as a chat window over the table
+  // from the game header's "ჩატი" button, so the board keeps the full width.
   const [desktopChat, setDesktopChat] = useState(true);
+  const [chatWindow, setChatWindow] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const inMatch = conn.room?.phase === "playing" && Boolean(conn.game);
+  const chatRef = useRef<HTMLDivElement>(null);
+  const chatInView = useInView(chatRef, inMatch);
+  const unread = useUnread(conn.chat, conn.you?.userId, inMatch ? chatWindow : chatInView);
+  const toggleChatWindow = useCallback(() => setChatWindow((v) => !v), []);
+  const closeChatWindow = useCallback(() => setChatWindow(false), []);
 
   useEffect(() => {
     if (conn.closeCode === WS_CLOSE.roomClosed || conn.closeCode === WS_CLOSE.kicked) void refresh();
@@ -91,12 +119,23 @@ export default function RoomPage() {
               <UserPlus size={14} /> <span className="hidden sm:inline">{t("room.invite")}</span>
             </button>
           )}
-          <button className="btn-secondary btn-sm lg:hidden" onClick={() => setChatOpen((v) => !v)} aria-expanded={chatOpen} aria-label={t("chat.title")}>
-            <MessageSquare size={14} />
-          </button>
-          <button className="btn-secondary btn-sm hidden lg:inline-flex" onClick={() => setDesktopChat((v) => !v)} aria-expanded={desktopChat} title={desktopChat ? t("room.hideChat") : t("room.showChat")}>
-            <MessageSquare size={14} /> <span>{desktopChat ? t("room.hideChat") : t("room.showChat")}</span>
-          </button>
+          {inMatch ? (
+            <button className="btn-secondary btn-sm" onClick={toggleChatWindow} aria-expanded={chatWindow} aria-label={t("chat.title")}>
+              <MessageSquare size={14} /> <span>{t("chat.title")}</span>
+              <UnreadBadge n={unread} />
+            </button>
+          ) : (
+            <>
+              <button className="btn-secondary btn-sm lg:hidden" onClick={() => chatRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })} aria-label={t("chat.title")}>
+                <MessageSquare size={14} /> <span>{t("chat.title")}</span>
+                <UnreadBadge n={unread} />
+              </button>
+              <button className="btn-secondary btn-sm hidden lg:inline-flex" onClick={() => setDesktopChat((v) => !v)} aria-expanded={desktopChat} title={desktopChat ? t("room.hideChat") : t("room.showChat")}>
+                <MessageSquare size={14} /> <span>{desktopChat ? t("room.hideChat") : t("room.showChat")}</span>
+                <UnreadBadge n={unread} />
+              </button>
+            </>
+          )}
           <button className="btn-danger btn-sm" onClick={() => void leave()}>
             <LogOut size={14} /> <span className="hidden sm:inline">{t("room.leave")}</span>
           </button>
@@ -106,25 +145,47 @@ export default function RoomPage() {
       {conn.status === "reconnecting" && <div className="card p-2.5 text-xs font-semibold text-warning border-warning/40 bg-warning/10 text-center">{t("room.reconnecting")}</div>}
       {conn.lastError && <ErrorText error={conn.lastError} />}
 
-      <div className={`grid gap-3 items-start ${desktopChat ? "lg:grid-cols-[1fr_300px]" : ""}`}>
-        <div className="min-w-0">
-          {playing ? (
+      {playing ? (
+        <GameChatContext.Provider value={{ open: chatWindow, unread, toggle: toggleChatWindow }}>
+          <div className="min-w-0">
             <GameBoard gameType={room.gameType} view={conn.game!.view} deadline={conn.game!.deadline} mySeat={you.spectator ? null : you.seat} seats={room.seats} onAction={conn.act} />
-          ) : (
+          </div>
+          <ChatFab />
+          <ChatWindow open={chatWindow} onClose={closeChatWindow}>
+            <ChatPanel
+              messages={conn.chat}
+              title={t("room.tableChat")}
+              enabled={room.settings.chatEnabled}
+              muted={you.muted}
+              myUserId={you.userId}
+              roomId={room.id}
+              onClose={closeChatWindow}
+              onSend={(text) => conn.send({ type: "chat.send", text })}
+            />
+          </ChatWindow>
+        </GameChatContext.Provider>
+      ) : (
+        <div className={`grid gap-3 items-start ${desktopChat ? "lg:grid-cols-[minmax(0,1fr)_320px]" : ""}`}>
+          <div className="min-w-0">
             <Lobby room={room} you={you} send={conn.send} result={conn.result} />
-          )}
+          </div>
+          <div
+            ref={chatRef}
+            id="room-chat"
+            className={`block ${desktopChat ? "lg:block" : "lg:hidden"} scroll-mt-20 lg:sticky lg:top-18 h-[26rem] max-h-[70dvh] lg:max-h-none lg:h-[calc(100dvh-5.5rem)]`}
+          >
+            <ChatPanel
+              messages={conn.chat}
+              title={t("room.tableChat")}
+              enabled={room.settings.chatEnabled}
+              muted={you.muted}
+              myUserId={you.userId}
+              roomId={room.id}
+              onSend={(text) => conn.send({ type: "chat.send", text })}
+            />
+          </div>
         </div>
-        <div className={`${chatOpen ? "block" : "hidden"} ${desktopChat ? "lg:block" : "lg:hidden"} lg:sticky lg:top-18 h-[56dvh] lg:h-[calc(100dvh-5.5rem)]`}>
-          <ChatPanel
-            messages={conn.chat}
-            enabled={room.settings.chatEnabled}
-            muted={you.muted}
-            myUserId={you.userId}
-            roomId={room.id}
-            onSend={(text) => conn.send({ type: "chat.send", text })}
-          />
-        </div>
-      </div>
+      )}
       <InviteDialog open={inviteOpen} onClose={() => setInviteOpen(false)} room={room} />
     </div>
   );

@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { ArrowLeft, Dumbbell, Info, RotateCcw, ScrollText, Trophy } from "lucide-react";
-import { isGameType, type GameType, type SeatInfo } from "@croco/shared/client";
+import { botChatDelay, isGameType, pickBotLine, type ChatMessage, type GameType, type SeatInfo } from "@croco/shared/client";
 import type { GameEngine } from "@croco/game-engine";
 import { useT } from "../i18n";
 import { ErrorText, Spinner } from "../components/ui";
 import { GameBadgeIcon } from "../components/GameArt";
 import { LobbyGrid } from "../components/lobby/LobbyGrid";
 import { GameBoard } from "../games/GameBoard";
+import { ChatPanel } from "../components/ChatPanel";
+import { ChatFab, ChatWindow, GameChatContext } from "../games/ui/gameChat";
+import { useUnread } from "../hooks/useUnread";
 import { JokerSetup, jokerRulesFromParams, jokerRulesToParams, type JokerTableRules } from "../games/JokerSetup";
 
 const PRACTICE_PLAYERS: Record<GameType, number> = {
@@ -36,7 +39,7 @@ function useLocalGame(gameType: GameType, version: number, jokerRules: JokerTabl
   const pauseUntil = useRef(0);
 
   // A stable key, so the game restarts only when a rule really changes.
-  const rulesKey = jokerRules ? `${jokerRules.ruleset}|${jokerRules.setBonus}|${jokerRules.hist}` : "";
+  const rulesKey = jokerRules ? `${jokerRules.ruleset}|${jokerRules.setBonus}|${jokerRules.hist}|${jokerRules.nineTrump}` : "";
 
   useEffect(() => {
     let cancelled = false;
@@ -44,7 +47,7 @@ function useLocalGame(gameType: GameType, version: number, jokerRules: JokerTabl
     setState(null);
     // Joker waits on the setup screen until the player has chosen the table rules.
     if (gameType === "joker" && !rulesKey) return;
-    const [ruleset, setBonus, hist] = rulesKey.split("|");
+    const [ruleset, setBonus, hist, nineTrump] = rulesKey.split("|");
     void (async () => {
       const [{ loadEngine }, { cryptoRng }] = await Promise.all([import("@croco/game-engine/registry"), import("@croco/game-engine/rng")]);
       const e = await loadEngine(gameType);
@@ -53,7 +56,7 @@ function useLocalGame(gameType: GameType, version: number, jokerRules: JokerTabl
       // Shorter matches for practice; the rules themselves are the defaults.
       const config = e.configSchema.parse(
         gameType === "joker"
-          ? { ruleset, setBonus, hist }
+          ? { ruleset, setBonus, hist, nineTrump }
           : gameType === "bura3" || gameType === "bura5"
             ? { targetPoints: 6 }
             : gameType === "japanese_joker"
@@ -138,6 +141,56 @@ export default function Practice() {
   return <PracticeGame key={gameType} gameType={gameType} />;
 }
 
+const randInt = (n: number) => Math.floor(Math.random() * n);
+let localMessageCounter = 0;
+const localId = () => `m_local${Date.now().toString(36)}${(localMessageCounter++).toString(36)}`;
+
+/**
+ * Practice table talk: a local chat (nothing leaves the browser). The bots post a quote or a joke
+ * on the default timer (one line every 5–10 minutes), the player can write, and now and then a
+ * bot answers.
+ */
+function usePracticeChat(players: number, running: boolean, gameKey: number) {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const botSay = useCallback(
+    (seat?: number) => {
+      const bot = seat ?? 1 + randInt(players - 1);
+      const line: ChatMessage = { id: localId(), ts: Date.now(), kind: "bot", bot: { seat: bot, name: `#${bot}` }, text: "", key: pickBotLine(randInt) };
+      setMessages((m) => [...m, line].slice(-200));
+    },
+    [players],
+  );
+
+  // A new game starts with a clean chat.
+  useEffect(() => setMessages([]), [gameKey]);
+
+  // Default timer for bot lines while a game is running.
+  useEffect(() => {
+    if (!running || players < 2) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      timer = setTimeout(() => {
+        botSay();
+        schedule();
+      }, botChatDelay(randInt));
+    };
+    schedule();
+    return () => clearTimeout(timer);
+  }, [running, players, botSay, gameKey]);
+
+  const send = useCallback(
+    (text: string, you: ChatMessage["user"]) => {
+      const mine: ChatMessage = { id: localId(), ts: Date.now(), kind: "user", user: you, text };
+      setMessages((m) => [...m, mine].slice(-200));
+      // Now and then (about one message in three) a bot answers after a moment.
+      if (players > 1 && Math.random() < 0.35) setTimeout(() => botSay(), 2500 + randInt(2500));
+    },
+    [players, botSay],
+  );
+
+  return { messages, send };
+}
+
 function PracticeGame({ gameType }: { gameType: GameType }) {
   const t = useT();
   const [version, setVersion] = useState(0);
@@ -157,6 +210,12 @@ function PracticeGame({ gameType }: { gameType: GameType }) {
     setStarted(true);
   };
   const players = PRACTICE_PLAYERS[gameType];
+  const running = Boolean(engine && state !== null && !engine.isOver(state));
+  const chat = usePracticeChat(players, running, version);
+  const [chatOpen, setChatOpen] = useState(false);
+  const unread = useUnread(chat.messages, "local", chatOpen);
+  const toggleChat = useCallback(() => setChatOpen((v) => !v), []);
+  const closeChat = useCallback(() => setChatOpen(false), []);
   const seats: SeatInfo[] = Array.from({ length: players }, (_, i) =>
     i === 0
       ? { seat: 0, occupant: "human", user: { id: "local", username: t("common.you"), avatar: "a01", badges: { admin: false, moderator: false } }, connected: true, botControlled: false, ready: true }
@@ -219,7 +278,21 @@ function PracticeGame({ gameType }: { gameType: GameType }) {
               </button>
             </div>
           )}
-          <GameBoard gameType={gameType} view={engine.view(state, 0)} deadline={null} mySeat={0} seats={seats} onAction={act} practice />
+          <GameChatContext.Provider value={{ open: chatOpen, unread, toggle: toggleChat }}>
+            <GameBoard gameType={gameType} view={engine.view(state, 0)} deadline={null} mySeat={0} seats={seats} onAction={act} practice />
+            <ChatFab />
+            <ChatWindow open={chatOpen} onClose={closeChat}>
+              <ChatPanel
+                messages={chat.messages}
+                title={t("room.tableChat")}
+                enabled
+                myUserId="local"
+                canReport={false}
+                onClose={closeChat}
+                onSend={(text) => chat.send(text, seats[0]!.user)}
+              />
+            </ChatWindow>
+          </GameChatContext.Provider>
         </>
       )}
     </div>

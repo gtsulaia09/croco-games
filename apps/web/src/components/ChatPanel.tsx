@@ -1,11 +1,66 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { EyeOff, Flag, MessageSquare, Send } from "lucide-react";
-import type { ChatMessage, GameType } from "@croco/shared/client";
+import { Bot, BotOff, EyeOff, Flag, MessageSquare, Send, Smile, X } from "lucide-react";
+import { isBotChatLine, type ChatMessage, type GameType } from "@croco/shared/client";
 import { post } from "../lib/api";
 import { useT } from "../i18n";
 import { Avatar, UserName } from "./ui";
+import { EMOJI_CATEGORIES } from "./emoji";
 
-const QUICK_REACTIONS = ["GG", "WP", "NH", "GL", "👏", "🔥"];
+const QUICK_REACTIONS = ["GG", "WP", "GL", "NH", "👏", "🔥", "😂", "😎", "🤝", "🃏", "🍀", "👑"];
+const MAX_TEXT = 300;
+
+/** Emoji picker: category tabs and a grid; a click inserts the emoji where the cursor is. */
+function EmojiPicker({ onPick }: { onPick(emoji: string): void }) {
+  const t = useT();
+  const [cat, setCat] = useState(EMOJI_CATEGORIES[0]!.id);
+  const current = EMOJI_CATEGORIES.find((c) => c.id === cat) ?? EMOJI_CATEGORIES[0]!;
+  return (
+    <div className="pemoji" role="dialog" aria-label={t("chat.emoji")}>
+      <div className="pemoji-tabs" role="tablist" aria-label={t("chat.emoji")}>
+        {EMOJI_CATEGORIES.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            role="tab"
+            aria-selected={c.id === cat}
+            className="pemoji-tab"
+            title={t(`chat.emojiCats.${c.id}`)}
+            aria-label={t(`chat.emojiCats.${c.id}`)}
+            onClick={() => setCat(c.id)}
+          >
+            {c.icon}
+          </button>
+        ))}
+      </div>
+      <div className="pemoji-name">{t(`chat.emojiCats.${current.id}`)}</div>
+      <div className="pemoji-grid" role="tabpanel">
+        {current.emoji.map((e, i) => (
+          <button key={`${current.id}-${i}`} type="button" className="pemoji-item" onClick={() => onPick(e)} aria-label={e}>
+            {e}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+const HIDE_BOTS_KEY = "croco.chat.hideBots";
+
+/** Per-viewer convenience: whether bot table talk is hidden (browser storage may be unavailable). */
+function readHideBots(): boolean {
+  try {
+    return localStorage.getItem(HIDE_BOTS_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function writeHideBots(value: boolean): void {
+  try {
+    localStorage.setItem(HIDE_BOTS_KEY, value ? "1" : "0");
+  } catch {
+    /* storage unavailable: the choice lasts for this page only */
+  }
+}
 
 /**
  * A chat: a table's room chat (`roomId`) or a game's chat room (`chatGame`). Messages are rendered
@@ -23,6 +78,8 @@ export function ChatPanel({
   meta,
   disabledText,
   className = "",
+  canReport = true,
+  onClose,
 }: {
   messages: ChatMessage[];
   onSend(text: string): void;
@@ -38,11 +95,32 @@ export function ChatPanel({
   /** Shown instead of the input when sending is not possible. */
   disabledText?: string;
   className?: string;
+  /** Practice chat is local: there is nobody to report. */
+  canReport?: boolean;
+  /** Shows a close button in the header (chat window). */
+  onClose?: () => void;
 }) {
   const t = useT();
   const [text, setText] = useState("");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [notice, setNotice] = useState<string | null>(null);
+  const [hideBots, setHideBots] = useState(readHideBots);
+  const [picker, setPicker] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  /** Insert at the cursor (or append), keeping the text within the limit. */
+  function insert(fragment: string) {
+    const el = inputRef.current;
+    const start = el?.selectionStart ?? text.length;
+    const end = el?.selectionEnd ?? text.length;
+    const next = `${text.slice(0, start)}${fragment}${text.slice(end)}`;
+    if (next.length > MAX_TEXT) return;
+    setText(next);
+    requestAnimationFrame(() => {
+      el?.focus();
+      el?.setSelectionRange(start + fragment.length, start + fragment.length);
+    });
+  }
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -50,13 +128,18 @@ export function ChatPanel({
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages.length]);
 
-  const visible = messages.filter((m) => m.kind === "system" || !m.user || !hidden.has(m.user.id));
+  const hasBots = messages.some((m) => m.kind === "bot");
+  const visible = messages.filter((m) => {
+    if (m.kind === "bot") return !hideBots && isBotChatLine(m.key);
+    return m.kind === "system" || !m.user || !hidden.has(m.user.id);
+  });
 
   function submit() {
     const value = text.trim();
     if (!value) return;
-    onSend(value.slice(0, 300));
+    onSend(value.slice(0, MAX_TEXT));
     setText("");
+    setPicker(false);
   }
 
   async function report(m: ChatMessage) {
@@ -77,7 +160,31 @@ export function ChatPanel({
           <MessageSquare size={15} className="text-primary shrink-0" />
           <span className="truncate">{title ?? t("chat.title")}</span>
         </div>
-        {meta ?? <span className="chip bg-surface-3 border border-line text-muted tabular-nums">{visible.length}</span>}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {meta ?? <span className="chip bg-surface-3 border border-line text-muted tabular-nums">{visible.length}</span>}
+          {hasBots && (
+            <button
+              type="button"
+              className="btn-ghost btn-sm size-7 px-0"
+              aria-pressed={hideBots}
+              title={hideBots ? t("chat.showBots") : t("chat.hideBots")}
+              aria-label={hideBots ? t("chat.showBots") : t("chat.hideBots")}
+              onClick={() => {
+                setHideBots((v) => {
+                  writeHideBots(!v);
+                  return !v;
+                });
+              }}
+            >
+              {hideBots ? <BotOff size={14} /> : <Bot size={14} />}
+            </button>
+          )}
+          {onClose && (
+            <button type="button" className="btn-ghost btn-sm size-7 px-0" onClick={onClose} aria-label={t("common.close")} title={t("common.close")}>
+              <X size={15} />
+            </button>
+          )}
+        </div>
       </div>
 
       <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-2.5 grid gap-2 content-start text-sm" aria-live="polite">
@@ -85,6 +192,21 @@ export function ChatPanel({
           m.kind === "system" ? (
             <div key={m.id} className="text-[11px] text-muted bg-surface-3/80 border border-line/60 rounded-lg px-2.5 py-1 text-center">
               {m.key ? t(`chat.system.${m.key}`, m.params) : m.text}
+            </div>
+          ) : m.kind === "bot" ? (
+            <div key={m.id} className="flex gap-2 items-start rounded-xl px-2.5 py-2 border bg-accent/8 border-accent/25">
+              <span className="size-6 rounded-full bg-secondary/60 border border-accent/40 text-accent flex items-center justify-center shrink-0" aria-hidden="true">
+                <Bot size={13} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 text-[11px]">
+                  <span className="font-bold text-text-2">
+                    {t("common.bot")} {m.bot?.name}
+                  </span>
+                  <time className="text-muted/80 ml-auto tabular-nums">{new Date(m.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>
+                </div>
+                <p className="break-words text-[13px] text-white/90 mt-0.5 leading-snug italic">{t(`botChat.${m.key}`)}</p>
+              </div>
             </div>
           ) : (
             <div
@@ -102,7 +224,7 @@ export function ChatPanel({
                 {/* Rendered as text: React escapes everything, no HTML is interpreted. */}
                 <p className="break-words whitespace-pre-wrap text-[13px] text-white/95 mt-0.5 leading-snug">{m.text}</p>
               </div>
-              {m.user && m.user.id !== myUserId && (
+              {canReport && m.user && m.user.id !== myUserId && (
                 <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 flex shrink-0">
                   <button className="btn-ghost btn-sm size-6 px-0" title={t("chat.muteLocal")} onClick={() => setHidden((h) => new Set(h).add(m.user!.id))}>
                     <EyeOff size={12} />
@@ -121,19 +243,20 @@ export function ChatPanel({
 
       {enabled && !muted ? (
         <div className="p-2.5 border-t border-line bg-surface-2/60 grid gap-2">
-          <div className="flex gap-1 overflow-x-auto">
+          <div className="flex gap-1 overflow-x-auto [scrollbar-width:none]">
             {QUICK_REACTIONS.map((e) => (
               <button
                 key={e}
                 type="button"
                 className="h-6 px-2 rounded-full bg-surface-3 border border-line text-[11px] font-bold text-text-2 hover:border-primary/50 hover:text-white transition-colors shrink-0"
-                onClick={() => setText((v) => `${v}${v ? " " : ""}${e}`.slice(0, 300))}
+                onClick={() => insert(`${text && !text.endsWith(" ") ? " " : ""}${e}`)}
                 aria-label={e}
               >
                 {e}
               </button>
             ))}
           </div>
+          {picker && <EmojiPicker onPick={insert} />}
           <form
             className="flex gap-2"
             onSubmit={(e) => {
@@ -141,7 +264,26 @@ export function ChatPanel({
               submit();
             }}
           >
-            <input className="input h-9 text-xs" value={text} maxLength={300} placeholder={t("chat.placeholder")} onChange={(e) => setText(e.target.value)} aria-label={t("chat.placeholder")} />
+            <button
+              type="button"
+              className={`btn-secondary h-9 w-9 px-0 shrink-0 ${picker ? "border-primary/60 text-primary" : ""}`}
+              onClick={() => setPicker((v) => !v)}
+              aria-expanded={picker}
+              aria-label={t("chat.emoji")}
+              title={t("chat.emoji")}
+            >
+              <Smile size={16} />
+            </button>
+            <input
+              ref={inputRef}
+              className="input h-9 text-xs"
+              value={text}
+              maxLength={MAX_TEXT}
+              placeholder={t("chat.placeholder")}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => e.key === "Escape" && picker && (e.stopPropagation(), setPicker(false))}
+              aria-label={t("chat.placeholder")}
+            />
             <button className="btn-primary h-9 px-3" aria-label={t("common.send")}>
               <Send size={14} />
             </button>
