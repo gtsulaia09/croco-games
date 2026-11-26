@@ -523,7 +523,7 @@ export const ka: Dictionary = {
     isChoosingTrump: "კოზირს ირჩევს: {name}…",
     isLeading: "კარტს იწყებს: {name}…",
     yourMove: "შენი სვლა — აირჩიე კარტი",
-    youLead: "შენ იწყებ კარტს — ითამაშე ნებისმიერი კარტი",
+    youLead: "შენ იწყებ სვლას — ჩამოდი ნებისმიერი კარტი",
     isPlaying: "თამაშობს: {name}…",
     declaredTitle: "ნათქვამი",
     declaring: "ცხადდება…",

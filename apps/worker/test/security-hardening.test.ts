@@ -55,6 +55,7 @@ async function bootstrapAdminWithStepUp(): Promise<{ admin: Client & { userId: s
   await p.json("POST", "/api/me/profile", { username: "Owner_sec_1", avatar: "a01", locale: "en" });
   const me = await p.json("GET", "/api/me");
   const admin = Object.assign(p, { userId: me.body.profile.id as string });
+  
   const status = await admin.json("GET", "/api/admin/mfa/status");
   if (!status.body.enrolled) {
     const start = await admin.json("POST", "/api/admin/mfa/enroll/start");
