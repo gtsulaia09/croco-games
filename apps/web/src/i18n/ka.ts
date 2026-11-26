@@ -4,7 +4,7 @@ import type { Dictionary } from "./en";
  * ქართული ლოკალიზაცია (ძირითადი ენა).
  * ტერმინოლოგიური სტანდარტი (იხ. docs/LOCALIZATION_GLOSSARY.md):
  *  - Card / Deck / Suit / Trump -> კარტი / დასტა / მასტი / კოზირი
- *  - Trick / Bid / Set / Penalty -> ხელი (წწაყვანილი) / ნათქვამი / პულკა / ხიშტი
+ *  - Trick / Bid / Set / Penalty -> ხელი (წაყვანილი) / ნათქვამი / პულკა / ხიშტი
  *  - Pot / Chips / Blinds -> ბანკი / ჩიპები / ბლაინდები (ფოლდი, ჩეკი, ქოლი, ბეთი, რეიზი, ოლ-ინი)
  *  - Point / Bar / Bear off / Cube -> უჯრა / ბარი / გაყვანილი / კუბი
  *  - Boneyard / Tile -> ბაზარი / ქვა
