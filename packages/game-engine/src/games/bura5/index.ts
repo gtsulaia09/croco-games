@@ -89,6 +89,11 @@ export interface Bura5State {
   dealer: number;
   phase: "lead" | "respond" | "raise" | "over";
   trick: Trick | null;
+  /**
+   * The last finished trick (presentation only): tables show it before it is collected. Optional
+   * because games persisted before it existed have none; it never affects play or scoring.
+   */
+  lastTrick?: { plays: Trick["plays"]; winner: number } | null;
   /** Current deal value (1 = plain … 6 = shashi). */
   value: number;
   raise: PendingRaise | null;
@@ -122,6 +127,8 @@ export interface Bura5View {
   targetPoints: number;
   players: Array<{ seat: number; team: number; handCount: number; capturedCount: number; tricksWon: number }>;
   trick: { leader: number; count: number; bestSeat: number; plays: Array<{ seat: number; faceUp: Card[] | null; count: number }> } | null;
+  /** The last finished trick, redacted like `trick` (face-down discards stay hidden from others). */
+  lastTrick: { winner: number; plays: Array<{ seat: number; faceUp: Card[] | null; count: number }> } | null;
   you: { seat: number; team: number; hand: Card[]; canRaise: boolean; canBura: boolean; malutka: Card[] | null } | null;
   lastHand: Bura5State["lastHand"];
 }
@@ -224,6 +231,7 @@ function resolveTrick(state: Bura5State, ctx: EngineContext, events: PublicEvent
   state.captured[winner]!.push(...trickCards(trick));
   state.tricksWon[winner]! += 1;
   events.push({ type: "trick_won", seat: winner, team: teamOf(winner) });
+  state.lastTrick = { plays: deepClone(trick.plays), winner };
   state.trick = null;
   state.leader = winner;
   refill(state, winner);
@@ -440,6 +448,12 @@ export const bura5Engine: GameEngine<Bura5State, Bura5Action, Bura5Config, Bura5
               canBura: currentActor(state) === seat && (state.phase === "lead" || state.phase === "respond") && hasBura(state, seat),
               malutka: malutkaFor(state, seat),
             },
+      lastTrick: state.lastTrick
+        ? {
+            winner: state.lastTrick.winner,
+            plays: state.lastTrick.plays.map((p) => ({ seat: p.seat, faceUp: p.faceUp ? [...p.faceUp] : seat === p.seat ? [...p.cards] : null, count: p.cards.length })),
+          }
+        : null,
       lastHand: state.lastHand ? deepClone(state.lastHand) : null,
     };
   },

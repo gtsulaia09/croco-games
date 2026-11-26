@@ -7,7 +7,7 @@
  *    when an open table card is played the card beneath is turned face up;
  *  - following suit is compulsory, then trumping; a joker beats everything (a joker played on a
  *    joker wins); with the `jokerLow` option (owner's request, on by default) a following joker may
- *    instead be played low ("დაბალი") and gives the trick away;
+ *    instead be played low ("გატანება") and gives the trick away;
  *  - a led joker demands the highest card of a named suit; without that (non-trump) suit the
  *    opponent must trump, and the trump beats the joker;
  *  - 18 tricks per deal; the player with more tricks scores the difference (11:7 gives 4, 9:9 is a
@@ -128,7 +128,8 @@ function deal(state: JapaneseJokerState, ctx: EngineContext, events: PublicEvent
   state.toAct = first;
   state.leader = first;
   state.trick = [];
-  state.lastTrick = null;
+  // lastTrick is kept from the previous deal (presentation only): tables show the final
+  // trick being collected before the new cards arrive. It never affects play or scoring.
   state.won = [0, 0];
   state.playedThisDeal = [false, false];
   events.push({ type: "deal", round: state.round, dealer: state.dealer });

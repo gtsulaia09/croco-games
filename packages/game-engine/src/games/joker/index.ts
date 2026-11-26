@@ -116,7 +116,8 @@ function startHand(state: JokerState, ctx: EngineContext, events: PublicEvent[])
   state.bids = [null, null, null, null];
   state.tricks = [0, 0, 0, 0];
   state.trick = [];
-  state.lastTrick = null;
+  // lastTrick is kept from the previous deal (presentation only): tables show the final
+  // trick being collected before the new cards arrive. It never affects play or scoring.
   state.trumpCard = null;
   state.trump = null;
   state.pendingDeal = null;

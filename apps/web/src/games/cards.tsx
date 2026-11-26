@@ -1,13 +1,20 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties, MouseEvent, ReactNode } from "react";
 import { cardLabel } from "../components/ui";
+import "./cards.css";
 
 /**
- * Realistic playing cards drawn as one small SVG per card (no images, no fonts to download):
- * double-ended corner indices, real pip layouts for 2–10, framed court cards, jester jokers,
- * and a Croco-green lattice back. Sizes are CSS variables, so one card scales everywhere.
+ * Playing cards drawn as one small SVG per card (no images, no web fonts): large double-ended
+ * corner indices that stay readable when the hand overlaps, real pip layouts for 2–10,
+ * illustrated court figures (king, queen, jack), jester jokers and an emerald card back.
+ * Sizes are CSS variables, so one card scales everywhere without changing its 5:7 ratio.
  */
 
-export type CardSize = "xs" | "sm" | "md" | "lg";
+/**
+ * Legacy sizes (xs–lg) are fixed steps used by the boards that are not part of the redesign.
+ * The redesigned tables use role sizes that follow the board width:
+ * mini (badges), pile (table stacks, stock), trick (cards on the felt), hand (your hand).
+ */
+export type CardSize = "xs" | "sm" | "md" | "lg" | "mini" | "pile" | "trick" | "hand";
 
 /** Suit outlines in a 24×24 box (same shapes as the rest of the UI). */
 export const SUIT_PATH: Record<string, string> = {
@@ -18,15 +25,19 @@ export const SUIT_PATH: Record<string, string> = {
 };
 
 const RED = "#c8102e";
-const BLACK = "#161b24";
-const GOLD = "#c9a24a";
+const BLACK = "#141a24";
+const GOLD = "#c9a046";
+const GOLD_DARK = "#8c6a22";
+const NAVY = "#1c2d52";
+const CRIMSON = "#b3122e";
+const SKIN = "#f3d4b8";
 const RANK_TEXT: Record<string, string> = { T: "10" };
 
-const L = 33;
+const L = 34;
 const C = 50;
-const R = 67;
-const TOP = 27;
-const BOT = 113;
+const R = 66;
+const TOP = 30;
+const BOT = 110;
 const MID = 70;
 const Q1 = TOP + (BOT - TOP) / 3;
 const Q2 = TOP + ((BOT - TOP) * 2) / 3;
@@ -43,106 +54,165 @@ const PIPS: Record<string, Array<[number, number, boolean?]>> = {
   T: [[L, TOP], [R, TOP], [C, (TOP + Q1) / 2], [L, Q1], [R, Q1], [L, Q2, true], [R, Q2, true], [C, (Q2 + BOT) / 2, true], [L, BOT, true], [R, BOT, true]],
 };
 
-function Pip({ suit, x, y, size, flip }: { suit: string; x: number; y: number; size: number; flip?: boolean }) {
+function Pip({ suit, x, y, size, flip, fill }: { suit: string; x: number; y: number; size: number; flip?: boolean; fill?: string }) {
   const s = size / 24;
   const t = `translate(${x - size / 2} ${y - size / 2}) scale(${s})`;
-  return <path d={SUIT_PATH[suit]} transform={flip ? `rotate(180 ${x} ${y}) ${t}` : t} />;
+  return <path d={SUIT_PATH[suit]} transform={flip ? `rotate(180 ${x} ${y}) ${t}` : t} fill={fill} />;
 }
 
+/** Corner index: rank over suit, sized to stay legible in an overlapping fan. */
 function CornerIndex({ rank, suit }: { rank: string; suit: string }) {
   const text = RANK_TEXT[rank] ?? rank;
   return (
     <g>
-      <text x={13} y={29} textAnchor="middle" className="pc-rank" {...(text.length > 1 ? { textLength: 23, lengthAdjust: "spacingAndGlyphs" } : {})}>
+      <text x={12.5} y={25} textAnchor="middle" className="pc-rank" {...(text.length > 1 ? { textLength: 21, lengthAdjust: "spacingAndGlyphs" } : {})}>
         {text}
       </text>
-      <Pip suit={suit} x={13} y={41} size={15} />
+      <Pip suit={suit} x={12.5} y={36.5} size={13} />
     </g>
   );
 }
 
-function CourtEmblem({ rank, color }: { rank: string; color: string }) {
+/** Head-dress and attribute of a court figure (upper half; mirrored for the lower half). */
+function CourtDetails({ rank, robe }: { rank: string; robe: string }) {
   if (rank === "K") {
     return (
       <g>
-        <path d="M36 45 L33.5 30 L42 37 L50 25.5 L58 37 L66.5 30 L64 45 Z" fill={color} />
-        <rect x={35.5} y={45} width={29} height={4.2} rx={1} fill={GOLD} />
-        <circle cx={33.5} cy={29.5} r={2.3} fill={GOLD} />
-        <circle cx={50} cy={25} r={2.5} fill={GOLD} />
-        <circle cx={66.5} cy={29.5} r={2.3} fill={GOLD} />
+        {/* Beard and moustache */}
+        <path d="M43.2 39.5Q43.6 49.8 50 51.2Q56.4 49.8 56.8 39.5Q55 45.2 50 45.6Q45 45.2 43.2 39.5Z" fill="#9b8466" />
+        <path d="M46 43.4Q50 41.4 54 43.4Q50 42.8 46 43.4Z" fill="#7d6a52" />
+        {/* Crown */}
+        <path d="M41.6 31.8L40.4 22.4L45 26.6L50 19.6L55 26.6L59.6 22.4L58.4 31.8Z" fill={GOLD} stroke={GOLD_DARK} strokeWidth={0.5} />
+        <rect x={41.4} y={29.6} width={17.2} height={2.8} rx={0.6} fill={GOLD_DARK} />
+        <circle cx={40.4} cy={22.4} r={1.4} fill={robe} />
+        <circle cx={50} cy={19.6} r={1.5} fill={robe} />
+        <circle cx={59.6} cy={22.4} r={1.4} fill={robe} />
+        {/* Sword */}
+        <path d="M33 23V50" stroke="#c3ccd6" strokeWidth={1.8} strokeLinecap="round" />
+        <path d="M33 23V50" stroke="#8d98a5" strokeWidth={0.5} />
+        <rect x={29.6} y={46.6} width={6.8} height={1.8} rx={0.6} fill={GOLD} />
+        <path d="M33 48.4V53.6" stroke="#5c3a1d" strokeWidth={1.8} strokeLinecap="round" />
       </g>
     );
   }
   if (rank === "Q") {
     return (
       <g>
-        <path d="M36.5 46 Q37 35 43.5 33.5 Q47 39 50 31 Q53 39 56.5 33.5 Q63 35 63.5 46 Z" fill={color} />
-        <rect x={36} y={45.5} width={28} height={4} rx={1} fill={GOLD} />
-        <circle cx={50} cy={26.5} r={3.2} fill={GOLD} />
-        <path d="M50 21.6 V24 M48.8 22.8 H51.2" stroke={GOLD} strokeWidth={1.1} />
+        {/* Hair */}
+        <path d="M42.4 39Q41.4 28.2 50 28.2Q58.6 28.2 57.6 39Q58.6 47.2 55.6 50.4L55 41Q54.2 32.4 50 32.4Q45.8 32.4 45 41L44.4 50.4Q41.4 47.2 42.4 39Z" fill="#6e3f22" />
+        {/* Tiara */}
+        <path d="M43.4 30.6Q50 23.6 56.6 30.6L55.2 32Q50 27.4 44.8 32Z" fill={GOLD} stroke={GOLD_DARK} strokeWidth={0.4} />
+        <circle cx={50} cy={26.4} r={1.7} fill={robe} stroke={GOLD} strokeWidth={0.6} />
+        {/* Rose */}
+        <path d="M33.5 53V37" stroke="#2f7d4f" strokeWidth={1.1} />
+        <path d="M33.5 46Q29.5 44 30 41.4Q33 42.6 33.5 46Z" fill="#2f7d4f" />
+        <circle cx={33.5} cy={35} r={3.2} fill={robe} />
+        <circle cx={33.5} cy={35} r={1.5} fill={GOLD} />
       </g>
     );
   }
   return (
     <g>
-      <path d="M37 46 Q39 32.5 51 31.5 Q61 32.5 63 46 Z" fill={color} />
-      <path d="M55 33 Q66 21 71.5 28 Q65 27.5 58.5 35.5 Z" fill={GOLD} />
-      <rect x={36.5} y={45.5} width={27} height={4} rx={1} fill={GOLD} />
+      {/* Hair */}
+      <path d="M43 37.4Q42.4 29.6 50 29.6Q57.6 29.6 57 37.4Q55 33.2 50 33.2Q45 33.2 43 37.4Z" fill="#8a5a2b" />
+      {/* Cap with feather */}
+      <path d="M41 31.6Q41.8 23.2 50 23.2Q58.2 23.2 59 31.6Q50 28.8 41 31.6Z" fill={robe} />
+      <path d="M41 31.6Q50 28.8 59 31.6" stroke={GOLD} strokeWidth={1.1} fill="none" />
+      <path d="M57 25.4Q66 14.6 71.4 19.6Q64.4 20.8 59.6 28.2Z" fill={GOLD} />
+      {/* Halberd */}
+      <path d="M33 21V53" stroke="#7a4e25" strokeWidth={1.4} strokeLinecap="round" />
+      <path d="M33 23.4L28 25.6V31L33 28.8Z" fill="#c3ccd6" stroke="#8d98a5" strokeWidth={0.4} />
+      <path d="M33 19.4L34.4 23H31.6Z" fill="#c3ccd6" />
     </g>
   );
 }
 
-function CourtFace({ rank, suit, color }: { rank: string; suit: string; color: string }) {
-  const half = (
-    <g>
-      <CourtEmblem rank={rank} color={color} />
-      <Pip suit={suit} x={50} y={59} size={13} />
-      <Pip suit={suit} x={27.5} y={23.5} size={7} />
-      {/* Robe bands */}
-      <rect x={23} y={64.6} width={54} height={1.6} fill={GOLD} />
-      <rect x={23} y={66.6} width={54} height={1.6} fill="#1f4e8c" />
-    </g>
-  );
+function CourtHalf({ rank, suit, robe, trim }: { rank: string; suit: string; robe: string; trim: string }) {
   return (
     <g>
-      <rect x={21} y={17} width={58} height={106} rx={2.5} fill="#f6eedb" stroke={color} strokeWidth={1.4} />
-      <rect x={23.2} y={19.2} width={53.6} height={101.6} rx={1.5} fill="none" stroke={GOLD} strokeWidth={0.8} />
-      {half}
-      <g transform="rotate(180 50 70)">{half}</g>
-      <line x1={23} y1={70} x2={77} y2={70} stroke={color} strokeWidth={0.9} />
+      {/* Robe with gold neckline and a centre band carrying the suit */}
+      <path d="M22.6 70V61Q23 53.4 33.2 51.4L44 49.4L50 57L56 49.4L66.8 51.4Q77 53.4 77.4 61V70Z" fill={robe} />
+      <path d="M23.6 62Q24.6 55.2 33.4 53.2" stroke="rgba(255,255,255,0.18)" strokeWidth={1} fill="none" />
+      <rect x={45.6} y={57} width={8.8} height={13} fill={trim} />
+      <path d="M45.6 57V70M54.4 57V70" stroke={GOLD} strokeWidth={0.8} />
+      <path d="M44 49.4L50 57L56 49.4" stroke={GOLD} strokeWidth={1.8} fill="none" strokeLinejoin="round" />
+      <circle cx={50} cy={64} r={3.6} fill="#fffaf0" />
+      <Pip suit={suit} x={50} y={64} size={5.4} fill={suit === "H" || suit === "D" ? RED : BLACK} />
+      <circle cx={30} cy={60} r={0.9} fill={GOLD} />
+      <circle cx={70} cy={60} r={0.9} fill={GOLD} />
+      <circle cx={36} cy={64} r={0.9} fill={GOLD} />
+      <circle cx={64} cy={64} r={0.9} fill={GOLD} />
+      {/* Neck and face */}
+      <rect x={46.6} y={44.4} width={6.8} height={6} fill={SKIN} />
+      <ellipse cx={50} cy={38.6} rx={7} ry={8} fill={SKIN} stroke="rgba(60,30,10,0.25)" strokeWidth={0.4} />
+      <circle cx={47.3} cy={37.6} r={0.8} fill="#2b2b2b" />
+      <circle cx={52.7} cy={37.6} r={0.8} fill="#2b2b2b" />
+      <path d="M48.4 42.4Q50 43.5 51.6 42.4" stroke="#a2463c" strokeWidth={0.7} fill="none" strokeLinecap="round" />
+      <CourtDetails rank={rank} robe={trim} />
+      {/* Suit mark in the frame corner */}
+      <Pip suit={suit} x={71.5} y={24} size={8.5} />
+    </g>
+  );
+}
+
+function CourtFace({ rank, suit }: { rank: string; suit: string }) {
+  const red = suit === "H" || suit === "D";
+  const color = red ? RED : BLACK;
+  const robe = red ? CRIMSON : NAVY;
+  const trim = red ? NAVY : CRIMSON;
+  return (
+    <g>
+      <rect x={19.5} y={15.5} width={61} height={109} rx={3} fill={red ? "#fdf3ee" : "#f0f3f8"} stroke={color} strokeWidth={1.1} />
+      <CourtHalf rank={rank} suit={suit} robe={robe} trim={trim} />
+      <g transform="rotate(180 50 70)">
+        <CourtHalf rank={rank} suit={suit} robe={robe} trim={trim} />
+      </g>
+      <rect x={21.6} y={17.6} width={56.8} height={104.8} rx={2} fill="none" stroke={GOLD} strokeWidth={0.8} />
+      <path d="M21.6 70H78.4" stroke={GOLD} strokeWidth={0.9} />
     </g>
   );
 }
 
 function JokerFace({ red }: { red: boolean }) {
-  const color = red ? RED : BLACK;
-  const letters = ["J", "O", "K", "E", "R"];
+  const main = red ? RED : "#1b2333";
+  const alt = red ? NAVY : CRIMSON;
   const index = (
-    <g>
-      {letters.map((l, i) => (
-        <text key={l} x={11} y={19 + i * 10.5} textAnchor="middle" className="pc-joker-index">
+    <g fill={main}>
+      {["J", "O", "K", "E", "R"].map((l, i) => (
+        <text key={l} x={11} y={18.5 + i * 10.2} textAnchor="middle" className="pc-joker-index">
           {l}
         </text>
       ))}
-      <path d="M11 76 l2.2 4.5 4.9.7-3.6 3.4.9 4.9-4.4-2.3-4.4 2.3.9-4.9-3.6-3.4 4.9-.7Z" fill={GOLD} />
+      <path d="M11 72.5l1.9 3.9 4.3.6-3.1 3 .7 4.3-3.8-2-3.8 2 .7-4.3-3.1-3 4.3-.6Z" fill={GOLD} />
     </g>
   );
   return (
-    <g fill={color}>
+    <g>
       {index}
       <g transform="rotate(180 50 70)">{index}</g>
-      <g>
-        <path d="M31 88 Q34 64 24.5 52 Q40 57.5 44.5 69 Q47.5 48 50 40 Q52.5 48 55.5 69 Q60 57.5 75.5 52 Q66 64 69 88 Z" />
-        <path d="M31 88 Q34 64 24.5 52 Q40 57.5 44.5 69 Z" fill={red ? BLACK : RED} opacity={0.9} />
-        <path d="M69 88 Q66 64 75.5 52 Q60 57.5 55.5 69 Z" fill={red ? BLACK : RED} opacity={0.9} />
-        <rect x={29.5} y={87} width={41} height={6.5} rx={2} fill={GOLD} />
-        <circle cx={24.5} cy={51.5} r={3.6} fill={GOLD} />
-        <circle cx={50} cy={39.5} r={3.6} fill={GOLD} />
-        <circle cx={75.5} cy={51.5} r={3.6} fill={GOLD} />
-        <circle cx={38} cy={90.25} r={1.4} fill={color} />
-        <circle cx={50} cy={90.25} r={1.4} fill={color} />
-        <circle cx={62} cy={90.25} r={1.4} fill={color} />
-      </g>
+      {/* Jester's hat: three tails with bells */}
+      <path d="M31 63Q33 42 21 31Q37.5 33.5 44 51Q47 31 50 21.5Q53 31 56 51Q62.5 33.5 79 31Q67 42 69 63Z" fill={main} />
+      <path d="M31 63Q33 42 21 31Q37.5 33.5 44 51Z" fill={alt} />
+      <path d="M69 63Q67 42 79 31Q62.5 33.5 56 51Z" fill={alt} />
+      <path d="M44 51Q47 31 50 21.5Q53 31 56 51" stroke={GOLD} strokeWidth={0.9} fill="none" />
+      <circle cx={21} cy={31} r={3.4} fill={GOLD} stroke={GOLD_DARK} strokeWidth={0.5} />
+      <circle cx={50} cy={21.5} r={3.4} fill={GOLD} stroke={GOLD_DARK} strokeWidth={0.5} />
+      <circle cx={79} cy={31} r={3.4} fill={GOLD} stroke={GOLD_DARK} strokeWidth={0.5} />
+      <rect x={29} y={60.5} width={42} height={6.4} rx={2.4} fill={GOLD} stroke={GOLD_DARK} strokeWidth={0.5} />
+      <circle cx={37} cy={63.7} r={1.3} fill={main} />
+      <circle cx={50} cy={63.7} r={1.3} fill={main} />
+      <circle cx={63} cy={63.7} r={1.3} fill={main} />
+      {/* Face */}
+      <ellipse cx={50} cy={79} rx={12.5} ry={13} fill={SKIN} stroke="rgba(60,30,10,0.25)" strokeWidth={0.5} />
+      <path d="M43.5 76.5Q45.5 74.5 47.5 76.5M52.5 76.5Q54.5 74.5 56.5 76.5" stroke="#2b2b2b" strokeWidth={1} fill="none" strokeLinecap="round" />
+      <circle cx={42.6} cy={82} r={2.2} fill={RED} opacity={0.35} />
+      <circle cx={57.4} cy={82} r={2.2} fill={RED} opacity={0.35} />
+      <path d="M44.5 84Q50 89.5 55.5 84" stroke="#a2463c" strokeWidth={1.1} fill="none" strokeLinecap="round" />
+      {/* Ruff collar and tunic */}
+      <path d="M29 93L34 100L39 93L44 100L50 93L56 100L61 93L66 100L71 93V103H29Z" fill="#fffaf0" stroke={main} strokeWidth={0.7} strokeLinejoin="round" />
+      <path d="M31 103H69L72.5 123H27.5Z" fill={main} />
+      <path d="M50 103L57 113L50 123L43 113Z" fill={GOLD} />
+      <path d="M31 103L37 113L31 123ZM69 103L63 113L69 123Z" fill={alt} />
     </g>
   );
 }
@@ -162,11 +232,11 @@ function CardFace({ card }: { card: string }) {
   return (
     <svg viewBox="0 0 100 140" className="pc-face" aria-hidden="true" fill={color}>
       {court ? (
-        <CourtFace rank={rank} suit={suit} color={color} />
+        <CourtFace rank={rank} suit={suit} />
       ) : rank === "A" ? (
-        <Pip suit={suit} x={50} y={70} size={suit === "S" ? 50 : 40} />
+        <Pip suit={suit} x={50} y={70} size={suit === "S" ? 52 : 42} />
       ) : (
-        (PIPS[rank] ?? []).map(([x, y, flip], i) => <Pip key={i} suit={suit} x={x} y={y} size={19} flip={flip} />)
+        (PIPS[rank] ?? []).map(([x, y, flip], i) => <Pip key={i} suit={suit} x={x} y={y} size={20} flip={flip} />)
       )}
       <CornerIndex rank={rank} suit={suit} />
       <g transform="rotate(180 50 70)">
@@ -176,9 +246,22 @@ function CardFace({ card }: { card: string }) {
   );
 }
 
+/** Emblem in the middle of the card back. */
+function BackEmblem() {
+  return (
+    <svg viewBox="0 0 100 140" className="pc-face" aria-hidden="true">
+      <g transform="translate(50 70)">
+        <path d="M0-21L15 0L0 21L-15 0Z" fill="none" stroke="#d9b56d" strokeWidth={1.4} />
+        <path d="M0-15L10.5 0L0 15L-10.5 0Z" fill="#0b3b30" stroke="#d9b56d" strokeWidth={0.8} />
+        <path d="M0-8.5C0-8.5-5.5-3-5.5 0.6C-5.5 2.6-4 3.8-2.4 3.8C-1.4 3.8-0.6 3.4 0 2.6C0.6 3.4 1.4 3.8 2.4 3.8C4 3.8 5.5 2.6 5.5 0.6C5.5-3 0-8.5 0-8.5ZM-1.8 7.8H1.8L0.6 3.6H-0.6Z" fill="#d9b56d" />
+      </g>
+    </svg>
+  );
+}
+
 export interface PlayingCardProps {
   card?: string;
-  onClick?: () => void;
+  onClick?: (e: MouseEvent<HTMLButtonElement>) => void;
   selected?: boolean;
   /** false = a legal-move filter is active and this card cannot be played now. */
   playable?: boolean;
@@ -188,18 +271,26 @@ export interface PlayingCardProps {
   animate?: "deal" | "play" | "flip" | false;
   className?: string;
   style?: CSSProperties;
+  /** Extra state hooks for styling (e.g. "winner", "latest"). */
+  highlight?: "winner" | "latest" | false;
 }
 
-export function PlayingCard({ card, onClick, selected, playable = true, size = "md", back, title, animate, className = "", style }: PlayingCardProps) {
+export function PlayingCard({ card, onClick, selected, playable = true, size = "md", back, title, animate, className = "", style, highlight }: PlayingCardProps) {
   const anim = animate ? `pc-anim-${animate}` : "";
   if (back || !card) {
-    return <span className={`pcard pc-back ${anim} ${className}`} data-size={size} style={style} role="img" aria-label="hidden card" />;
+    return (
+      <span className={`pcard pc-back ${anim} ${className}`} data-size={size} style={style} role="img" aria-label="hidden card">
+        <BackEmblem />
+      </span>
+    );
   }
   const common = {
     className: `pcard ${anim} ${className}`,
     "data-size": size,
     "data-selected": selected ? "true" : "false",
     "data-playable": playable ? "true" : "false",
+    "data-highlight": highlight || undefined,
+    "data-card": card,
     title: title ?? cardLabel(card),
     style,
   };
@@ -217,9 +308,9 @@ export function PlayingCard({ card, onClick, selected, playable = true, size = "
   );
 }
 
-export function CardSlot({ size = "md", children }: { size?: CardSize; children?: ReactNode }) {
+export function CardSlot({ size = "md", children, label }: { size?: CardSize; children?: ReactNode; label?: string }) {
   return (
-    <span className="pc-slot" data-size={size} aria-hidden={children ? undefined : true}>
+    <span className="pc-slot" data-size={size} aria-hidden={children || label ? undefined : true} aria-label={label}>
       {children}
     </span>
   );
@@ -233,8 +324,8 @@ export interface HandCard {
 }
 
 /**
- * A held hand: one row, slightly fanned, overlapping only as much as the width requires
- * (pure CSS grid — no measuring). Cards keep their order, so suits stay grouped.
+ * Legacy held hand used by the boards outside the redesign (poker): one row, slightly fanned,
+ * overlapping only as much as the width requires (pure CSS grid — no measuring).
  */
 export function CardHand({
   cards,

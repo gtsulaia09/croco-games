@@ -84,7 +84,10 @@ test.describe("performance and responsiveness", () => {
     // 1. Verify Georgian (ka, default) has native Georgian text, zero English tag leaks, and zero overflow across all 7 viewports.
     await page.goto("./#/");
     await expect(page.locator("html")).toHaveAttribute("lang", "ka");
-    await expect(page.getByText("ტეხას ჰოლდემი")).toBeVisible();
+    // This phase offers only Joker, Japanese Joker and Bura; the other games stay implemented but unlisted.
+    await expect(page.getByRole("heading", { name: "იაპონური ჯოკერი" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "ბურა", exact: true })).toBeVisible();
+    await expect(page.getByText("ტეხას ჰოლდემი")).toHaveCount(0);
     await expect(page.getByText("MULTIPLAYER ARENA")).toHaveCount(0);
     await expect(page.getByText("4P · Trick")).toHaveCount(0);
 

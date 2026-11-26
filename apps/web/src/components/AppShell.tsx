@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import { AlertTriangle, Bell, Dumbbell, Globe, Home, LogOut, Settings, Shield, Trophy, Users } from "lucide-react";
 import { useSession } from "../store/session";
 import { backendConfigured } from "../lib/config";
@@ -51,6 +51,9 @@ function LiveToasts() {
 export function AppShell() {
   const t = useT();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  /** At a game table every pixel goes to the table: the phone tab bar steps aside (the table has its own back button). */
+  const atTable = /^\/(practice\/[^/]+|room\/)/.test(pathname);
   const { me, unread, status, signOut } = useSession();
   const [maintenance, setMaintenance] = useState<string | null>(null);
   const isStaff = Boolean(me?.roles.length);
@@ -82,7 +85,7 @@ export function AppShell() {
 
   return (
     <div className="min-h-dvh flex flex-col">
-      <header className="sticky top-0 z-30 bg-bg-elevated border-b border-line">
+      <header className={`sticky top-0 z-30 bg-bg-elevated/95 backdrop-blur border-b border-line ${atTable ? "hidden sm:block" : ""}`}>
         <div className="max-w-7xl mx-auto flex items-center gap-2.5 px-3 sm:px-5 h-14">
           <button className="flex items-center gap-2.5 text-left group shrink-0" onClick={() => navigate("/")}>
             <BrandMark size={30} />
@@ -153,7 +156,7 @@ export function AppShell() {
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-5 py-3.5 sm:py-5 pb-20 lg:pb-8">
+      <main className={`flex-1 w-full max-w-7xl mx-auto px-2.5 sm:px-5 py-3 sm:py-4 ${atTable ? "pb-4" : "pb-20 lg:pb-8"}`}>
         {maintenance && (
           <div role="status" className="card p-3.5 mb-4 border-warning/50 bg-warning/10 text-sm text-text-2 flex items-center gap-2.5">
             <AlertTriangle size={16} className="text-warning shrink-0" />
@@ -163,7 +166,7 @@ export function AppShell() {
         <Outlet />
       </main>
 
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-bg-elevated border-t border-line grid grid-cols-5" aria-label="mobile">
+      <nav className={`${atTable ? "hidden" : "lg:hidden"} fixed bottom-0 inset-x-0 z-30 bg-bg-elevated/95 backdrop-blur border-t border-line grid grid-cols-5`} aria-label="mobile">
         {[...links, isStaff ? { to: "/admin", icon: Shield, label: t("nav.admin") } : { to: "/settings", icon: Settings, label: t("nav.settings") }].map((l) => (
           <NavLink
             key={l.to}

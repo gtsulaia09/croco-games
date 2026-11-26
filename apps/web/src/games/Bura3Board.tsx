@@ -1,148 +1,203 @@
-import { useMemo, useState } from "react";
-import { Award, Flame } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Award, Crown, Flame, Swords, Trophy } from "lucide-react";
 import type { Bura3View } from "@croco/game-engine/games/bura3";
 import { useT } from "../i18n";
-import { CardHand } from "./cards";
 import { sortHand } from "./cardOrder";
-import { BuraTrick, CapturedPile, Meter, Stock } from "./buraParts";
-import { GameTable, HudChip, MiniCardCount, opponentsOrder, SeatStat, SeatTag, TrumpBadge, TurnBar, useSeatName, type BoardProps } from "./common";
+import { BuraTrick, CapturedPile, Meter, OpponentHand, rememberSelection, Stock } from "./buraParts";
+import { useSeatName, type BoardProps } from "./common";
+import { GameHud, HudFact, TrumpFact } from "./ui/GameHud";
+import { GameNotification, type TableNotice } from "./ui/GameNotification";
+import { GameTable } from "./ui/GameTable";
+import { seatRect, sweepTo } from "./ui/motion";
+import { PlayerHand } from "./ui/PlayerHand";
+import { PlayerSeat, SeatNumber } from "./ui/PlayerSeat";
+import { TRICK_SWEEP_MS, useTrickStage } from "./ui/useTrickStage";
 
-/** Three-card Bura on a wine-red felt: deck with turned trump, open answers, 31-point gauge. */
+type Play = NonNullable<Bura3View["trick"]>["plays"][number];
+
+/** Three-card Bura, one against one: deck with the turned trump, open answers, var at 31. */
 export default function Bura3Board({ view, mySeat, seats, deadline, onAction }: BoardProps<Bura3View>) {
   const t = useT();
   const name = useSeatName(seats);
+  const boardRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<string[]>([]);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const me = mySeat ?? 0;
+  const opp = 1 - me;
   const myTurn = view.toAct !== null && view.toAct === mySeat;
   const responding = view.phase === "respond";
   const need = responding ? (view.trick?.count ?? 0) : 0;
   const hand = sortHand(view.you?.hand ?? [], { order: "bura", trump: view.trump });
+  const selection = selected.filter((c) => hand.includes(c));
+  const sameSuit = selection.length > 0 && selection.every((c) => c[1] === selection[0]![1]);
+  const maxLead = Math.min(3, view.players[opp]?.handCount ?? 3);
 
-  const sameSuit = selected.length > 0 && selected.every((c) => c[1] === selected[0]![1]);
+  // Bura tricks: plays carry the cards on the felt; a "card" key lets the shared trick logic track them.
+  const livePlays = (view.trick?.plays ?? []).map((p) => ({ ...p, card: `${p.seat}:${p.faceUp?.join("") ?? p.count}` }));
+  const last = view.lastTrick ? { winner: view.lastTrick.winner, plays: view.lastTrick.plays.map((p) => ({ ...p, card: `${p.seat}:${p.faceUp?.join("") ?? p.count}` })) } : null;
+  const { stage, plays, winner } = useTrickStage(livePlays, last);
+
+  useEffect(() => {
+    if (stage !== "collect" || winner === null) return;
+    const els = Array.from(boardRef.current?.querySelectorAll<HTMLElement>("[data-trick-card]") ?? []);
+    sweepTo(els, seatRect(boardRef.current, winner), TRICK_SWEEP_MS);
+  }, [stage, winner]);
 
   const toggle = (c: string) => {
     setSelected((cur) => {
-      if (cur.includes(c)) return cur.filter((x) => x !== c);
-      if (view.phase === "lead" && cur.length > 0 && cur[0]![1] !== c[1]) return [c];
-      if (responding && need > 0 && cur.length >= need) return [...cur.slice(1), c];
-      return [...cur, c];
+      const now = cur.filter((x) => hand.includes(x));
+      if (now.includes(c)) return now.filter((x) => x !== c);
+      if (view.phase === "lead" && now.length > 0 && now[0]![1] !== c[1]) return [c];
+      if (view.phase === "lead" && now.length >= maxLead) return [...now.slice(1), c];
+      if (responding && need > 0 && now.length >= need) return [...now.slice(1), c];
+      return [...now, c];
     });
   };
 
-  const submit = (type: string) => {
-    onAction({ type, cards: selected });
+  const submit = (type: "lead" | "beat" | "discard") => {
+    rememberSelection(boardRef.current, selection);
+    onAction({ type, cards: selection });
     setSelected([]);
   };
 
-  const players = view.players.length;
+  const lh = view.lastHand;
+  const lastMessage = !lh
+    ? null
+    : lh.reason === "bura"
+      ? t("bura.bura", { name: name(lh.winner!) })
+      : lh.reason === "var"
+        ? t("bura.claimTrue", { name: name(lh.claimer!), points: lh.claimedPoints ?? 0 })
+        : lh.reason === "false_var"
+          ? t("bura.claimFalse", { name: name(lh.claimer!), points: lh.claimedPoints ?? 0 })
+          : lh.reason === "points" && lh.winner !== null
+            ? t("bura.wonOnPoints", { name: name(lh.winner), points: lh.points[lh.winner] ?? 0 })
+            : t("bura.draw");
+  const freshDeal = view.players.every((p) => p.capturedCount === 0) && !view.trick;
+  const handNotice: TableNotice | null = lh && lastMessage ? { id: `hand-${lh.handNumber}`, tone: "gold", icon: <Award size={15} />, text: lastMessage } : null;
+  const trickNotice: TableNotice | null =
+    stage === "won" && winner !== null ? { id: `trick-${plays.map((p) => p.card).join("|")}`, tone: winner === mySeat ? "win" : "info", icon: <Crown size={15} />, text: t("table.takesTrick", { name: name(winner) }) } : null;
+  const notice = freshDeal || view.phase === "over" ? (handNotice ?? trickNotice) : (trickNotice ?? null);
+
   const knownPts = view.you?.knownPoints ?? null;
 
-  const lastMessage = useMemo(() => {
-    if (!view.lastHand) return null;
-    const lh = view.lastHand;
-    if (lh.reason === "bura") return t("bura.bura", { name: name(lh.winner!) });
-    if (lh.reason === "var") return t("bura.claimTrue", { name: name(lh.claimer!), points: lh.claimedPoints ?? 0 });
-    if (lh.reason === "false_var") return t("bura.claimFalse", { name: name(lh.claimer!), points: lh.claimedPoints ?? 0 });
-    if (lh.reason === "points" && lh.winner !== null) return t("bura.wonOnPoints", { name: name(lh.winner), points: lh.points[lh.winner] ?? 0 });
-    return t("bura.draw");
-  }, [view.lastHand, t, name]);
+  function seat(s: number) {
+    const p = view.players[s]!;
+    return (
+      <PlayerSeat seat={s} seats={seats} active={view.toAct === s} deadline={deadline} you={s === mySeat} cards={s !== mySeat ? p.handCount : undefined}>
+        <SeatNumber value={`${view.scores[s]}/${view.targetPoints}`} tone="gold" />
+        <CapturedPile count={p.capturedCount} label={t("bura.pile", { n: p.capturedCount })} />
+      </PlayerSeat>
+    );
+  }
 
-  const meSeat = mySeat ?? 0;
+  let centre;
+  if (view.phase === "over") {
+    const champ = view.scores[0]! > view.scores[1]! ? 0 : 1;
+    centre = (
+      <div className="pstage-wait" data-tone="gold">
+        <Trophy size={16} /> {t("table.wins", { name: name(champ) })}
+      </div>
+    );
+  } else if (freshDeal && lastMessage) {
+    centre = (
+      <div className="pstage-wait" data-tone="gold">
+        <Award size={15} /> {lastMessage}
+      </div>
+    );
+  } else if (view.toAct !== null) {
+    centre = myTurn ? (
+      <div className="pstage-wait" data-tone="teal">
+        {view.phase === "var" ? t("bura.varHint") : t("table.yourMove")}
+      </div>
+    ) : (
+      <div className="pstage-wait">{t("table.isPlaying", { name: name(view.toAct) })}</div>
+    );
+  }
 
   return (
-    <div className="board">
-      <TurnBar
+    <div className="pboard" data-game="bura3" ref={boardRef}>
+      <GameHud
         toAct={view.toAct}
         mySeat={mySeat}
-        deadline={deadline}
         seats={seats}
-        extra={
+        chips={
           <>
-            <HudChip>{t("game.hand", { n: view.handNumber })}</HudChip>
-            <TrumpBadge card={view.trumpCard} suit={view.trump} />
-            <HudChip>{t("game.stock", { n: view.stockCount })}</HudChip>
-            <HudChip tone="gold">{t("bura.target", { n: view.targetPoints })}</HudChip>
+            <HudFact value={t("game.hand", { n: view.handNumber })} optional />
+            <HudFact label={t("table.target", { n: view.targetPoints })} value={`${view.scores[me]} : ${view.scores[opp]}`} tone="gold" />
+            <TrumpFact suit={view.trump} />
           </>
         }
       />
 
-      {lastMessage && (
-        <div className="notice fade-in">
-          <Award size={15} /> {lastMessage}
-        </div>
-      )}
-
-      <GameTable rail="mahogany" felt="bura3" print={t("games.bura3.name")}>
-        <div className="table-col">
-          <div className="opp-row">
-            {opponentsOrder(players, mySeat)
-              .filter((s) => s !== meSeat || mySeat === null)
-              .map((s) => (
-                <div key={s} className="opp-unit">
-                  <SeatTag seat={s} seats={seats} active={view.toAct === s} compact>
-                    <MiniCardCount count={view.players[s]!.handCount} />
-                    <SeatStat value={`${view.scores[s]}/${view.targetPoints}`} tone="gold" />
-                  </SeatTag>
-                  <CapturedPile count={view.players[s]!.capturedCount} />
-                </div>
-              ))}
+      <GameTable shape="duel" label={t("games.bura3.name")} overlay={<GameNotification notice={notice} />}>
+        <div className="pbura-grid" data-players="2">
+          <div className="pbura-seat" data-pos="n">
+            {seat(opp)}
+            <OpponentHand count={view.players[opp]?.handCount ?? 0} label={t("table.cardsInHand", { n: view.players[opp]?.handCount ?? 0 })} />
           </div>
-
-          <div className="bura-mid">
+          <div className="pbura-center">
             <Stock trumpCard={view.trumpCard} count={view.stockCount} />
-            <div className="grid place-items-center">
-              {view.trick?.plays.length ? (
-                <BuraTrick plays={view.trick.plays} bestSeat={view.trick.bestSeat} mySeat={mySeat} name={name} />
+            <div className="pbura-stage">
+              {stage !== "idle" ? (
+                <BuraTrick
+                  plays={plays as Play[]}
+                  bestSeat={stage === "live" ? (view.trick?.bestSeat ?? null) : winner}
+                  stage={stage}
+                  posOf={(s) => (s === opp ? "n" : "s")}
+                  labelOf={(s) => name(s)}
+                  scope={boardRef}
+                  animate={mounted}
+                  layout="duel"
+                />
               ) : (
-                <span className="felt-label !normal-case !tracking-normal text-center">{t("bura.cardValues")}</span>
+                centre
               )}
             </div>
-          </div>
-
-          {mySeat !== null && (
-            <div className="opp-unit">
-              <SeatTag seat={mySeat} seats={seats} active={myTurn} compact>
-                <SeatStat value={`${view.scores[mySeat]}/${view.targetPoints}`} tone="gold" />
-                {knownPts !== null && (
-                  <Meter value={knownPts} max={31} tone={knownPts >= 31 ? "gold" : "brand"} label={`${t("ui.toward31")} · ${t("bura.knownPoints", { n: knownPts })}`} />
-                )}
-              </SeatTag>
-              <CapturedPile count={view.players[mySeat]!.capturedCount} />
+            <div className="pbura-info">
+              <span className="pj-plaque-label">{t("bura.points")}</span>
+              <span className="pbura-values">{t("bura.cardValues")}</span>
+              {knownPts !== null && <Meter value={knownPts} max={31} tone={knownPts >= 31 ? "gold" : "brand"} label={`${t("ui.toward31")} · ${t("bura.knownPoints", { n: knownPts })}`} />}
             </div>
-          )}
+          </div>
+          <div className="pbura-seat" data-pos="s">
+            {seat(me)}
+          </div>
         </div>
       </GameTable>
 
       {mySeat !== null && view.you && (
-        <div className="dock">
+        <div className="pdock">
           {myTurn && (
-            <div className="action-bar fade-in">
+            <div className="pactions" role="group" aria-label={t("table.selectHint")}>
               {view.phase === "lead" && (
                 <>
-                  <span className="action-hint w-full text-center">
+                  <span className="pactions-hint">
                     {t("bura.select")}
-                    {selected.length > 0 && sameSuit ? ` · ${t("ui.selectedCount", { n: selected.length })}` : ""}
+                    {selection.length > 0 && sameSuit ? ` · ${t("ui.selectedCount", { n: selection.length })}` : ""}
                   </span>
-                  <button className="btn-primary btn-lg px-8" disabled={!sameSuit || selected.length > 3} onClick={() => submit("lead")}>
-                    {t("bura.lead")}
+                  <button className="btn-primary btn-lg px-8" disabled={!sameSuit || selection.length > maxLead} onClick={() => submit("lead")}>
+                    <Swords size={16} /> {t("bura.lead")}
                   </button>
                 </>
               )}
               {responding && (
                 <>
-                  <span className="action-hint w-full text-center">
-                    {t("bura.selectRespond", { n: need })} ({t("ui.selectedCount", { n: selected.length })})
+                  <span className="pactions-hint">
+                    {t("bura.selectRespond", { n: need })} ({t("ui.selectedCount", { n: selection.length })})
                   </span>
-                  <button className="btn-primary btn-lg px-7" disabled={selected.length !== need} onClick={() => submit("beat")}>
+                  <button className="btn-primary btn-lg px-7" disabled={selection.length !== need} onClick={() => submit("beat")}>
                     {t("bura.beat")}
                   </button>
-                  <button className="btn-secondary btn-lg px-6" disabled={selected.length !== need} onClick={() => submit("discard")}>
+                  <button className="btn-secondary btn-lg px-6" disabled={selection.length !== need} onClick={() => submit("discard")}>
                     {t("bura.discard")}
                   </button>
                 </>
               )}
               {view.phase === "var" && (
                 <>
-                  <span className="action-hint w-full text-center">{t("bura.varHint")}</span>
+                  <span className="pactions-hint">{t("bura.varHint")}</span>
                   <button className="btn-gold btn-lg px-7" onClick={() => onAction({ type: "claim" })}>
                     <Flame size={16} /> {t("bura.claim")}
                   </button>
@@ -154,11 +209,13 @@ export default function Bura3Board({ view, mySeat, seats, deadline, onAction }: 
             </div>
           )}
 
-          <CardHand
+          <PlayerHand
             label={t("game.yourHand")}
-            size="lg"
-            spread="loose"
-            cards={hand.map((c) => ({ card: c, selected: selected.includes(c), onClick: myTurn && view.phase !== "var" ? () => toggle(c) : undefined }))}
+            mode="select"
+            dealKey={view.handNumber}
+            active={myTurn && view.phase !== "var"}
+            onPick={toggle}
+            cards={hand.map((c) => ({ card: c, selected: selection.includes(c) }))}
           />
         </div>
       )}

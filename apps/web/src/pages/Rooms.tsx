@@ -5,7 +5,8 @@ import { BOT_DIFFICULTIES, GAME_CATALOG, isGameType, type GameType, type RoomSum
 import { ApiError, get, post } from "../lib/api";
 import { useT } from "../i18n";
 import { Avatar, EmptyState, ErrorText, Modal, Spinner, UserName } from "../components/ui";
-import { GAME_THEMES, GameArtwork, GameBadgeIcon } from "../components/GameArt";
+import { GameArtwork, GameBadgeIcon } from "../components/GameArt";
+import { BuraArt, JapaneseJokerArt, JokerArt } from "../components/lobby/LobbyArt";
 import { defaultOptions, GAME_OPTIONS } from "../games/options";
 
 const FILTERS = ["all", "public", "password", "invite", "waiting", "active", "seats"] as const;
@@ -19,7 +20,6 @@ export default function Rooms() {
 function RoomBrowser({ game }: { game: GameType }) {
   const t = useT();
   const navigate = useNavigate();
-  const theme = GAME_THEMES[game];
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
   const [q, setQ] = useState("");
   const [rooms, setRooms] = useState<RoomSummary[] | null>(null);
@@ -59,9 +59,17 @@ function RoomBrowser({ game }: { game: GameType }) {
   return (
     <div className="grid gap-4 fade-in">
       {/* Game Server Browser Banner */}
-      <section className={`relative overflow-hidden rounded-2xl border border-line bg-gradient-to-r ${theme.headerBg} p-4 sm:p-5`}>
-        <div className="absolute right-0 top-0 bottom-0 w-56 opacity-40 pointer-events-none hidden sm:block">
-          <GameArtwork game={game} className="w-full h-full" />
+      <section className="relative overflow-hidden rounded-2xl border border-line bg-gradient-to-r from-[#0c2a28] via-surface to-surface p-4 sm:p-5">
+        <div className="absolute right-0 top-0 bottom-0 w-72 opacity-60 pointer-events-none hidden sm:block">
+          {game === "joker" ? (
+            <JokerArt cw={50} className="w-full h-full" />
+          ) : game === "japanese_joker" ? (
+            <JapaneseJokerArt cw={42} className="w-full h-full" />
+          ) : game === "bura3" || game === "bura5" ? (
+            <BuraArt cw={46} className="w-full h-full" />
+          ) : (
+            <GameArtwork game={game} className="w-full h-full" />
+          )}
         </div>
         <div className="relative z-10 flex flex-wrap items-center gap-3">
           <Link to="/" className="btn-secondary btn-sm px-2.5">

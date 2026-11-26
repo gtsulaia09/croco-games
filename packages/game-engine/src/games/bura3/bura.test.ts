@@ -96,6 +96,27 @@ describe("three-card Bura", () => {
     expect(c.state.hands.map((h) => h.length)).toEqual([3, 3]);
   });
 
+  it("shows the finished trick to the table without revealing a thrown card to the opponent", () => {
+    const s = bura3With([["AH", "JD", "JC"], ["KH", "QD", "TC"]]);
+    let r = bura3Engine.apply(s, 0, { type: "lead", cards: ["AH"] }, testCtx());
+    if (!r.ok) throw new Error(r.error);
+    r = bura3Engine.apply(r.state, 1, { type: "discard", cards: ["TC"] }, testCtx());
+    if (!r.ok) throw new Error(r.error);
+    const leaderView = bura3Engine.view(r.state, 0);
+    expect(leaderView.trick).toBeNull();
+    expect(leaderView.lastTrick).toEqual({
+      winner: 0,
+      plays: [
+        { seat: 0, faceUp: ["AH"], count: 1 },
+        { seat: 1, faceUp: null, count: 1 },
+      ],
+    });
+    expect(JSON.stringify(leaderView)).not.toContain("TC");
+    // The player who threw the card still sees it; spectators never do.
+    expect(bura3Engine.view(r.state, 1).lastTrick!.plays[1]!.faceUp).toEqual(["TC"]);
+    expect(JSON.stringify(bura3Engine.view(r.state, null))).not.toContain("TC");
+  });
+
   it("var: 31+ captured points wins the deal, fewer gives it to the opponent", () => {
     const good = bura3With([["JD", "JC", "QH"], ["KD", "QC", "KH"]]);
     good.phase = "var";

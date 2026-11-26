@@ -30,17 +30,17 @@ Terms follow the owner's rules handbook (*„თამაშების წე�
 
 | Concept | English (`en`) | Georgian (`ka-GE`) | Grammar & Usage Notes |
 |---|---|---|---|
-| Trick | Trick | ვაზი | One round of play (handbook: *ვაზი / ხრიკი*) |
+| Trick | Trick | კარტი | One round of play (handbook: *კარტი / ხრიკი*) |
 | Bid | Bid | ნათქვამი (თქმა) | Declared number of tricks |
-| Tricks taken | Taken / Tricks | აღებული / ვაზი | Tricks captured in the current deal |
+| Tricks taken | Taken / Tricks | წაყვანილი / კარტი | Tricks captured in the current deal |
 | No trump | No trump (bez) | ბეზი | Handbook term (replaces *უკოზირო*) |
 | Set (8/4 deals) | Set | სეტი | Handbook term (replaces *პულკა*) |
 | Undertrick penalty | Khishti | ხიშტი | House variant, off by default |
 | Score sheet | Score sheet | ქულების ცხრილი | |
 | Joker genitive / instrumental | Joker's / with Joker | ჯოკრის / ჯოკრით | Syncopated stem (*ჯოკრის*, not *ჯოკერის*) |
 | Lead with the joker | Lead with the joker | ჯოკრით წაყვანა | Joker lead dialog title |
-| Joker lead: high / let it take | High / Let it take | მაღალი / წაიყვანოს | Each with a suit; never "დაბალი" for a lead |
-| Joker follow: take / low | Joker it / Low | მოჯოკვრა / დაბალი | A following joker |
+| Joker lead: high / let it take | High / Let it take | მაღალი / წაიყვანოს | Each with a suit; never "გატანება" for a lead |
+| Joker follow: take / low | Joker it / Low | მოჯოკვრა / გატანება | A following joker |
 | Joker demand | Joker demands | ჯოკერი ითხოვს | Japanese Joker: the led joker names a suit |
 
 ---

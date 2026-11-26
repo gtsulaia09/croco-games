@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
-import { ArrowLeft, Dumbbell, Info, Play, RotateCcw, Trophy, Users } from "lucide-react";
-import { GAME_CATALOG, GAME_TYPES, isGameType, type GameType, type SeatInfo } from "@croco/shared/client";
+import { ArrowLeft, Dumbbell, Info, RotateCcw, Trophy } from "lucide-react";
+import { isGameType, type GameType, type SeatInfo } from "@croco/shared/client";
 import type { GameEngine } from "@croco/game-engine";
 import { useT } from "../i18n";
 import { ErrorText, Spinner } from "../components/ui";
-import { GAME_THEMES, GameArtwork, GameBadgeIcon } from "../components/GameArt";
+import { GameBadgeIcon } from "../components/GameArt";
+import { LobbyGrid } from "../components/lobby/LobbyGrid";
 import { GameBoard } from "../games/GameBoard";
 
 const PRACTICE_PLAYERS: Record<GameType, number> = {
@@ -23,11 +24,17 @@ const PRACTICE_PLAYERS: Record<GameType, number> = {
 
 type JokerRuleset = "standard" | "nines";
 
+/** Bots think for a moment, and wait longer after a trick so the table can show and collect it. */
+const BOT_DELAY_MS = 700;
+const TRICK_PAUSE_MS = 1700;
+
 function useLocalGame(gameType: GameType, version: number, ruleset: JokerRuleset) {
   const [engine, setEngine] = useState<GameEngine | null>(null);
   const [state, setState] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
   const rngRef = useRef<{ int(n: number): number } | null>(null);
+  /** After a trick is taken the table shows it for a moment; bots wait until it is collected. */
+  const pauseUntil = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,12 +72,18 @@ function useLocalGame(gameType: GameType, version: number, ruleset: JokerRuleset
     if (!engine || state === null || engine.isOver(state) || humanOut) return;
     const actor = engine.actors(state)[0];
     if (actor === undefined || actor === 0) return;
-    const id = setTimeout(() => {
-      const view = engine.botView ? engine.botView(state, actor) : engine.view(state, actor);
-      const action = engine.bot({ view, legal: engine.legalActions(state, actor), seat: actor, difficulty: "medium", rng: rngRef.current! });
-      const r = engine.apply(state, actor, action, { rng: rngRef.current!, now: Date.now() });
-      if (r.ok) setState(r.state);
-    }, 650);
+    const id = setTimeout(
+      () => {
+        const view = engine.botView ? engine.botView(state, actor) : engine.view(state, actor);
+        const action = engine.bot({ view, legal: engine.legalActions(state, actor), seat: actor, difficulty: "medium", rng: rngRef.current! });
+        const r = engine.apply(state, actor, action, { rng: rngRef.current!, now: Date.now() });
+        if (r.ok) {
+          if (r.events.some((e) => e.type === "trick_won")) pauseUntil.current = Date.now() + TRICK_PAUSE_MS;
+          setState(r.state);
+        }
+      },
+      Math.max(BOT_DELAY_MS, pauseUntil.current - Date.now()),
+    );
     return () => clearTimeout(id);
   }, [engine, state, humanOut]);
 
@@ -81,6 +94,7 @@ function useLocalGame(gameType: GameType, version: number, ruleset: JokerRuleset
       if (!parsed.success) return setError("invalid_action");
       const r = engine.apply(state, 0, parsed.data, { rng: rngRef.current!, now: Date.now() });
       if (r.ok) {
+        if (r.events.some((e) => e.type === "trick_won")) pauseUntil.current = Date.now() + TRICK_PAUSE_MS;
         setState(r.state);
         setError(null);
       } else setError(r.error);
@@ -97,15 +111,13 @@ export default function Practice() {
   if (!isGameType(gameType)) {
     return (
       <div className="grid gap-4 fade-in">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5">
-            <span className="size-9 rounded-xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
-              <Dumbbell size={18} />
-            </span>
-            <div>
-              <h1 className="text-lg sm:text-xl font-bold text-white">{t("practice.title")}</h1>
-              <p className="text-xs sm:text-sm text-muted">{t("practice.choose")}</p>
-            </div>
+        <div className="flex items-center gap-3">
+          <span className="size-11 rounded-2xl bg-primary/12 border border-primary/30 text-primary flex items-center justify-center shrink-0">
+            <Dumbbell size={20} />
+          </span>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-white">{t("practice.title")}</h1>
+            <p className="text-sm text-muted">{t("practice.choose")}</p>
           </div>
         </div>
 
@@ -114,44 +126,7 @@ export default function Practice() {
           <span>{t("demo.practiceBanner")}</span>
         </p>
 
-        <ul className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
-          {GAME_TYPES.map((g) => {
-            const theme = GAME_THEMES[g];
-            const info = GAME_CATALOG[g];
-            const playerLabel =
-              info.minPlayers === info.maxPlayers
-                ? t("ui.playersExact", { n: info.minPlayers })
-                : t("ui.playersRange", { min: info.minPlayers, max: info.maxPlayers });
-            return (
-              <li key={g} className="game-card">
-                <Link to={`/practice/${g}`} className="flex flex-col flex-1">
-                  <div className={`relative h-24 bg-gradient-to-br ${theme.headerBg} border-b border-line/60 overflow-hidden`}>
-                    <GameArtwork game={g} className="w-full h-full" />
-                    <span className={`chip absolute top-2.5 left-2.5 ${theme.badgeClass}`}>{t(`games.${g}.tag`)}</span>
-                    <span className="absolute bottom-2 left-2.5 inline-flex items-center gap-1 text-[11px] font-medium text-text-2 bg-bg/80 rounded-md px-2 py-0.5">
-                      <Users size={11} className="text-muted" /> {playerLabel}
-                    </span>
-                  </div>
-                  <div className="p-3.5 flex flex-col gap-2 flex-1">
-                    <div className="flex items-center gap-2">
-                      <GameBadgeIcon game={g} size={17} />
-                      <span className="font-bold text-[15px] text-white">{t(`games.${g}.name`)}</span>
-                    </div>
-                    <span className="text-xs text-muted leading-relaxed">{t(`games.${g}.desc`)}</span>
-                    <span className="btn-primary btn-sm mt-auto w-full">
-                      <Play size={13} className="fill-current" /> {t("practice.start")}
-                    </span>
-                  </div>
-                </Link>
-                {g === "joker" && (
-                  <Link to="/practice/joker?ruleset=nines" className="btn-secondary btn-sm mx-3.5 mb-3.5 -mt-1.5">
-                    <Play size={13} className="fill-current" /> {t("practice.playNines")}
-                  </Link>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+        <LobbyGrid online={false} />
       </div>
     );
   }
@@ -172,37 +147,40 @@ function PracticeGame({ gameType }: { gameType: GameType }) {
   );
 
   return (
-    <div className="grid gap-2 min-w-0 fade-in">
-      {/* Sleek Unified Neo-Arena Top Bar (single practiceBanner node, wraps cleanly on 360px mobile) */}
-      <div className="rounded-2xl bg-surface/90 border border-line/80 px-3 py-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 min-w-0">
-        <Link to="/practice" className="btn-ghost btn-sm px-2.5">
-          <ArrowLeft size={14} /> {t("common.back")}
+    <div className="grid gap-2.5 min-w-0 fade-in">
+      {/* Compact table bar: back, game, ruleset, new game; the practice notice stays visible but small */}
+      <div className="practice-bar">
+        <Link to="/practice" className="btn-ghost btn-sm px-2.5" aria-label={t("common.back")}>
+          <ArrowLeft size={15} /> <span className="hidden sm:inline">{t("common.back")}</span>
         </Link>
         <div className="flex items-center gap-2 min-w-0">
           <GameBadgeIcon game={gameType} size={20} />
           <h1 className="font-extrabold text-sm sm:text-base text-white truncate">{t(`games.${gameType}.name`)}</h1>
-          <span className={`chip hidden md:inline-flex ${GAME_THEMES[gameType].badgeClass}`}>{t(`games.${gameType}.tag`)}</span>
         </div>
         {gameType === "joker" && (
-          <div className="inline-flex rounded-full bg-surface-3 border border-line p-0.5" role="radiogroup" aria-label={t("opt.ruleset")}>
+          <div className="inline-flex rounded-xl bg-surface-3 border border-line p-0.5" role="radiogroup" aria-label={t("opt.ruleset")}>
             {(["standard", "nines"] as const).map((r) => (
               <button
                 key={r}
                 type="button"
                 role="radio"
                 aria-checked={ruleset === r}
-                className={`h-7 px-3 rounded-full text-xs font-bold transition-colors ${ruleset === r ? "bg-[#168a3d] text-white" : "text-text-2 hover:text-white"}`}
+                className={`h-7 px-3 rounded-[9px] text-xs font-bold transition-colors ${ruleset === r ? "bg-primary text-[#04241c]" : "text-text-2 hover:text-white"}`}
                 onClick={() => setParams(r === "nines" ? { ruleset: "nines" } : {})}
               >
-                {t(`joker.rulesets.${r}`)}
+                <span className="hidden sm:inline">{t(`joker.rulesets.${r}`)}</span>
+                <span className="sm:hidden">{r === "nines" ? t("joker.ninesShort") : t("joker.standardShort")}</span>
               </button>
             ))}
           </div>
         )}
-        <button className="btn-secondary btn-sm ml-auto xl:order-last" onClick={() => setVersion((v) => v + 1)}>
-          <RotateCcw size={13} /> {t("practice.newGame")}
+        <p className="practice-bar-note" title={t("demo.practiceBanner")}>
+          <Info size={12} className="shrink-0 text-warning" />
+          <span className="truncate">{t("demo.practiceBanner")}</span>
+        </p>
+        <button className="btn-secondary btn-sm ml-auto" onClick={() => setVersion((v) => v + 1)} aria-label={t("practice.newGame")} title={t("practice.newGame")}>
+          <RotateCcw size={13} /> <span className="hidden sm:inline">{t("practice.newGame")}</span>
         </button>
-        <p className="w-full xl:w-auto xl:max-w-md xl:truncate text-[11px] text-muted leading-snug break-words">{t("demo.practiceBanner")}</p>
       </div>
 
       {error && <ErrorText error={error} />}

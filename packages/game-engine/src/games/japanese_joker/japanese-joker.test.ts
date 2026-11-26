@@ -142,7 +142,7 @@ describe("Japanese Joker play", () => {
     expect(r.state.won[follower]).toBe(1);
   });
 
-  it("lets a following joker take the trick (მოჯოკვრა) or go low (დაბალი)", () => {
+  it("lets a following joker take the trick (მოჯოკვრა) or go low (გატანება)", () => {
     const s = started(9);
     const leader = s.toAct;
     const follower = 1 - leader;

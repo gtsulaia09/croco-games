@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { Crown, Medal, Trophy } from "lucide-react";
-import { GAME_TYPES, isGameType, type GlobalLeaderboardEntry, type LeaderboardEntry } from "@croco/shared/client";
+import { isGameType, type GlobalLeaderboardEntry, type LeaderboardEntry } from "@croco/shared/client";
 import { get } from "../lib/api";
 import { useSession } from "../store/session";
 import { useT } from "../i18n";
 import { Avatar, EmptyState, ErrorText, Spinner, UserName } from "../components/ui";
 import { GameBadgeIcon } from "../components/GameArt";
+import { VISIBLE_GAMES } from "../lib/availability";
 
 export default function Leaderboards() {
   const { gameType } = useParams();
@@ -72,7 +73,7 @@ export default function Leaderboards() {
         >
           <Trophy size={13} /> {t("leaderboard.global")}
         </Link>
-        {GAME_TYPES.map((g) => (
+        {VISIBLE_GAMES.map((g) => (
           <Link
             key={g}
             to={`/leaderboards/${g}`}

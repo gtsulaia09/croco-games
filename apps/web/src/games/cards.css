@@ -1,0 +1,290 @@
+/* ============================================================================
+ * Playing cards (shared by every card table and the lobby artwork)
+ * Width is one CSS variable (--cw); height is always 1.4 × width, so the 5:7 ratio never
+ * distorts. Everything animated uses transform / opacity only.
+ * ============================================================================ */
+
+.pcard,
+.pc-slot {
+  --cw: 72px;
+}
+
+/* Legacy fixed steps (boards outside the redesign) */
+.pcard:where([data-size="xs"]),
+.pc-slot:where([data-size="xs"]),
+.hand:where([data-size="xs"]) {
+  --cw: 40px;
+}
+
+.pcard:where([data-size="sm"]),
+.pc-slot:where([data-size="sm"]),
+.hand:where([data-size="sm"]) {
+  --cw: clamp(48px, 4.2vw + 20px, 72px);
+}
+
+.pcard:where([data-size="md"]),
+.pc-slot:where([data-size="md"]),
+.hand:where([data-size="md"]) {
+  --cw: clamp(56px, 4.6vw + 26px, 92px);
+}
+
+.pcard:where([data-size="lg"]),
+.pc-slot:where([data-size="lg"]),
+.hand:where([data-size="lg"]) {
+  --cw: clamp(76px, 6vw + 32px, 118px);
+}
+
+/* Role sizes: the redesigned boards set --cw-* from their own width (container units) */
+.pcard:where([data-size="mini"]),
+.pc-slot:where([data-size="mini"]) {
+  --cw: var(--cw-mini, 34px);
+}
+
+.pcard:where([data-size="pile"]),
+.pc-slot:where([data-size="pile"]) {
+  --cw: var(--cw-pile, 64px);
+}
+
+.pcard:where([data-size="trick"]),
+.pc-slot:where([data-size="trick"]) {
+  --cw: var(--cw-trick, 88px);
+}
+
+.pcard:where([data-size="hand"]),
+.pc-slot:where([data-size="hand"]) {
+  --cw: var(--cw-hand, 104px);
+}
+
+.pcard {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: var(--cw);
+  height: calc(var(--cw) * 1.4);
+  padding: 0;
+  border: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  border-radius: calc(var(--cw) * 0.085);
+  background: linear-gradient(165deg, #ffffff 0%, #fcfbf8 50%, #f3f0e8 100%);
+  box-shadow:
+    0 0 0 1px rgba(15, 22, 34, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.9),
+    0 1px 1.5px rgba(0, 0, 0, 0.3),
+    0 8px 16px -6px rgba(0, 0, 0, 0.5);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    translate 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    rotate 0.2s ease,
+    scale 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.2s ease;
+}
+
+.pc-face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+.pc-rank {
+  font: 700 24px/1 "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  letter-spacing: -0.03em;
+}
+
+.pc-joker-index {
+  font: 800 9.6px/1 "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Card back: emerald lattice with a champagne-gold frame and emblem */
+.pc-back {
+  background: linear-gradient(165deg, #fbf8f0, #efe9da);
+}
+
+.pc-back::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--cw) * 0.06);
+  border-radius: calc(var(--cw) * 0.05);
+  background:
+    radial-gradient(ellipse 60% 42% at 50% 50%, rgba(57, 214, 176, 0.22), transparent 72%),
+    repeating-linear-gradient(45deg, rgba(217, 181, 109, 0.17) 0 1px, transparent 1px 6px),
+    repeating-linear-gradient(-45deg, rgba(217, 181, 109, 0.17) 0 1px, transparent 1px 6px),
+    linear-gradient(160deg, #0e5e48 0%, #093d32 55%, #062a25 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 2.5px rgba(217, 181, 109, 0.75),
+    inset 0 0 0 4px rgba(0, 0, 0, 0.22);
+}
+
+.pc-back > .pc-face {
+  z-index: 1;
+}
+
+.pc-slot {
+  display: inline-block;
+  flex: none;
+  width: var(--cw);
+  height: calc(var(--cw) * 1.4);
+  border-radius: calc(var(--cw) * 0.085);
+  border: 1.5px dashed rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+button.pcard {
+  cursor: pointer;
+}
+
+button.pcard:disabled {
+  cursor: default;
+}
+
+button.pcard:focus-visible {
+  outline: 3px solid #39d6b0;
+  outline-offset: 2px;
+}
+
+/* Not a legal card right now: shaded, but rank and suit stay readable */
+.pcard[data-playable="false"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(9, 15, 27, 0.42);
+}
+
+.pcard[data-selected="true"] {
+  box-shadow:
+    0 0 0 2.5px #39d6b0,
+    0 0 0 5.5px rgba(57, 214, 176, 0.22),
+    0 18px 30px -8px rgba(0, 0, 0, 0.6);
+}
+
+.pcard[data-selected="true"]::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--cw) * -0.09);
+  right: calc(var(--cw) * -0.09);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2304241c' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.2 4.2L19 7'/%3E%3C/svg%3E") center / 13px no-repeat,
+    #39d6b0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+/* Trick highlights */
+.pcard[data-highlight="winner"] {
+  box-shadow:
+    0 0 0 2.5px #d9b56d,
+    0 0 26px rgba(217, 181, 109, 0.55),
+    0 12px 24px -6px rgba(0, 0, 0, 0.55);
+}
+
+.pcard[data-highlight="latest"] {
+  box-shadow:
+    0 0 0 2px rgba(57, 214, 176, 0.85),
+    0 0 18px rgba(57, 214, 176, 0.35),
+    0 12px 24px -6px rgba(0, 0, 0, 0.55);
+}
+
+/* ---------------------------------------------------------------------------
+ * Legacy held hand (CSS grid; boards outside the redesign)
+ * ------------------------------------------------------------------------- */
+.hand {
+  --hand-step: calc(var(--cw) * 0.7);
+  --hand-min: calc(var(--cw) * 0.36);
+  display: grid;
+  width: max-content;
+  max-width: 100%;
+  margin-inline: auto;
+  padding: 26px 4px 8px;
+}
+
+.hand[data-spread="loose"] {
+  --hand-step: calc(var(--cw) + 12px);
+  --hand-min: calc(var(--cw) * 0.55);
+}
+
+.hand > .pcard {
+  grid-row: 1;
+  rotate: var(--fan-r, 0deg);
+  translate: 0 var(--fan-y, 0px);
+  transform-origin: 50% 140%;
+}
+
+.hand > button.pcard:not(:disabled) {
+  translate: 0 calc(var(--fan-y, 0px) - 8px);
+}
+
+.hand > .pcard[data-selected="true"] {
+  translate: 0 calc(var(--fan-y, 0px) - 22px);
+  z-index: 3;
+}
+
+@media (hover: hover) {
+  .hand > button.pcard:not(:disabled):hover {
+    translate: 0 calc(var(--fan-y, 0px) - 18px);
+    z-index: 4;
+    box-shadow:
+      0 0 0 1px rgba(22, 27, 36, 0.24),
+      0 0 0 3px rgba(57, 214, 176, 0.9),
+      0 14px 24px rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Card motion
+ * ------------------------------------------------------------------------- */
+.pc-anim-deal {
+  animation: pc-deal 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--deal-i, 0) * 45ms);
+}
+
+.pc-anim-play {
+  animation: pc-play 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.pc-anim-flip {
+  animation: pc-flip 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--deal-i, 0) * 90ms);
+}
+
+@keyframes pc-deal {
+  from {
+    opacity: 0;
+    transform: translateY(-60px) scale(0.86) rotate(-6deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pc-play {
+  from {
+    opacity: 0;
+    transform: translate(var(--from-x, 0px), var(--from-y, 44px)) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pc-flip {
+  from {
+    opacity: 0.2;
+    transform: perspective(600px) rotateY(88deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

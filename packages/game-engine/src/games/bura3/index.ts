@@ -77,6 +77,11 @@ export interface Bura3State {
   dealer: number;
   phase: "lead" | "respond" | "var" | "over";
   trick: Trick | null;
+  /**
+   * The last finished trick (presentation only): tables show it before it is collected. Optional
+   * because games persisted before it existed have none; it never affects play or scoring.
+   */
+  lastTrick?: { plays: Trick["plays"]; winner: number } | null;
   scores: number[];
   handNumber: number;
   lastHand: {
@@ -102,6 +107,8 @@ export interface Bura3View {
   targetPoints: number;
   players: Array<{ seat: number; handCount: number; capturedCount: number; tricksWon: number }>;
   trick: { leader: number; count: number; bestSeat: number; plays: Array<{ seat: number; faceUp: Card[] | null; count: number }> } | null;
+  /** The last finished trick, redacted like `trick` (face-down discards stay hidden from others). */
+  lastTrick: { winner: number; plays: Array<{ seat: number; faceUp: Card[] | null; count: number }> } | null;
   you: { seat: number; hand: Card[]; knownPoints: number | null; hiddenInPile: number | null } | null;
   lastHand: Bura3State["lastHand"];
 }
@@ -186,6 +193,7 @@ function resolveTrick(state: Bura3State, ctx: EngineContext, events: PublicEvent
     if (p.faceUp || !state.config.closedDiscards || p.seat === winner) state.known[winner]!.push(...p.cards);
   }
   events.push({ type: "trick_won", seat: winner, cards: cards.length });
+  state.lastTrick = { plays: deepClone(trick.plays), winner };
   state.trick = null;
   state.leader = winner;
   if (state.hands.every((h) => h.length === 0) && state.stock.length === 0) {
@@ -365,6 +373,12 @@ export const bura3Engine: GameEngine<Bura3State, Bura3Action, Bura3Config, Bura3
           }
         : null,
       you,
+      lastTrick: state.lastTrick
+        ? {
+            winner: state.lastTrick.winner,
+            plays: state.lastTrick.plays.map((p) => ({ seat: p.seat, faceUp: p.faceUp ? [...p.faceUp] : seat === p.seat ? [...p.cards] : null, count: p.cards.length })),
+          }
+        : null,
       lastHand: state.lastHand ? deepClone(state.lastHand) : null,
     };
   },

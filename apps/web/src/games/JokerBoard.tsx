@@ -1,46 +1,71 @@
-import { useState, type CSSProperties } from "react";
-import { ClipboardList, Crown, Sparkles } from "lucide-react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
+import { ClipboardList, Crown, Sparkles, Trophy } from "lucide-react";
 import type { JokerView } from "@croco/game-engine/games/joker";
 import { useT } from "../i18n";
-import { Modal, SuitIcon, suitSymbol } from "../components/ui";
-import { CardHand, PlayingCard } from "./cards";
+import { SuitIcon, suitSymbol } from "../components/ui";
+import { PlayingCard } from "./cards";
 import { sortHand } from "./cardOrder";
-import { GameTable, HudChip, isRedSuit, MiniCardCount, opponentsOrder, SeatStat, SeatTag, SuitPicker, SUITS, tiltFor, TrumpBadge, TurnBar, useSeatName, type BoardProps } from "./common";
+import { isRedSuit, opponentsOrder, SUITS, tiltFor, useSeatName, type BoardProps } from "./common";
+import { CompactScoreboard, FullScoreboard } from "./JokerScoreboard";
+import { ActionSheet } from "./ui/ActionSheet";
+import { GameHud, HudFact, TrumpFact } from "./ui/GameHud";
+import { GameNotification, type TableNotice } from "./ui/GameNotification";
+import { GameTable } from "./ui/GameTable";
+import { bidLabel, signedPoints } from "./ui/labels";
+import { flyIn, seatRect, sweepTo } from "./ui/motion";
+import { PlayerHand } from "./ui/PlayerHand";
+import { PlayerSeat, SeatNumber } from "./ui/PlayerSeat";
+import { TRICK_SWEEP_MS, useTrickStage } from "./ui/useTrickStage";
 
 type Pos = "n" | "w" | "e" | "s";
-const FROM: Record<Pos, CSSProperties> = {
-  n: { "--from-x": "0px", "--from-y": "-70px" } as CSSProperties,
-  s: { "--from-x": "0px", "--from-y": "70px" } as CSSProperties,
-  w: { "--from-x": "-70px", "--from-y": "0px" } as CSSProperties,
-  e: { "--from-x": "70px", "--from-y": "0px" } as CSSProperties,
-};
+type Play = JokerView["trick"][number];
 
-/** Bid as rings, tricks taken as filled pips; tricks over the bid turn red. */
-function BidPips({ bid, won }: { bid: number | null | undefined; won: number }) {
+/** Tricks taken against the declaration: filled = taken, ring = still to take, red = over. */
+function TrickPips({ bid, won }: { bid: number | null | undefined; won: number }) {
   if (bid === null || bid === undefined) return null;
-  const total = Math.max(bid, won);
+  const total = Math.min(9, Math.max(bid, won));
   if (total === 0) return null;
   return (
-    <span className="bid-pips" aria-hidden="true">
-      {Array.from({ length: Math.min(total, 9) }, (_, i) => (
-        <span key={i} className="bid-pip" data-won={i < won ? "true" : "false"} data-over={i >= bid ? "true" : "false"} />
+    <span className="ppips" aria-hidden="true">
+      {Array.from({ length: total }, (_, i) => (
+        <i key={i} data-won={i < won ? "true" : "false"} data-over={i >= bid ? "true" : "false"} />
       ))}
     </span>
+  );
+}
+
+/** One card on the felt; it flies in from the hand or the seat that played it. */
+function TrickCard({ play, pos, highlight, tag, scope, animate }: { play: Play; pos: Pos; highlight?: "winner" | "latest"; tag?: string; scope: RefObject<HTMLDivElement | null>; animate: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (animate) flyIn(ref.current, play.card, seatRect(scope.current, play.seat));
+    // Only when the card first lands on the felt.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return (
+    <div ref={ref} className="ptrick-card" data-pos={pos} data-trick-card="true">
+      <PlayingCard card={play.card} size="trick" highlight={highlight} style={{ "--tilt": tiltFor(play.card, 5) } as CSSProperties} />
+      {tag && <span className="ptrick-tag">{tag}</span>}
+    </div>
   );
 }
 
 export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: BoardProps<JokerView>) {
   const t = useT();
   const name = useSeatName(seats);
+  const boardRef = useRef<HTMLDivElement>(null);
   const [jokerCard, setJokerCard] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const myTurn = view.toAct === mySeat && mySeat !== null;
   const playable = new Set(view.you?.playable ?? []);
   const leading = view.trick.length === 0;
+  const { stage, plays, winner } = useTrickStage(view.trick, view.lastTrick);
 
   /** Georgian table terms: a led joker is "high" or "let it take"; a following joker "jokers it" or goes low. */
-  const jokerLabel = (mode: "high" | "low", lead: boolean) =>
-    lead ? t(mode === "high" ? "joker.high" : "joker.take") : t(mode === "high" ? "joker.jokerIt" : "joker.low");
+  const jokerLabel = (mode: "high" | "low", lead: boolean) => (lead ? t(mode === "high" ? "joker.high" : "joker.take") : t(mode === "high" ? "joker.jokerIt" : "joker.low"));
 
   function play(card: string) {
     if (card.startsWith("X")) setJokerCard(card);
@@ -54,168 +79,248 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
   const southSeat = mySeat ?? opps[3]!;
   const posOf: Record<number, Pos> = { [westSeat]: "w", [northSeat]: "n", [eastSeat]: "e", [southSeat]: "s" };
 
-  function renderSeat(s: number, compact = true) {
+  // Sweep a finished trick toward its winner.
+  useEffect(() => {
+    if (stage !== "collect" || winner === null) return;
+    const els = Array.from(boardRef.current?.querySelectorAll<HTMLElement>("[data-trick-card]") ?? []);
+    sweepTo(els, seatRect(boardRef.current, winner), TRICK_SWEEP_MS);
+  }, [stage, winner]);
+
+  const declared = view.bids.reduce<number>((s, b) => s + (b ?? 0), 0);
+  const allDeclared = view.bids.every((b) => b !== null);
+  const diff = declared - view.cards;
+
+  // Table notifications: a finished deal (while the next one is being declared), else the last trick.
+  const lastRec = view.history[view.history.length - 1];
+  const handNotice: TableNotice | null =
+    lastRec && (view.phase === "bid" || view.phase === "trump" || view.phase === "over")
+      ? {
+          id: `hand-${lastRec.hand}`,
+          tone: "gold",
+          icon: <Trophy size={15} />,
+          text:
+            mySeat !== null
+              ? `${t("table.handDone", { n: lastRec.hand })} · ${t("common.you")} ${signedPoints(lastRec.scores[mySeat] ?? 0)}`
+              : t("table.handDone", { n: lastRec.hand }),
+        }
+      : null;
+  const trickNotice: TableNotice | null =
+    stage === "won" && winner !== null ? { id: `trick-${plays.map((p) => p.card).join("")}`, tone: winner === mySeat ? "win" : "info", icon: <Crown size={15} />, text: t("table.takesTrick", { name: name(winner) }) } : null;
+  const notice = trickNotice ?? handNotice;
+
+  const closeJoker = useCallback(() => setJokerCard(null), []);
+  const closeSheet = useCallback(() => setSheet(false), []);
+
+  function seatBadge(s: number) {
+    const bid = view.bids[s];
+    if (bid === null || bid === undefined) return null;
+    return (
+      <span key={`${view.handNumber}-${bid}`} className="pseat-bubble" data-pass={bid === 0 ? "true" : "false"} title={t("joker.bid")}>
+        {bidLabel(t, bid)}
+      </span>
+    );
+  }
+
+  function renderSeat(s: number, layout: "row" | "column") {
     const bid = view.bids[s];
     const won = view.tricks[s] ?? 0;
-    const tone = bid === null || bid === undefined ? undefined : won > bid ? "bad" : won === bid ? "good" : undefined;
+    const tone = bid === null || bid === undefined ? "muted" : won > bid ? "bad" : won === bid ? "good" : undefined;
     return (
-      <SeatTag seat={s} seats={seats} active={view.toAct === s} dealer={view.dealer === s} compact={compact}>
-        <SeatStat label={t("joker.bid")} value={`${won}/${bid ?? "—"}`} tone={tone} />
-        <BidPips bid={bid} won={won} />
-        {s !== mySeat && <MiniCardCount count={view.handCounts[s] ?? 0} />}
-        <SeatStat value={view.totals[s]} tone="gold" />
-      </SeatTag>
+      <PlayerSeat
+        seat={s}
+        seats={seats}
+        active={view.toAct === s}
+        deadline={deadline}
+        dealer={view.dealer === s}
+        you={s === mySeat}
+        layout={layout}
+        badge={seatBadge(s)}
+        cards={s !== mySeat ? (view.handCounts[s] ?? 0) : undefined}
+      >
+        <SeatNumber label={t("joker.tricks")} value={`${won}/${bid === null || bid === undefined ? "—" : bidLabel(t, bid)}`} tone={tone} />
+        <TrickPips bid={bid} won={won} />
+        <SeatNumber value={view.totals[s]} tone="gold" />
+      </PlayerSeat>
     );
   }
 
   const hand = view.you ? sortHand(view.you.hand, { trump: view.trump }) : [];
+  const handActive = myTurn && view.phase === "play";
 
-  // Trump and bid choices sit on the felt in the empty centre, right next to the turned trump card.
-  const actionPanel =
-    mySeat !== null && view.you ? (
-      <>
-      {myTurn && view.phase === "trump" && (
-        <div className="action-bar fade-in" role="group" aria-label={t("joker.chooseTrump")}>
-          <span className="action-title w-full sm:w-auto text-center">{t("joker.chooseTrump")}</span>
-          <SuitPicker onPick={(s) => onAction({ type: "trump", suit: s })} />
-          <button type="button" className="btn-gold h-[50px] px-5" onClick={() => onAction({ type: "trump", suit: "none" })}>
+  // What the centre of the felt shows when no trick is on it.
+  let centre;
+  if (myTurn && view.phase === "trump" && view.you) {
+    centre = (
+      <div className="pdecide" role="group" aria-label={t("joker.chooseTrump")}>
+        <div className="pdecide-title">{t("joker.chooseTrump")}</div>
+        <div className="pdecide-row">
+          {SUITS.map((s) => (
+            <button key={s} type="button" className="psuit" data-red={isRedSuit(s) ? "true" : "false"} onClick={() => onAction({ type: "trump", suit: s })} aria-label={suitSymbol(s)}>
+              <SuitIcon suit={s} size={26} />
+            </button>
+          ))}
+          <button type="button" className="psuit psuit-wide" onClick={() => onAction({ type: "trump", suit: "none" })}>
             {t("game.noTrump")}
           </button>
         </div>
-      )}
-
-      {myTurn && view.phase === "bid" && (
-        <div className="action-bar fade-in" role="group" aria-label={t("joker.chooseBid")}>
-          <span className="action-title w-full text-center">{t("joker.chooseBid")}</span>
-          <div className="flex flex-wrap gap-2 justify-center">
-            {Array.from({ length: view.cards + 1 }, (_, n) => n).map((n) => {
-              const forbidden = n === view.you!.forbiddenBid;
-              return (
-                <button key={n} type="button" className="bid-btn" disabled={forbidden} onClick={() => onAction({ type: "bid", value: n })} aria-label={String(n)}>
-                  {n}
-                </button>
-              );
-            })}
-          </div>
-          {view.you.forbiddenBid !== null && <span className="action-hint w-full text-center text-[#ff9c97]">{t("joker.forbidden", { n: view.you.forbiddenBid })}</span>}
+      </div>
+    );
+  } else if (myTurn && view.phase === "bid" && view.you) {
+    const forbidden = view.you.forbiddenBid;
+    const left = view.cards - declared;
+    centre = (
+      <div className="pdecide" role="group" aria-label={t("joker.chooseBid")}>
+        <div className="pdecide-title">{t("joker.chooseBid")}</div>
+        <div className="pdecide-meta">
+          <span>{t("table.declaredSoFar", { n: declared, cards: view.cards })}</span>
+          <span data-tone={left < 0 ? "over" : "left"}>{left >= 0 ? t("table.toFill", { n: left }) : t("table.overBy", { n: -left })}</span>
         </div>
-      )}
-      </>
-    ) : null;
+        <div className="pbid-grid" data-many={view.cards > 5 ? "true" : "false"}>
+          {Array.from({ length: view.cards + 1 }, (_, n) => n).map((n) => (
+            <button
+              key={n}
+              type="button"
+              className="pbid"
+              data-pass={n === 0 ? "true" : "false"}
+              disabled={n === forbidden}
+              onClick={() => onAction({ type: "bid", value: n })}
+              aria-label={bidLabel(t, n)}
+              title={n === forbidden ? t("joker.forbidden", { n: bidLabel(t, n) }) : undefined}
+            >
+              {bidLabel(t, n)}
+            </button>
+          ))}
+        </div>
+        {forbidden !== null && <div className="pdecide-warn">{t("joker.forbidden", { n: bidLabel(t, forbidden) })}</div>}
+      </div>
+    );
+  } else if (view.phase !== "over" && view.toAct !== null) {
+    if (myTurn && view.phase === "play") {
+      centre = <div className="pstage-wait" data-tone="teal">{t("table.youLead")}</div>;
+    } else {
+      const key = view.phase === "bid" ? "table.isDeclaring" : view.phase === "trump" ? "table.isChoosingTrump" : "table.isLeading";
+      centre = <div className="pstage-wait">{t(key, { name: name(view.toAct) })}</div>;
+    }
+  } else if (view.phase === "over") {
+    centre = (
+      <div className="pstage-wait" data-tone="gold">
+        <Trophy size={16} /> {t("game.finished")}
+      </div>
+    );
+  }
+
+  const showTrick = stage !== "idle";
 
   return (
-    <div className="board">
-      <TurnBar
+    <div className="pboard" data-game="joker" ref={boardRef}>
+      <GameHud
         toAct={view.toAct}
         mySeat={mySeat}
-        deadline={deadline}
         seats={seats}
-        extra={
+        chips={
           <>
-            {view.ruleset === "nines" && <HudChip tone="brand">{t("joker.ninesShort")}</HudChip>}
-            <HudChip>{t("game.hand", { n: `${view.handNumber}/${view.totalHands}` })}</HudChip>
-            <HudChip>{t("joker.set", { n: view.set })}</HudChip>
-            <TrumpBadge card={view.trumpCard} suit={view.trump} />
-            <button type="button" className="hud-chip" onClick={() => setSheet(true)}>
-              <ClipboardList size={13} /> {t("joker.sheet")}
-            </button>
+            {view.ruleset === "nines" && <HudFact value={t("joker.ninesShort")} tone="teal" optional />}
+            <HudFact label={t("joker.set", { n: view.set })} value={t("game.hand", { n: `${view.handNumber}/${view.totalHands}` })} />
+            <HudFact label={t("table.cardsLabel")} value={view.cards} optional />
+            <TrumpFact suit={view.trump} joker={Boolean(view.trumpCard?.startsWith("X"))} />
           </>
+        }
+        actions={
+          <button type="button" className="phud-btn" onClick={() => setSheet(true)}>
+            <ClipboardList size={15} /> <span>{t("joker.sheet")}</span>
+          </button>
         }
       />
 
-      <GameTable rail="walnut" felt="joker" print={t("games.joker.name")}>
-        {view.trumpCard && view.trick.length > 0 && (
-          <div className="corner-tl grid justify-items-center gap-1">
-            <PlayingCard card={view.trumpCard} size="xs" />
-            <span className="felt-label">{t("game.trump")}</span>
-          </div>
-        )}
-        <div className="seat-ring">
-          <div data-area="n">{renderSeat(northSeat)}</div>
-          <div data-area="w">{renderSeat(westSeat)}</div>
-          <div data-area="e">{renderSeat(eastSeat)}</div>
+      <div className="pj-layout">
+        <CompactScoreboard view={view} seats={seats} mySeat={mySeat} onOpen={() => setSheet(true)} />
 
-          <div data-area="c" className="grid place-items-center min-h-[150px] w-full">
-            {view.trick.length > 0 ? (
-              <div className="trick-cross" style={{ "--cw": "clamp(48px, 4.2vw + 20px, 72px)" } as CSSProperties}>
-                {view.trick.map((p, i) => {
-                  const pos = posOf[p.seat] ?? "s";
-                  return (
-                    <div key={`${p.seat}-${p.card}`} className="trick-card" data-pos={pos}>
-                      <PlayingCard card={p.card} size="sm" animate="play" style={{ ...FROM[pos], "--tilt": tiltFor(p.card) } as CSSProperties} />
-                      {p.joker ? (
-                        <span className="trick-tag" data-tone="gold">
-                          {jokerLabel(p.joker.mode, i === 0)} {p.joker.suit ? suitSymbol(p.joker.suit) : ""}
-                        </span>
-                      ) : null}
-                    </div>
-                  );
-                })}
-                <span className="trick-spacer" aria-hidden="true" />
-              </div>
-            ) : (
-              <div className="row-center">
-                {view.trumpCard && (
-                  <div className="grid justify-items-center gap-1.5">
-                    <PlayingCard card={view.trumpCard} size="sm" animate="flip" />
-                    <span className="felt-label">{t("game.trump")}</span>
-                  </div>
+        <GameTable shape="oval" label={t("games.joker.name")} overlay={<GameNotification notice={notice} />}>
+          <div className="pj-grid">
+            <div data-area="n">{renderSeat(northSeat, "row")}</div>
+            <div data-area="w">{renderSeat(westSeat, "column")}</div>
+            <div data-area="e">{renderSeat(eastSeat, "column")}</div>
+            <div data-area="c" className="pj-center">
+              <div className="pj-trump" aria-label={t("game.trump")}>
+                {view.trumpCard ? (
+                  <PlayingCard key={`${view.handNumber}-${view.trumpCard}`} card={view.trumpCard} size="pile" animate={mounted ? "flip" : false} />
+                ) : (
+                  <span className="pc-slot" data-size="pile" />
                 )}
-                {actionPanel}
-                <div className="grid justify-items-center gap-2 text-center">
-                  {view.lastTrick && (
-                    <span className="amount-tag">
-                      <Crown size={13} className="text-[#e2c27a]" /> {t("game.lastTrick")}: {name(view.lastTrick.winner)}
-                    </span>
-                  )}
-                </div>
+                <span className="pj-plaque-label">{t("game.trump")}</span>
               </div>
-            )}
-          </div>
 
-          <div data-area="s">{renderSeat(southSeat, false)}</div>
-        </div>
-      </GameTable>
+              <div className="pj-stage">
+                {showTrick ? (
+                  <div className="ptrick-cross" data-stage={stage}>
+                    {plays.map((p, i) => {
+                      const isWinner = stage !== "live" && p.seat === winner;
+                      const latest = stage === "live" && i === plays.length - 1;
+                      const tag = p.joker ? `${jokerLabel(p.joker.mode, i === 0)}${p.joker.suit ? ` ${suitSymbol(p.joker.suit)}` : ""}` : undefined;
+                      return (
+                        <TrickCard
+                          key={`${p.seat}-${p.card}`}
+                          play={p}
+                          pos={posOf[p.seat] ?? "s"}
+                          highlight={isWinner ? "winner" : latest ? "latest" : undefined}
+                          tag={tag}
+                          scope={boardRef}
+                          animate={mounted}
+                        />
+                      );
+                    })}
+                  </div>
+                ) : (
+                  centre
+                )}
+              </div>
+
+              <div className="pj-declared" data-tone={!allDeclared ? "open" : diff > 0 ? "over" : "under"} aria-label={t("table.declaredTitle")}>
+                <span className="pj-plaque-label">{t("table.declaredTitle")}</span>
+                <b>
+                  {declared}
+                  <small>/{view.cards}</small>
+                </b>
+                <span className="pj-declared-state">{!allDeclared ? t("table.declaring") : diff > 0 ? t("table.overShort", { n: diff }) : t("table.underShort", { n: -diff })}</span>
+              </div>
+            </div>
+            <div data-area="s">{renderSeat(southSeat, "row")}</div>
+          </div>
+        </GameTable>
+      </div>
 
       {mySeat !== null && view.you && (
-        <div className="dock">
-          {myTurn && view.phase === "play" && (
-            <div className="flex justify-center">
-              <span className="hint-pill">{t("joker.playHint")}</span>
-            </div>
-          )}
-
-          <CardHand
+        <div className="pdock">
+          <div className="pdock-hint" data-on={handActive || (myTurn && view.phase === "bid") ? "true" : "false"}>
+            {handActive ? t("joker.playHint") : t("table.declareHint")}
+          </div>
+          <PlayerHand
             label={t("game.yourHand")}
-            size="md"
             dealKey={view.handNumber}
-            cards={hand.map((c) => {
-              const active = myTurn && view.phase === "play";
-              const canPlay = active && playable.has(c);
-              return { card: c, playable: !active || canPlay, onClick: canPlay ? () => play(c) : undefined };
-            })}
+            active={handActive}
+            onPick={play}
+            cards={hand.map((c) => ({ card: c, playable: playable.has(c) }))}
           />
         </div>
       )}
 
       {/* Joker: lead "high" or "let it take" (with a suit); follow "joker it" or low */}
-      <Modal open={jokerCard !== null} onClose={() => setJokerCard(null)} title={leading ? t("joker.jokerLead") : t("joker.jokerFollow")}>
+      <ActionSheet open={jokerCard !== null} onClose={closeJoker} title={leading ? t("joker.jokerLead") : t("joker.jokerFollow")} subtitle={t("table.jokerSubtitle")}>
         {leading ? (
-          <div className="grid gap-3">
+          <div className="pjoker-lead">
             {(["high", "low"] as const).map((mode) => (
-              <div key={mode} className="panel-inset p-3.5 grid gap-2.5">
-                <div>
-                  <div className="text-sm font-extrabold text-[#e2c27a] flex items-center gap-1.5">
-                    <Sparkles size={15} /> {jokerLabel(mode, true)}
-                  </div>
-                  <p className="text-xs text-muted mt-0.5">{t(mode === "high" ? "joker.highHint" : "joker.takeHint")}</p>
+              <div key={mode} className="pjoker-option" data-mode={mode}>
+                <div className="pjoker-option-head">
+                  <Sparkles size={15} />
+                  <b>{jokerLabel(mode, true)}</b>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <p>{t(mode === "high" ? "joker.highHint" : "joker.takeHint")}</p>
+                <div className="pdecide-row">
                   {SUITS.map((s) => (
                     <button
                       key={s}
                       type="button"
-                      className="suit-tile !h-11 !min-w-11"
+                      className="psuit"
                       data-red={isRedSuit(s) ? "true" : "false"}
                       aria-label={`${jokerLabel(mode, true)} ${suitSymbol(s)}`}
                       onClick={() => {
@@ -223,7 +328,7 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
                         setJokerCard(null);
                       }}
                     >
-                      <SuitIcon suit={s} size={20} />
+                      <SuitIcon suit={s} size={24} />
                     </button>
                   ))}
                 </div>
@@ -231,64 +336,27 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
             ))}
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 gap-2.5">
+          <div className="pjoker-follow">
             {(["high", "low"] as const).map((mode) => (
               <button
                 key={mode}
                 type="button"
-                className={`${mode === "high" ? "btn-primary" : "btn-secondary"} !h-auto !rounded-2xl !flex-col !gap-0.5 py-3 text-center`}
+                className="pjoker-choice"
+                data-mode={mode}
                 onClick={() => {
                   onAction({ type: "play", card: jokerCard, joker: { mode } });
                   setJokerCard(null);
                 }}
               >
-                <span className="text-[15px]">{jokerLabel(mode, false)}</span>
-                <span className="text-[11px] font-medium opacity-85 whitespace-normal">{t(mode === "high" ? "joker.jokerItHint" : "joker.lowHint")}</span>
+                <b>{jokerLabel(mode, false)}</b>
+                <span>{t(mode === "high" ? "joker.jokerItHint" : "joker.lowHint")}</span>
               </button>
             ))}
           </div>
         )}
-      </Modal>
+      </ActionSheet>
 
-      {/* Score sheet */}
-      <Modal open={sheet} onClose={() => setSheet(false)} title={t("joker.sheet")} wide>
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs tabular-nums">
-            <thead className="text-muted bg-surface-2 border-b border-line">
-              <tr>
-                <th className="text-left p-2.5">#</th>
-                {[0, 1, 2, 3].map((s) => (
-                  <th key={s} className="text-right p-2.5 font-bold text-white">
-                    {name(s)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {view.history.map((h) => (
-                <tr key={h.hand} className="table-row hover:bg-surface-hover/40">
-                  <td className="p-2.5 text-muted font-semibold">
-                    {h.hand} ({h.cards})
-                  </td>
-                  {[0, 1, 2, 3].map((s) => (
-                    <td key={s} className={`p-2.5 text-right font-semibold ${h.bids[s] === h.tricks[s] ? "text-primary" : h.scores[s]! < 0 ? "text-danger" : "text-text-2"}`}>
-                      {h.bids[s]}/{h.tricks[s]} · {h.scores[s]}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-              <tr className="font-extrabold text-sm bg-surface-2 border-t border-line-strong">
-                <td className="p-2.5 text-gold">{t("joker.total")}</td>
-                {view.totals.map((v, s) => (
-                  <td key={s} className="p-2.5 text-right text-white">
-                    {v}
-                  </td>
-                ))}
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </Modal>
+      <FullScoreboard open={sheet} onClose={closeSheet} view={view} seats={seats} mySeat={mySeat} />
     </div>
   );
 }
