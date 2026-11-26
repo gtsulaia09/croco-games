@@ -10,7 +10,7 @@ Built as a TypeScript monorepo targeting **OWASP ASVS 5.0.0 Level 2** (with Leve
 
 Every game runs as a pure, server-authoritative engine in `packages/game-engine` with cryptographically secure randomness (`crypto.getRandomValues` + rejection sampling), per-seat private card redaction, 3 bot difficulty levels (`easy`, `medium`, `hard`), individual statistics, match history, and dedicated leaderboards:
 
-1. **Joker (`joker`)** — Georgian 4-player classic (24 deals in four sets, dealer bid restriction, high/low jokers, set bonus; khishti penalty as an option)
+1. **Joker (`joker`)** — Georgian 4-player classic (24 deals in four sets, dealer bid restriction, high/low jokers; პრემია "ბოლო იშლება / არ იშლება" and ხიშტი (standard −100 × cards or fixed −100/−200/−300/−500) chosen before the game; paper score sheet counting in hundreds)
 2. **Japanese Joker (`japanese_joker`)** — 2-player Georgian game (open/covered table cards, first card from the hand, suit-demanding joker, trick-difference scoring to 1/3/7/11/21)
 3. **Bura — Three-Card (`bura3`)** — 1 v 1 with 20 cards (10–A): 61 points wins the deal, "var" (31+) right after a won trick, bura of three trumps
 4. **Bura — Five-Card (`bura5`)** — 2 v 2 team game with malutka, bura of five trumps and raises davi … shashi (×2…×6)

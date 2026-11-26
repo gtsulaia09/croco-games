@@ -13,16 +13,16 @@ match history all keep working, and a game comes back by adding it to `VISIBLE_G
 
 ## Palette (tokens in `apps/web/src/styles.css`)
 
-| Token | Value | Use |
-|---|---|---|
-| `--color-bg` | `#0b1220` | Page background |
-| `--color-bg-elevated` / `--color-surface` / `--color-surface-2` | `#0f1829` / `#131f32` / `#18263b` | Header, panels, raised panels |
-| `--color-felt` / `--color-felt-hi` | `#075b45` / `#0c7657` | Card table felt |
-| `--color-primary` | `#39d6b0` | Primary actions, your turn, playable cards, selection |
-| `--color-lime` | `#a7f36b` | Positive results only (a met declaration) |
-| `--color-gold` | `#d9b56d` | Scores, totals, trump, dealer chip, winners |
-| `--color-danger` | `#f0616d` | Penalties, negative scores, urgent timer |
-| `--color-text` / `--color-muted` | `#f5f7fa` / `#9aa8b8` | Text |
+| Token                                                           | Value                             | Use                                                   |
+| --------------------------------------------------------------- | --------------------------------- | ----------------------------------------------------- |
+| `--color-bg`                                                    | `#0b1220`                         | Page background                                       |
+| `--color-bg-elevated` / `--color-surface` / `--color-surface-2` | `#0f1829` / `#131f32` / `#18263b` | Header, panels, raised panels                         |
+| `--color-felt` / `--color-felt-hi`                              | `#075b45` / `#0c7657`             | Card table felt                                       |
+| `--color-primary`                                               | `#39d6b0`                         | Primary actions, your turn, playable cards, selection |
+| `--color-lime`                                                  | `#a7f36b`                         | Positive results only (a met declaration)             |
+| `--color-gold`                                                  | `#d9b56d`                         | Scores, totals, trump, dealer chip, winners           |
+| `--color-danger`                                                | `#f0616d`                         | Penalties, negative scores, urgent timer              |
+| `--color-text` / `--color-muted`                                | `#f5f7fa` / `#9aa8b8`             | Text                                                  |
 
 Accent colours are used sparingly: teal = "you can act", gold = "score / winner", lime =
 "made it", red = "penalty". Buttons (`.btn-primary`, `.btn-secondary`, `.btn-gold`,
@@ -31,15 +31,15 @@ Accent colours are used sparingly: teal = "you can act", gold = "score / winner"
 
 ## Where things are
 
-| File | What |
-|---|---|
-| `apps/web/src/games/cards.tsx` + `cards.css` | `PlayingCard` (SVG faces: large corner indices, pip layouts, illustrated court figures, jester jokers, emerald back) |
-| `apps/web/src/games/ui/` | Shared table components: `GameTable`, `GameHud`, `PlayerSeat`, `PlayerHand`, `GameNotification`, `ActionSheet`, `useTrickStage`, card-flight `motion.ts`, `labels.ts` |
-| `apps/web/src/games/premium.css` | Table, seats, trick cross, declarations, hand fan, score sheets, Japanese Joker |
-| `apps/web/src/games/bura.css` | Bura stock, trick sets, captured piles, action bar |
-| `apps/web/src/games/JokerScoreboard.tsx` + `jokerSheet.ts` | Compact and full Joker score sheet (model unit-tested) |
-| `apps/web/src/components/lobby/` | `GameLobbyCard`, `LobbyGrid`, card-art scenes built from real `PlayingCard`s |
-| `apps/web/src/games/table.css` | Tables of the games outside this phase (poker, dominoes, nardi) — unchanged |
+| File                                                       | What                                                                                                                                                                  |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web/src/games/cards.tsx` + `cards.css`               | `PlayingCard` (SVG faces: large corner indices, pip layouts, illustrated court figures, jester jokers, emerald back)                                                  |
+| `apps/web/src/games/ui/`                                   | Shared table components: `GameTable`, `GameHud`, `PlayerSeat`, `PlayerHand`, `GameNotification`, `ActionSheet`, `useTrickStage`, card-flight `motion.ts`, `labels.ts` |
+| `apps/web/src/games/premium.css`                           | Table, seats, trick cross, declarations, hand fan, score sheets, Japanese Joker                                                                                       |
+| `apps/web/src/games/bura.css`                              | Bura stock, trick sets, captured piles, action bar                                                                                                                    |
+| `apps/web/src/games/JokerScoreboard.tsx` + `jokerSheet.ts` | Compact and full Joker score sheet (model unit-tested)                                                                                                                |
+| `apps/web/src/components/lobby/`                           | `GameLobbyCard`, `LobbyGrid`, card-art scenes built from real `PlayingCard`s                                                                                          |
+| `apps/web/src/games/table.css`                             | Tables of the games outside this phase (poker, dominoes, nardi) — unchanged                                                                                           |
 
 ## Cards
 
@@ -57,12 +57,12 @@ Accent colours are used sparingly: teal = "you can act", gold = "score / winner"
 `PlayerHand` is an overlapping fan whose overlap is computed in CSS from the hand's own width
 (never below a readable step; very long hands scroll horizontally).
 
-| State | Look |
-|---|---|
-| Your turn, legal card | lifted 7 px with a teal under-glow |
-| Hover (mouse) | lifted 24 px, slightly enlarged, teal edge, brought to the front |
-| Not legal now | shaded, still readable, not clickable |
-| Selected (Bura) / armed (touch) | lifted 28 px, teal ring and check badge |
+| State                           | Look                                                             |
+| ------------------------------- | ---------------------------------------------------------------- |
+| Your turn, legal card           | lifted 7 px with a teal under-glow                               |
+| Hover (mouse)                   | lifted 24 px, slightly enlarged, teal edge, brought to the front |
+| Not legal now                   | shaded, still readable, not clickable                            |
+| Selected (Bura) / armed (touch) | lifted 28 px, teal ring and check badge                          |
 
 Mouse: one click plays a legal card. Touch screens: the first tap lifts the card ("tap again to
 play"), the second plays it — the same safety JokerStars uses, without slowing desktop play.
@@ -88,7 +88,7 @@ play"), the second plays it — the same safety JokerStars uses, without slowing
 - Four seats: you at the bottom, opponents left, top and right. Each seat shows the declaration
   bubble, tricks taken against the declaration (pips), the total in gold and the cards left.
 - Centre of the felt: the trick laid in a cross (each card toward its player), the turned trump
-  card on the left, the declared-total plaque on the right (`7/9 · შეტენვა −2` / `გადაჭარბება +1`).
+  card on the left, the declared-total plaque on the right (`7/9 · შეტენვა −2` / `წაგლეჯვა +1`).
 - Declarations are made on the felt: "პასი" and 1…N, the dealer's forbidden value is struck
   through, and the panel shows how much is declared and how much is left to fill.
 - **Declared 0 is shown as "პასი"** (`bidLabel` in `ui/labels.ts`) on the bid buttons, seat
@@ -147,6 +147,8 @@ Studied as a functional UX reference (not copied): a free "fun" table, classic 4
   stack — **adopted** with larger cards and a gold winner highlight before the sweep.
 - The score sheet is always on the table: per player a declaration and a points column, rows per
   deal, set subtotals in hundreds, failed bids as "---" — **adopted** as the compact + full sheet,
-  with full numbers, colour-coded results and "პასი".
+  drawn as a paper ოქმი (ivory paper, ruled lines, red margin): deal cells keep the written points
+  (300, 30, −500) with the declaration in the corner, every sum counts in hundreds (3.0, 0.3), erased
+  deals are struck through and a premia deal carries a star (owner's request 2026-11-27).
 - Cards are small and need tap-to-lift, tap-to-play; a slow player is marked away and a bot takes
   over — **improved**: large cards, single click on desktop, two taps only on touch screens.

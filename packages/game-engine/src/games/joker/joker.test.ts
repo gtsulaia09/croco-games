@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { simulate, testCtx } from "../../testing";
-import { forbiddenDealerBid, jokerConfigSchema, jokerEngine, jokerSchedule, playableCards, trickWinner, type JokerState } from "./index";
+import { forbiddenDealerBid, jokerConfigSchema, jokerEngine, jokerSchedule, playableCards, trickWinner, type HandRecord, type JokerConfig, type JokerState } from "./index";
 
 const cfg = (o: Record<string, unknown> = {}) => jokerConfigSchema.parse(o);
 
@@ -97,30 +97,35 @@ describe("play rules", () => {
   });
 });
 
+/**
+ * Finish the current deal through the engine: seats 1–3 have played 7D, 8D, 9D and seat 0 plays
+ * 6D, so seat 3 takes the last trick. `tricks` are the counts before that trick.
+ */
+function finishDeal(s: JokerState, bids: number[], tricks: number[]) {
+  s.bids = [...bids];
+  s.tricks = [...tricks];
+  s.phase = "play";
+  s.trick = [
+    { seat: 1, card: "7D" },
+    { seat: 2, card: "8D" },
+    { seat: 3, card: "9D" },
+  ];
+  s.hands = [["6D"], [], [], []];
+  s.leader = 1;
+  s.toAct = 0;
+  const r = jokerEngine.apply(s, 0, { type: "play", card: "6D" }, testCtx());
+  if (!r.ok) throw new Error(r.error);
+  return r.state;
+}
+
 describe("scoring", () => {
-  function scoreHand(bid: number, tricks: number, cards: number, set = 0, hist: "classic" | "none" = "none") {
+  function scoreHand(bid: number, tricks: number, cards: number, set = 0, hist: JokerConfig["hist"] = "perCard") {
     const s = jokerEngine.create(cfg({ hist }), 4, testCtx(1));
     s.cards = cards;
     s.setIndex = set;
     s.handInSet = 0;
-    s.bids = [bid, 0, 0, 0];
-    s.tricks = [tricks, 0, 0, 0];
-    s.phase = "play";
-    s.hands = [["AH"], [], [], []];
-    s.trick = [];
-    s.toAct = 0;
-    // Finish the hand by letting seat 0 play its last card into an otherwise empty trick is not
-    // possible with four players, so call the scoring path directly via a completed trick.
-    s.trick = [
-      { seat: 1, card: "7D" },
-      { seat: 2, card: "8D" },
-      { seat: 3, card: "9D" },
-    ];
-    s.hands = [["6D"], [], [], []];
-    s.leader = 1;
-    const r = jokerEngine.apply(s, 0, { type: "play", card: "6D" }, testCtx());
-    if (!r.ok) throw new Error(r.error);
-    return r.state.history[r.state.history.length - 1]!.scores[0]!;
+    const done = finishDeal(s, [bid, 0, 0, 0], [tricks, 0, 0, 0]);
+    return done.history[done.history.length - 1]!.scores[0]!;
   }
 
   it("matches the pagat worked examples (4-card deal)", () => {
@@ -133,21 +138,104 @@ describe("scoring", () => {
     expect(scoreHand(0, 2, 4)).toBe(20);
   });
 
-  it("has no khishti penalty in the base rules", () => {
-    expect(cfg().hist).toBe("none");
+  it("uses the standard ხიშტი by default: −100 × the cards dealt", () => {
+    expect(cfg().hist).toBe("perCard");
+    expect(scoreHand(5, 0, 9, 1)).toBe(-900);
+    expect(scoreHand(2, 0, 5)).toBe(-500);
+    expect(scoreHand(1, 0, 3)).toBe(-300);
+    expect(scoreHand(1, 0, 1)).toBe(-100);
   });
 
-  it("applies the hist penalty (−200 in sets 1/3, −500 in sets 2/4)", () => {
+  it("applies a fixed ხიშტი chosen for the table in every deal", () => {
+    expect(scoreHand(2, 0, 4, 0, "fixed100")).toBe(-100);
+    expect(scoreHand(2, 0, 9, 1, "fixed200")).toBe(-200);
+    expect(scoreHand(2, 0, 9, 1, "fixed300")).toBe(-300);
+    expect(scoreHand(2, 0, 4, 0, "fixed500")).toBe(-500);
+  });
+
+  it("keeps the legacy ხიშტი values working", () => {
     expect(scoreHand(2, 0, 4, 0, "none")).toBe(0);
     expect(scoreHand(2, 0, 4, 0, "classic")).toBe(-200);
     expect(scoreHand(2, 0, 9, 1, "classic")).toBe(-500);
+  });
+
+  it("is not a ხიშტი when the bid was a pass or a trick was taken", () => {
+    expect(scoreHand(0, 0, 9, 1)).toBe(50);
+    expect(scoreHand(3, 1, 9, 1)).toBe(10);
+  });
+});
+
+describe("premia (set bonus)", () => {
+  // The second set of the standard game: four nine-card deals (hands 9–12). Seat 0 makes every
+  // bid; seat 1 misses deal 11; seat 2 has two ხიშტი; seat 3 misses everything.
+  const earlier: HandRecord[] = [
+    { hand: 9, set: 1, cards: 9, bids: [2, 1, 5, 1], tricks: [2, 1, 5, 0], scores: [150, 100, 300, -900] },
+    { hand: 10, set: 1, cards: 9, bids: [3, 4, 1, 0], tricks: [3, 4, 0, 1], scores: [200, 250, -900, 10] },
+    { hand: 11, set: 1, cards: 9, bids: [0, 2, 0, 2], tricks: [0, 3, 0, 6], scores: [50, 30, 50, 60] },
+  ];
+
+  function finishSet(setBonus: JokerConfig["setBonus"]) {
+    const s = jokerEngine.create(cfg({ setBonus }), 4, testCtx(1));
+    s.setIndex = 1;
+    s.handInSet = 3;
+    s.handNumber = 12;
+    s.cards = 9;
+    s.history = earlier.map((h) => ({ ...h }));
+    s.totals = [0, 0, 0, 0];
+    // Last deal: seat 0 bids 1 and takes 1 (100), seat 1 2/2 (150), seat 2 ხიშტი (−900), seat 3 0/1 (10).
+    return finishDeal(s, [1, 2, 1, 0], [1, 2, 0, 0]);
+  }
+
+  it("ბოლო იშლება (eraseLast, the default): others lose their last deal that scored", () => {
+    expect(cfg().setBonus).toBe("eraseLast");
+    const s = finishSet("eraseLast");
+    expect(s.history.at(-1)!.scores).toEqual([100, 150, -900, 10]);
+    expect(s.bonuses).toEqual([
+      { set: 1, seat: 0, amount: 200, kind: "premia", hand: 10 },
+      { set: 1, seat: 1, amount: -150, kind: "erase", hand: 12 },
+      { set: 1, seat: 2, amount: -50, kind: "erase", hand: 11 },
+      { set: 1, seat: 3, amount: -10, kind: "erase", hand: 12 },
+    ]);
+    expect(s.totals).toEqual([100 + 200, 150 - 150, -900 - 50, 10 - 10]);
+  });
+
+  it("ბოლო არ იშლება (eraseHighest): others lose their highest deal of the set", () => {
+    const s = finishSet("eraseHighest");
+    expect(s.bonuses).toEqual([
+      { set: 1, seat: 0, amount: 200, kind: "premia", hand: 10 },
+      { set: 1, seat: 1, amount: -250, kind: "erase", hand: 10 },
+      { set: 1, seat: 2, amount: -300, kind: "erase", hand: 9 },
+      { set: 1, seat: 3, amount: -60, kind: "erase", hand: 11 },
+    ]);
+  });
+
+  it("keeps the legacy set-bonus values: simple adds only, double erases the highest", () => {
+    expect(finishSet("simple").bonuses).toEqual([{ set: 1, seat: 0, amount: 200, kind: "premia", hand: 10 }]);
+    expect(finishSet("double").bonuses.filter((b) => b.kind === "erase").map((b) => b.hand)).toEqual([10, 9, 11]);
+    expect(finishSet("none").bonuses).toEqual([]);
+  });
+
+  it("erases nothing when nobody took the premia", () => {
+    const s = jokerEngine.create(cfg(), 4, testCtx(1));
+    s.setIndex = 1;
+    s.handInSet = 3;
+    s.handNumber = 12;
+    s.cards = 9;
+    s.history = earlier.map((h) => ({ ...h }));
+    const done = finishDeal(s, [2, 2, 1, 0], [1, 2, 0, 0]); // seat 0 misses the last deal
+    expect(done.bonuses).toEqual([]);
+  });
+
+  it("shows the table's rules in the view", () => {
+    const s = jokerEngine.create(cfg({ hist: "fixed300", setBonus: "eraseHighest" }), 4, testCtx(1));
+    expect(jokerEngine.view(s, 0).rules).toEqual({ hist: "fixed300", setBonus: "eraseHighest" });
   });
 });
 
 describe("full Joker matches", () => {
   it.each(["standard", "nines"] as const)("%s ruleset plays to the end with legal bot moves", (ruleset) => {
     for (const seed of [1, 2]) {
-      const { state, finished } = simulate(jokerEngine, cfg({ ruleset, nineTrump: seed === 2 ? "choose" : "lastCard", setBonus: seed === 2 ? "double" : "simple" }), 4, seed, {
+      const { state, finished } = simulate(jokerEngine, cfg({ ruleset, nineTrump: seed === 2 ? "choose" : "lastCard", setBonus: seed === 2 ? "eraseHighest" : "eraseLast", hist: seed === 2 ? "fixed500" : "perCard" }), 4, seed, {
         difficulty: ["easy", "medium", "hard", "medium"],
         onStep: (st) => {
           if (st.phase === "over") return;

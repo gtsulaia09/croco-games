@@ -11,7 +11,7 @@ import { ActionSheet } from "./ui/ActionSheet";
 import { GameHud, HudFact, TrumpFact } from "./ui/GameHud";
 import { GameNotification, type TableNotice } from "./ui/GameNotification";
 import { GameTable } from "./ui/GameTable";
-import { bidLabel, signedPoints } from "./ui/labels";
+import { bidLabel, sheetTotal, signedPoints } from "./ui/labels";
 import { flyIn, seatRect, sweepTo } from "./ui/motion";
 import { PlayerHand } from "./ui/PlayerHand";
 import { PlayerSeat, SeatNumber } from "./ui/PlayerSeat";
@@ -139,7 +139,7 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
       >
         <SeatNumber label={t("joker.tricks")} value={`${won}/${bid === null || bid === undefined ? "—" : bidLabel(t, bid)}`} tone={tone} />
         <TrickPips bid={bid} won={won} />
-        <SeatNumber value={view.totals[s]} tone="gold" />
+        <SeatNumber value={sheetTotal(view.totals[s] ?? 0)} tone="gold" />
       </PlayerSeat>
     );
   }

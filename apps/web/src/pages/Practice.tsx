@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
-import { ArrowLeft, Dumbbell, Info, RotateCcw, Trophy } from "lucide-react";
+import { ArrowLeft, Dumbbell, Info, RotateCcw, ScrollText, Trophy } from "lucide-react";
 import { isGameType, type GameType, type SeatInfo } from "@croco/shared/client";
 import type { GameEngine } from "@croco/game-engine";
 import { useT } from "../i18n";
@@ -8,6 +8,7 @@ import { ErrorText, Spinner } from "../components/ui";
 import { GameBadgeIcon } from "../components/GameArt";
 import { LobbyGrid } from "../components/lobby/LobbyGrid";
 import { GameBoard } from "../games/GameBoard";
+import { JokerSetup, jokerRulesFromParams, jokerRulesToParams, type JokerTableRules } from "../games/JokerSetup";
 
 const PRACTICE_PLAYERS: Record<GameType, number> = {
   joker: 4,
@@ -22,13 +23,11 @@ const PRACTICE_PLAYERS: Record<GameType, number> = {
   backgammon: 2,
 };
 
-type JokerRuleset = "standard" | "nines";
-
 /** Bots think for a moment, and wait longer after a trick so the table can show and collect it. */
 const BOT_DELAY_MS = 700;
 const TRICK_PAUSE_MS = 1700;
 
-function useLocalGame(gameType: GameType, version: number, ruleset: JokerRuleset) {
+function useLocalGame(gameType: GameType, version: number, jokerRules: JokerTableRules | null) {
   const [engine, setEngine] = useState<GameEngine | null>(null);
   const [state, setState] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
@@ -36,10 +35,16 @@ function useLocalGame(gameType: GameType, version: number, ruleset: JokerRuleset
   /** After a trick is taken the table shows it for a moment; bots wait until it is collected. */
   const pauseUntil = useRef(0);
 
+  // A stable key, so the game restarts only when a rule really changes.
+  const rulesKey = jokerRules ? `${jokerRules.ruleset}|${jokerRules.setBonus}|${jokerRules.hist}` : "";
+
   useEffect(() => {
     let cancelled = false;
     setEngine(null);
     setState(null);
+    // Joker waits on the setup screen until the player has chosen the table rules.
+    if (gameType === "joker" && !rulesKey) return;
+    const [ruleset, setBonus, hist] = rulesKey.split("|");
     void (async () => {
       const [{ loadEngine }, { cryptoRng }] = await Promise.all([import("@croco/game-engine/registry"), import("@croco/game-engine/rng")]);
       const e = await loadEngine(gameType);
@@ -48,7 +53,7 @@ function useLocalGame(gameType: GameType, version: number, ruleset: JokerRuleset
       // Shorter matches for practice; the rules themselves are the defaults.
       const config = e.configSchema.parse(
         gameType === "joker"
-          ? { ruleset }
+          ? { ruleset, setBonus, hist }
           : gameType === "bura3" || gameType === "bura5"
             ? { targetPoints: 6 }
             : gameType === "japanese_joker"
@@ -64,7 +69,7 @@ function useLocalGame(gameType: GameType, version: number, ruleset: JokerRuleset
     return () => {
       cancelled = true;
     };
-  }, [gameType, version, ruleset]);
+  }, [gameType, version, rulesKey]);
 
   const humanOut = Boolean(engine && state !== null && (engine.view(state, 0) as { players?: Array<{ busted?: boolean }> }).players?.[0]?.busted);
 
@@ -137,8 +142,20 @@ function PracticeGame({ gameType }: { gameType: GameType }) {
   const t = useT();
   const [version, setVersion] = useState(0);
   const [params, setParams] = useSearchParams();
-  const ruleset: JokerRuleset = gameType === "joker" && params.get("ruleset") === "nines" ? "nines" : "standard";
-  const { engine, state, act, error, humanOut } = useLocalGame(gameType, version, ruleset);
+  const isJoker = gameType === "joker";
+  const [jokerRules, setJokerRules] = useState(() => jokerRulesFromParams(params));
+  // Keep the chosen rules in the address, so a reload or a shared link opens the same table.
+  useEffect(() => {
+    if (isJoker) setParams(jokerRulesToParams(jokerRules), { replace: true });
+  }, [isJoker, jokerRules, setParams]);
+  /** Joker practice opens on the table-rules screen; "New game" returns to it. */
+  const [started, setStarted] = useState(!isJoker);
+  const { engine, state, act, error, humanOut } = useLocalGame(gameType, version, isJoker && started ? jokerRules : null);
+  const newGame = () => (isJoker ? setStarted(false) : setVersion((v) => v + 1));
+  const startJoker = () => {
+    setVersion((v) => v + 1);
+    setStarted(true);
+  };
   const players = PRACTICE_PLAYERS[gameType];
   const seats: SeatInfo[] = Array.from({ length: players }, (_, i) =>
     i === 0
@@ -157,42 +174,36 @@ function PracticeGame({ gameType }: { gameType: GameType }) {
           <GameBadgeIcon game={gameType} size={20} />
           <h1 className="font-extrabold text-sm sm:text-base text-white truncate">{t(`games.${gameType}.name`)}</h1>
         </div>
-        {gameType === "joker" && (
-          <div className="inline-flex rounded-xl bg-surface-3 border border-line p-0.5" role="radiogroup" aria-label={t("opt.ruleset")}>
-            {(["standard", "nines"] as const).map((r) => (
-              <button
-                key={r}
-                type="button"
-                role="radio"
-                aria-checked={ruleset === r}
-                className={`h-7 px-3 rounded-[9px] text-xs font-bold transition-colors ${ruleset === r ? "bg-primary text-[#04241c]" : "text-text-2 hover:text-white"}`}
-                onClick={() => setParams(r === "nines" ? { ruleset: "nines" } : {})}
-              >
-                <span className="hidden sm:inline">{t(`joker.rulesets.${r}`)}</span>
-                <span className="sm:hidden">{r === "nines" ? t("joker.ninesShort") : t("joker.standardShort")}</span>
-              </button>
-            ))}
-          </div>
+        {isJoker && started && (
+          <button type="button" className="practice-rules" onClick={() => setStarted(false)} title={t("joker.setupTitle")}>
+            <ScrollText size={13} className="shrink-0 text-gold" />
+            <span className="truncate">
+              {jokerRules.ruleset === "nines" ? t("joker.ninesShort") : t("joker.standardShort")} · {t(`opt.values.${jokerRules.setBonus}`)} · {t("opt.hist")}{" "}
+              {t(`opt.values.${jokerRules.hist}`)}
+            </span>
+          </button>
         )}
         <p className="practice-bar-note" title={t("demo.practiceBanner")}>
           <Info size={12} className="shrink-0 text-warning" />
           <span className="truncate">{t("demo.practiceBanner")}</span>
         </p>
-        <button className="btn-secondary btn-sm ml-auto" onClick={() => setVersion((v) => v + 1)} aria-label={t("practice.newGame")} title={t("practice.newGame")}>
+        <button className="btn-secondary btn-sm ml-auto" onClick={newGame} aria-label={t("practice.newGame")} title={t("practice.newGame")}>
           <RotateCcw size={13} /> <span className="hidden sm:inline">{t("practice.newGame")}</span>
         </button>
       </div>
 
       {error && <ErrorText error={error} />}
 
-      {!engine || state === null ? (
+      {isJoker && !started ? (
+        <JokerSetup rules={jokerRules} onChange={(patch) => setJokerRules((r) => ({ ...r, ...patch }))} onStart={startJoker} />
+      ) : !engine || state === null ? (
         <Spinner />
       ) : (
         <>
           {humanOut && !engine.isOver(state) && (
             <div className="card p-3 border-danger/45 bg-danger/10 text-sm flex flex-wrap items-center gap-3">
               <span className="font-semibold text-white">{t("practice.busted")}</span>
-              <button className="btn-primary btn-sm ml-auto" onClick={() => setVersion((v) => v + 1)}>
+              <button className="btn-primary btn-sm ml-auto" onClick={newGame}>
                 <RotateCcw size={13} /> {t("practice.newGame")}
               </button>
             </div>
@@ -203,7 +214,7 @@ function PracticeGame({ gameType }: { gameType: GameType }) {
               <span className="font-bold text-white">
                 {t("game.finished")} — {t("game.placement")}: #{engine.outcome(state).placements[0]} / {players}
               </span>
-              <button className="btn-gold btn-sm ml-auto" onClick={() => setVersion((v) => v + 1)}>
+              <button className="btn-gold btn-sm ml-auto" onClick={newGame}>
                 <RotateCcw size={13} /> {t("practice.newGame")}
               </button>
             </div>

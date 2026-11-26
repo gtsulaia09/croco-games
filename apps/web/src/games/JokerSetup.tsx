@@ -1,0 +1,104 @@
+import { Play, ScrollText } from "lucide-react";
+import { useT } from "../i18n";
+import { JOKER_KHISHTI, JOKER_PREMIA, type JokerKhishti, type JokerPremia } from "./options";
+
+export type JokerRuleset = "standard" | "nines";
+
+export interface JokerTableRules {
+  ruleset: JokerRuleset;
+  setBonus: JokerPremia;
+  hist: JokerKhishti;
+}
+
+export const DEFAULT_JOKER_RULES: JokerTableRules = { ruleset: "standard", setBonus: "eraseLast", hist: "perCard" };
+
+/** Reads table rules from URL parameters, falling back to the defaults for anything unknown. */
+export function jokerRulesFromParams(params: URLSearchParams): JokerTableRules {
+  const pick = <T extends string>(value: string | null, allowed: readonly T[], fallback: T): T => (allowed.includes(value as T) ? (value as T) : fallback);
+  return {
+    ruleset: pick(params.get("ruleset"), ["standard", "nines"] as const, DEFAULT_JOKER_RULES.ruleset),
+    setBonus: pick(params.get("premia"), JOKER_PREMIA, DEFAULT_JOKER_RULES.setBonus),
+    hist: pick(params.get("khishti"), JOKER_KHISHTI, DEFAULT_JOKER_RULES.hist),
+  };
+}
+
+export function jokerRulesToParams(rules: JokerTableRules): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (rules.ruleset !== DEFAULT_JOKER_RULES.ruleset) out.ruleset = rules.ruleset;
+  if (rules.setBonus !== DEFAULT_JOKER_RULES.setBonus) out.premia = rules.setBonus;
+  if (rules.hist !== DEFAULT_JOKER_RULES.hist) out.khishti = rules.hist;
+  return out;
+}
+
+function Choice<T extends string>({ name, legend, value, options, label, hint, onChange }: { name: string; legend: string; value: T; options: readonly T[]; label(v: T): string; hint?(v: T): string; onChange(v: T): void }) {
+  return (
+    <fieldset className="jsetup-group">
+      <legend>{legend}</legend>
+      <div className="jsetup-options" data-count={options.length}>
+        {options.map((v) => (
+          <label key={v} className="jsetup-option" data-checked={v === value ? "true" : "false"}>
+            <input type="radio" name={name} value={v} checked={v === value} onChange={() => onChange(v)} />
+            <b>{label(v)}</b>
+            {hint && <span>{hint(v)}</span>}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+/**
+ * Before a Joker practice game: the player chooses the format, the premia rule (ბოლო იშლება /
+ * ბოლო არ იშლება) and the ხიშტი, as a table creator does when opening a room.
+ */
+export function JokerSetup({ rules, onChange, onStart }: { rules: JokerTableRules; onChange(patch: Partial<JokerTableRules>): void; onStart(): void }) {
+  const t = useT();
+  return (
+    <form
+      className="jsetup"
+      onSubmit={(e) => {
+        e.preventDefault();
+        onStart();
+      }}
+    >
+      <div className="jsetup-head">
+        <span className="jsetup-icon">
+          <ScrollText size={20} />
+        </span>
+        <div className="min-w-0">
+          <h2>{t("joker.setupTitle")}</h2>
+          <p>{t("joker.setupText")}</p>
+        </div>
+      </div>
+      <Choice
+        name="ruleset"
+        legend={t("opt.ruleset")}
+        value={rules.ruleset}
+        options={["standard", "nines"] as const}
+        label={(v) => t(`joker.rulesets.${v}`)}
+        onChange={(ruleset) => onChange({ ruleset })}
+      />
+      <Choice
+        name="premia"
+        legend={t("opt.setBonus")}
+        value={rules.setBonus}
+        options={JOKER_PREMIA}
+        label={(v) => t(`opt.values.${v}`)}
+        hint={(v) => t(`opt.hints.${v}`)}
+        onChange={(setBonus) => onChange({ setBonus })}
+      />
+      <Choice
+        name="khishti"
+        legend={t("opt.hist")}
+        value={rules.hist}
+        options={JOKER_KHISHTI}
+        label={(v) => t(`opt.values.${v}`)}
+        onChange={(hist) => onChange({ hist })}
+      />
+      <p className="jsetup-note">{t(`opt.hints.${rules.hist}`)}</p>
+      <button type="submit" className="btn-primary h-11 w-full sm:w-auto sm:justify-self-end sm:px-8">
+        <Play size={16} /> {t("joker.start")}
+      </button>
+    </form>
+  );
+}

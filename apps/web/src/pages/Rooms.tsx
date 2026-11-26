@@ -451,16 +451,19 @@ function CreateRoomDialog({ game, open, onClose, onCreated }: { game: GameType; 
                 <>
                   <label className="label" htmlFor={`opt-${opt.key}`}>{t(`opt.${opt.key}`)}</label>
                   {opt.kind === "select" ? (
-                    <select
-                      id={`opt-${opt.key}`}
-                      className="input"
-                      value={String(gameConfig[opt.key])}
-                      onChange={(e) => setGameConfig((g) => ({ ...g, [opt.key]: typeof opt.default === "number" ? Number(e.target.value) : e.target.value }))}
-                    >
-                      {opt.options.map((v) => (
-                        <option key={String(v)} value={String(v)}>{typeof v === "number" ? v : t(`opt.values.${v}`)}</option>
-                      ))}
-                    </select>
+                    <>
+                      <select
+                        id={`opt-${opt.key}`}
+                        className="input"
+                        value={String(gameConfig[opt.key])}
+                        onChange={(e) => setGameConfig((g) => ({ ...g, [opt.key]: typeof opt.default === "number" ? Number(e.target.value) : e.target.value }))}
+                      >
+                        {opt.options.map((v) => (
+                          <option key={String(v)} value={String(v)}>{typeof v === "number" ? v : t(`opt.values.${v}`)}</option>
+                        ))}
+                      </select>
+                      {opt.hints && <p className="mt-1 text-[11px] leading-snug text-muted">{t(`opt.hints.${String(gameConfig[opt.key])}`)}</p>}
+                    </>
                   ) : (
                     <input
                       id={`opt-${opt.key}`}

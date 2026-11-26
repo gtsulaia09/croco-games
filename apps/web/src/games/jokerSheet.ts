@@ -2,7 +2,7 @@ import type { JokerView } from "@croco/game-engine/games/joker";
 
 /**
  * The Joker score sheet (ოქმი) built from the public game view — presentation only. Scores,
- * bonuses and totals are taken from the engine as they are; nothing is recalculated except the
+ * premia and erasures are taken from the engine as they are; nothing is recalculated except the
  * per-set subtotals, which are plain sums of the engine's own numbers.
  */
 
@@ -15,6 +15,10 @@ export interface SheetCell {
   points: number | null;
   /** Declaration met exactly (null while the hand is not finished). */
   made: boolean | null;
+  /** The deal was erased because another player took the premia. */
+  erased: boolean;
+  /** The deal the player's premia repeated. */
+  premia: boolean;
 }
 
 export interface SheetRow {
@@ -29,9 +33,12 @@ export interface SheetSet {
   index: number;
   cards: number[];
   rows: SheetRow[];
-  /** Sum of finished hands plus the set's bonuses (premia), per seat. */
+  /** Premia added per seat (0 when none). */
+  premia: number[];
+  /** Points erased per seat, as a positive number (0 when none). */
+  erased: number[];
+  /** Sum of finished hands plus premia minus erased deals, per seat. */
   subtotal: number[];
-  bonus: number[];
   complete: boolean;
   active: boolean;
 }
@@ -44,9 +51,14 @@ export function jokerSchedule(ruleset: JokerView["ruleset"]): number[][] {
   return [[1, 2, 3, 4, 5, 6, 7, 8], [9, 9, 9, 9], [8, 7, 6, 5, 4, 3, 2, 1], [9, 9, 9, 9]];
 }
 
+/** Older matches stored adjustments without a kind: a positive amount was a premia. */
+const kindOf = (b: JokerView["bonuses"][number]) => b.kind ?? (b.amount >= 0 ? "premia" : "erase");
+
 export function buildSheet(view: SheetView): { sets: SheetSet[]; totals: number[]; leaders: number[] } {
   const schedule = jokerSchedule(view.ruleset);
   const byHand = new Map(view.history.map((h) => [h.hand, h]));
+  const marked = (kind: "premia" | "erase", hand: number, seat: number) =>
+    view.bonuses.some((b) => b.hand === hand && b.seat === seat && kindOf(b) === kind);
   let hand = 0;
   const sets = schedule.map((cardsInSet, index): SheetSet => {
     const rows = cardsInSet.map((cards): SheetRow => {
@@ -62,6 +74,8 @@ export function buildSheet(view: SheetView): { sets: SheetSet[]; totals: number[
             tricks: rec.tricks[s] ?? 0,
             points: rec.scores[s] ?? 0,
             made: rec.bids[s] === rec.tricks[s],
+            erased: marked("erase", rec.hand, s),
+            premia: marked("premia", rec.hand, s),
           })),
         };
       }
@@ -75,16 +89,22 @@ export function buildSheet(view: SheetView): { sets: SheetSet[]; totals: number[
           tricks: current && view.phase === "play" ? (view.tricks[s] ?? 0) : null,
           points: null,
           made: null,
+          erased: false,
+          premia: false,
         })),
       };
     });
-    const bonus = Array.from({ length: PLAYERS }, (_, s) => view.bonuses.filter((b) => b.set === index && b.seat === s).reduce((sum, b) => sum + b.amount, 0));
-    const subtotal = Array.from({ length: PLAYERS }, (_, s) => rows.reduce((sum, r) => sum + (r.cells[s]!.points ?? 0), 0) + bonus[s]!);
+    const sumOf = (kind: "premia" | "erase", s: number) =>
+      view.bonuses.filter((b) => b.set === index && b.seat === s && kindOf(b) === kind).reduce((sum, b) => sum + Math.abs(b.amount), 0);
+    const premia = Array.from({ length: PLAYERS }, (_, s) => sumOf("premia", s));
+    const erased = Array.from({ length: PLAYERS }, (_, s) => sumOf("erase", s));
+    const subtotal = Array.from({ length: PLAYERS }, (_, s) => rows.reduce((sum, r) => sum + (r.cells[s]!.points ?? 0), 0) + premia[s]! - erased[s]!);
     return {
       index,
       cards: cardsInSet,
       rows,
-      bonus,
+      premia,
+      erased,
       subtotal,
       complete: rows.every((r) => r.status === "done"),
       active: rows.some((r) => r.status === "current"),

@@ -53,6 +53,75 @@ function TableStacks({ piles, label, playable, onPlay, mine }: { piles: Pile[]; 
   );
 }
 
+/** Match points toward the target: one pip per point up to 11, a bar for longer matches. */
+function ScoreMeter({ value, target }: { value: number; target: number }) {
+  const filled = Math.min(value, target);
+  if (target <= 11) {
+    return (
+      <span className="pjj-meter" data-kind="pips" aria-hidden="true">
+        {Array.from({ length: target }, (_, i) => (
+          <i key={i} data-on={i < filled ? "true" : "false"} />
+        ))}
+      </span>
+    );
+  }
+  return (
+    <span className="pjj-meter" data-kind="bar" aria-hidden="true">
+      <i style={{ width: `${(filled / target) * 100}%` }} />
+    </span>
+  );
+}
+
+/**
+ * The match score card on the felt, in the paper style of the Joker score sheet: both players'
+ * points toward the target and the tricks of the current deal (18 in all).
+ */
+function MatchScore({ view, me, opp, name }: { view: JapaneseJokerView; me: number; opp: number; name(seat: number): string }) {
+  const t = useT();
+  const won = (s: number) => view.won[s] ?? 0;
+  const leader = view.scores[me] === view.scores[opp] ? null : (view.scores[me] ?? 0) > (view.scores[opp] ?? 0) ? me : opp;
+  return (
+    <div className="pjj-score" role="group" aria-label={t("table.matchScore")}>
+      <div className="pjj-score-head">
+        <span>{t("table.matchScore")}</span>
+        <b>{t("table.target", { n: view.targetPoints })}</b>
+      </div>
+      {[opp, me].map((s) => {
+        const points = view.scores[s] ?? 0;
+        return (
+          <div
+            key={s}
+            className="pjj-score-row"
+            data-you={s === me ? "true" : "false"}
+            data-lead={leader === s ? "true" : "false"}
+            title={t("table.toGo", { n: Math.max(0, view.targetPoints - points) })}
+          >
+            <span className="pjj-score-name">
+              {leader === s && <Crown size={11} className="shrink-0" />}
+              <span className="truncate">{name(s)}</span>
+            </span>
+            <b className="pjj-score-pts">{points}</b>
+            <ScoreMeter value={points} target={view.targetPoints} />
+          </div>
+        );
+      })}
+      <div className="pjj-score-deal" aria-label={t("table.thisDeal")}>
+        <span className="pjj-score-label">{t("table.thisDeal")}</span>
+        <b className="pjj-score-tricks">
+          <span data-you="true">{won(me)}</span>
+          <i>:</i>
+          <span>{won(opp)}</span>
+          <small>/ 18</small>
+        </b>
+        <span className="pjj-split" aria-hidden="true">
+          <i data-side="me" style={{ width: `${(won(me) / 18) * 100}%` }} />
+          <i data-side="opp" style={{ width: `${(won(opp) / 18) * 100}%` }} />
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function TrickCard({ play, pos, highlight, tags, scope, animate }: { play: Play; pos: "n" | "s"; highlight?: "winner" | "latest"; tags: string[]; scope: RefObject<HTMLDivElement | null>; animate: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -243,15 +312,7 @@ export default function JapaneseJokerBoard({ view, mySeat, seats, deadline, onAc
               )}
             </div>
 
-            <div className="pjj-plaque" aria-label={t("table.roundScore")}>
-              <span className="pj-plaque-label">{t("jj.cardsWon")}</span>
-              <b className="pjj-tricks">
-                <span data-you="true">{view.won[me] ?? 0}</span>
-                <i>:</i>
-                <span>{view.won[opp] ?? 0}</span>
-              </b>
-              <span className="pjj-of">/ 18</span>
-            </div>
+            <MatchScore view={view} me={me} opp={opp} name={name} />
           </div>
 
           <div className="pjj-side" data-side="bottom">

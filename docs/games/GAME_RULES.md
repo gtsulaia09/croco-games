@@ -16,8 +16,11 @@ All ten game modes run as independent, server-authoritative engines inside `pack
 - **Bidding (თქმა)**: from the dealer's left; the dealer bids last and may not make the bids add up to the number of cards (`dealer_bid_forbidden`).
 - **Trick play (ვაზი)**: follow the led suit; without it you must trump; otherwise any card. A joker may always be played. The trick goes to the highest trump, else the highest card of the led suit.
 - **Joker** (Georgian table terms): leading with a joker (**წაყვანა**) is either **მაღალი** + a suit (the others must give their highest card of it; the joker takes) or **წაიყვანოს** + a suit (the highest card of that suit takes; the joker does not). A following joker is either **მოჯოკვრა** (it takes the trick) or **გატანება** (it goes low). In the engine these are `mode: "high" | "low"`. A high joker wins unless a later high joker is played (the later one wins) or — when it led a non-trump suit — a player without that suit trumps it (`ledJokerTrumped: "trumpWins"`). A low joker loses, except a led low joker wins when nobody played the suit, a trump or a high joker.
-- **Scoring**: exact bid `k` → `50 × k + 50`; bid 0 and took 0 → `50`; bid and took every trick → `100 × cards`; missed bid → `10 × tricks taken`. **Set bonus**: a player who makes every bid of a set adds their best single deal of that set.
-- **House variant "ხიშტი" (`hist: "classic"`)**: bid ≥ 1 and took no trick scores −200 in deals of 1–8 cards and −500 in nine-card deals. **Off by default** — the handbook says it is not universal.
+- **Scoring**: exact bid `k` → `50 × k + 50`; bid 0 and took 0 → `50`; bid and took every trick → `100 × cards`; missed bid → `10 × tricks taken`.
+- **Table rules chosen before the game** (room creation, and the setup screen of practice; owner's request 2026-11-27):
+  - **ხიშტი** (`hist`) — bid ≥ 1 and took no trick: **სტანდარტული** `perCard` (default) costs `100 × cards dealt` (9 cards → −900, 5 → −500, 3 → −300); or a fixed `fixed100` / `fixed200` / `fixed300` / `fixed500` in every deal. Legacy values `classic` (−200 / −500 in nine-card deals) and `none` stay valid for older rooms.
+  - **პრემია** (`setBonus`) — a player who makes every bid of a pulka adds their best deal of that pulka (the earliest on a tie), and every other player loses one deal of it, once however many players took the premia: **ბოლო იშლება** `eraseLast` (default) — their last deal of the pulka that scored points; **ბოლო არ იშლება** `eraseHighest` — their highest deal of the pulka. A deal with 0 or fewer points is never erased. Legacy values: `simple` (no erasing), `double` (= `eraseHighest`), `none`.
+- **Score sheet (ოქმი)**: a deal's cell shows the points as written (300, 30, −500) with the declaration in its corner; every sum counts in hundreds — pulka subtotals and totals read 300 → **3.0**, 30 → **0.3**. Erased deals are struck through and the deal a premia repeated carries a star. Presentation only: the engine and the API keep whole points.
 
 ---
 
@@ -29,6 +32,7 @@ All ten game modes run as independent, server-authoritative engines inside `pack
 - **Follow rules**: follow suit; without it trump; otherwise any card. The trick goes to the highest card of the led suit or the highest trump; in ბეზი only the led suit (or a joker).
 - **Joker**: beats everything; a joker played on a joker wins. **Take or low** (`jokerLow`, added at the owner's request on 2026-11-26, on by default): a joker played on the opponent's card is either **მოჯოკვრა** (takes the trick) or **გატანება** (goes low and gives the trick away, also on a led joker). A **led joker names a suit** and asks for the highest card of it — the opponent must give that card or a joker. Without that (non-trump) suit the opponent must trump, and **the trump beats the joker**.
 - **Scoring**: the player with more tricks scores the difference (11:7 → 4; 9:9 → nothing). Match to **1, 3, 7, 11 or 21** points (default 11).
+- **Score card**: the felt shows a paper score card in the style of the Joker sheet — both players' points toward the target (pips up to 11, a bar for 21) and this deal's tricks out of 18.
 
 ---
 

@@ -1,12 +1,21 @@
 import { useEffect, useRef } from "react";
-import { Crown, Maximize2, X } from "lucide-react";
+import { Crown, Maximize2, Star, X } from "lucide-react";
 import type { JokerView } from "@croco/game-engine/games/joker";
 import type { SeatInfo } from "@croco/shared/client";
 import { useT } from "../i18n";
 import { Avatar } from "../components/ui";
 import { useSeatName } from "./common";
 import { buildSheet, type SheetCell, type SheetSet } from "./jokerSheet";
-import { bidLabel, signedPoints } from "./ui/labels";
+import { bidLabel, dealPoints, sheetTotal, signedPoints } from "./ui/labels";
+
+/*
+ * The Joker score sheet (ოქმი), drawn as the paper sheet players keep beside the table. A deal's
+ * cell shows the points as written (300, 30, −500) with the declaration in its corner; every sum —
+ * pulka subtotals, totals — counts in hundreds (3.0, 0.3, −5.0). Deals erased by another
+ * player's premia are struck through, and the deal a premia repeated carries a star.
+ */
+
+const ROMAN = ["I", "II", "III", "IV"];
 
 function SeatAvatar({ seats, seat, size }: { seats: SeatInfo[]; seat: number; size: number }) {
   const s = seats[seat];
@@ -22,36 +31,65 @@ function setTitle(t: ReturnType<typeof useT>, set: SheetSet): string {
   const first = set.cards[0]!;
   const last = set.cards[set.cards.length - 1]!;
   const shape = first === last ? `${set.cards.length} × ${first}` : `${first} → ${last}`;
-  return `${t("joker.set", { n: set.index + 1 })} · ${shape}`;
+  return `${t("joker.set", { n: ROMAN[set.index] ?? set.index + 1 })} · ${shape}`;
 }
 
-/** Points, then the declaration and the tricks taken (a declared 0 reads "პასი"). */
-function ScoreCell({ cell, status }: { cell: SheetCell; status: "done" | "current" | "upcoming" }) {
+type CellState = "made" | "miss" | "khishti" | "current" | "upcoming";
+
+function cellState(cell: SheetCell, status: "done" | "current" | "upcoming"): CellState {
+  if (status !== "done") return status;
+  if (cell.points !== null && cell.points < 0) return "khishti";
+  return cell.made ? "made" : "miss";
+}
+
+/** Hover / screen-reader text: declaration, tricks taken, points and what happened to them. */
+function cellTitle(t: ReturnType<typeof useT>, cell: SheetCell): string {
+  const parts = [`${t("joker.bid")} ${bidLabel(t, cell.bid)}`];
+  if (cell.tricks !== null) parts.push(`${t("joker.tricks")} ${cell.tricks}`);
+  if (cell.points !== null) parts.push(dealPoints(cell.points));
+  if (cell.premia) parts.push(t("table.bonus"));
+  if (cell.erased) parts.push(t("table.erased"));
+  return parts.join(" · ");
+}
+
+/** One deal of one player: points as written, the declaration in the corner. */
+function DealCell({ cell, status }: { cell: SheetCell; status: "done" | "current" | "upcoming" }) {
   const t = useT();
-  if (status === "upcoming") return <td className="sc-cell" data-result="upcoming" />;
-  const result = status === "current" ? "current" : cell.points !== null && cell.points < 0 ? "minus" : cell.made ? "made" : "miss";
-  return (
-    <td className="sc-cell" data-result={result}>
-      <span className="sc-points">{cell.points === null ? "" : signedPoints(cell.points)}</span>
-      <span className="sc-decl">
-        <i data-pass={cell.bid === 0 ? "true" : "false"} title={t("joker.bid")}>
+  const state = cellState(cell, status);
+  if (state === "upcoming") return <td className="ok-cell" data-state="upcoming" />;
+  if (state === "current") {
+    return (
+      <td className="ok-cell" data-state="current" title={cellTitle(t, cell)}>
+        <span className="ok-bid" data-pass={cell.bid === 0 ? "true" : "false"}>
           {cell.bid === null ? "·" : bidLabel(t, cell.bid)}
-        </i>
-        {cell.tricks !== null && <em title={t("joker.tricks")}>{cell.tricks}</em>}
+        </span>
+        <span className="ok-pts ok-pencil">{cell.tricks === null ? "" : cell.tricks}</span>
+      </td>
+    );
+  }
+  return (
+    <td className="ok-cell" data-state={state} data-erased={cell.erased ? "true" : "false"} title={cellTitle(t, cell)}>
+      <span className="ok-bid" data-pass={cell.bid === 0 ? "true" : "false"}>
+        {bidLabel(t, cell.bid)}
+      </span>
+      <span className="ok-pts">
+        {cell.premia && <Star size={11} className="ok-star" aria-hidden="true" />}
+        {dealPoints(cell.points ?? 0)}
       </span>
     </td>
   );
 }
 
 /**
- * Compact score panel shown during play: totals and the current declarations for every player
- * and, when there is room, the hands of the current set.
+ * Compact score panel shown during play: totals (in hundreds) and the current declarations for
+ * every player and, when there is room, the deals of the current pulka.
  */
 export function CompactScoreboard({ view, seats, mySeat, onOpen }: { view: JokerView; seats: SeatInfo[]; mySeat: number | null; onOpen(): void }) {
   const t = useT();
   const name = useSeatName(seats);
   const sheet = buildSheet(view);
   const current = sheet.sets.find((s) => s.active) ?? sheet.sets.find((s) => !s.complete) ?? sheet.sets[sheet.sets.length - 1]!;
+  const anyDone = current.rows.some((r) => r.status === "done");
   return (
     <aside className="scc" aria-label={t("joker.sheet")}>
       <div className="scc-head">
@@ -75,14 +113,16 @@ export function CompactScoreboard({ view, seats, mySeat, onOpen }: { view: Joker
             <li key={s} className="scc-player" data-you={s === mySeat ? "true" : "false"} data-active={view.toAct === s ? "true" : "false"}>
               <SeatAvatar seats={seats} seat={s} size={26} />
               <span className="scc-name">
-                {sheet.leaders.includes(s) && <Crown size={12} className="text-gold shrink-0" aria-label={t("table.leader")} />}
+                {sheet.leaders.includes(s) && <Crown size={12} className="scc-crown shrink-0" aria-label={t("table.leader")} />}
                 <span className="truncate">{name(s)}</span>
               </span>
               <span className="scc-decl" data-tone={tone} title={`${t("joker.bid")} · ${t("joker.tricks")}`}>
-                <i>{bidLabel(t, bid)}</i>
-                <em>{view.phase === "play" ? tricks : "·"}</em>
+                <i data-pass={bid === 0 ? "true" : "false"}>{bidLabel(t, bid)}</i>
+                {view.phase === "play" && <em>{tricks}</em>}
               </span>
-              <b className="scc-total">{view.totals[s]}</b>
+              <b className="scc-total" data-sign={(view.totals[s] ?? 0) < 0 ? "minus" : "plus"}>
+                {sheetTotal(view.totals[s] ?? 0)}
+              </b>
             </li>
           );
         })}
@@ -90,9 +130,11 @@ export function CompactScoreboard({ view, seats, mySeat, onOpen }: { view: Joker
       <table className="scc-set">
         <thead>
           <tr>
-            <th scope="col">#</th>
+            <th scope="col">
+              <span className="sr-only">{t("table.deal")}</span>
+            </th>
             {[0, 1, 2, 3].map((s) => (
-              <th key={s} scope="col" className="truncate">
+              <th key={s} scope="col" data-you={s === mySeat ? "true" : "false"}>
                 {name(s)}
               </th>
             ))}
@@ -103,19 +145,29 @@ export function CompactScoreboard({ view, seats, mySeat, onOpen }: { view: Joker
             <tr key={r.hand} data-status={r.status}>
               <th scope="row">{r.cards}</th>
               {r.cells.map((c, s) => (
-                <td key={s} data-result={r.status !== "done" ? r.status : c.points !== null && c.points < 0 ? "minus" : c.made ? "made" : "miss"}>
-                  {r.status === "done" ? signedPoints(c.points ?? 0) : r.status === "current" ? bidLabel(t, c.bid) : ""}
-                </td>
+                <DealCell key={s} cell={c} status={r.status} />
               ))}
             </tr>
           ))}
         </tbody>
+        <tfoot>
+          <tr>
+            <th scope="row" title={t("table.setTotal")}>
+              Σ
+            </th>
+            {current.subtotal.map((v, s) => (
+              <td key={s} data-sign={v < 0 ? "minus" : "plus"}>
+                {anyDone ? sheetTotal(v) : "—"}
+              </td>
+            ))}
+          </tr>
+        </tfoot>
       </table>
     </aside>
   );
 }
 
-/** Full score sheet: every set and deal, sticky player header and totals footer. */
+/** Full score sheet: every pulka and deal, sticky player header and totals footer. */
 export function FullScoreboard({ open, onClose, view, seats, mySeat }: { open: boolean; onClose(): void; view: JokerView; seats: SeatInfo[]; mySeat: number | null }) {
   const t = useT();
   const name = useSeatName(seats);
@@ -139,35 +191,49 @@ export function FullScoreboard({ open, onClose, view, seats, mySeat }: { open: b
   const sheet = buildSheet(view);
   const ranked = [0, 1, 2, 3].slice().sort((a, b) => (view.totals[b] ?? 0) - (view.totals[a] ?? 0));
   const place = (s: number) => ranked.findIndex((x) => view.totals[x] === view.totals[s]) + 1;
+  const rules = view.rules;
 
   return (
-    <div className="scf-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={ref} className="scf" role="dialog" aria-modal="true" aria-label={t("joker.sheet")}>
-        <div className="scf-head">
+    <div className="ok-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div ref={ref} className="ok" role="dialog" aria-modal="true" aria-label={t("joker.sheet")}>
+        <div className="ok-head">
           <div className="min-w-0">
-            <h2 className="scf-title">{t("joker.sheet")}</h2>
-            <p className="scf-sub">
+            <h2 className="ok-title">{t("joker.sheet")}</h2>
+            <p className="ok-sub">
               {t(`joker.rulesets.${view.ruleset}`)} · {view.phase === "over" ? t("game.finished") : t("game.hand", { n: `${view.handNumber}/${view.totalHands}` })}
             </p>
+            {rules && (
+              <ul className="ok-rules" aria-label={t("joker.rules")}>
+                <li>
+                  {t("opt.setBonus")}: <b>{t(`opt.values.${rules.setBonus}`)}</b>
+                </li>
+                <li>
+                  {t("opt.hist")}: <b>{t(`opt.values.${rules.hist}`)}</b>
+                </li>
+              </ul>
+            )}
           </div>
-          <button type="button" className="psheet-close" onClick={onClose} aria-label="close">
+          <button type="button" className="ok-close" onClick={onClose} aria-label="close">
             <X size={16} />
           </button>
         </div>
-        <div className="scf-scroll">
-          <table className="scf-table">
+        <div className="ok-scroll">
+          <table className="ok-table">
             <thead>
               <tr>
-                <th scope="col" className="scf-corner">
-                  <span>{t("table.deal")}</span>
+                <th scope="col" className="ok-corner" aria-label={t("table.deal")}>
+                  <span className="ok-corner-long">{t("table.deal")}</span>
+                  <span className="ok-corner-short" aria-hidden="true">
+                    #
+                  </span>
                 </th>
                 {[0, 1, 2, 3].map((s) => (
-                  <th key={s} scope="col" className="scf-player" data-you={s === mySeat ? "true" : "false"}>
-                    <span className="scf-player-in">
-                      <SeatAvatar seats={seats} seat={s} size={30} />
-                      <span className="scf-player-name">
+                  <th key={s} scope="col" className="ok-player" data-you={s === mySeat ? "true" : "false"}>
+                    <span className="ok-player-in">
+                      <SeatAvatar seats={seats} seat={s} size={28} />
+                      <span className="ok-player-name">
                         <span className="truncate">{name(s)}</span>
-                        <span className="scf-place">
+                        <span className="ok-place">
                           {place(s) === 1 && sheet.leaders.length ? <Crown size={11} /> : null}#{place(s)}
                         </span>
                       </span>
@@ -176,52 +242,70 @@ export function FullScoreboard({ open, onClose, view, seats, mySeat }: { open: b
                 ))}
               </tr>
             </thead>
-            {sheet.sets.map((set) => (
-              <tbody key={set.index} data-active={set.active ? "true" : "false"}>
-                <tr className="scf-set-row">
-                  <th colSpan={5} scope="rowgroup">
-                    {setTitle(t, set)}
-                  </th>
-                </tr>
-                {set.rows.map((r) => (
-                  <tr key={r.hand} data-status={r.status} ref={r.status === "current" ? currentRow : undefined}>
-                    <th scope="row" className="scf-hand">
-                      <b>{r.hand}</b>
-                      <span>{t("table.cardsShort", { n: r.cards })}</span>
+            {sheet.sets.map((set) => {
+              const anyDone = set.rows.some((r) => r.status === "done");
+              const adjusted = set.premia.some((v) => v > 0) || set.erased.some((v) => v > 0);
+              return (
+                <tbody key={set.index} data-active={set.active ? "true" : "false"}>
+                  <tr className="ok-set-row">
+                    <th colSpan={5} scope="rowgroup">
+                      {setTitle(t, set)}
                     </th>
-                    {r.cells.map((c, s) => (
-                      <ScoreCell key={s} cell={c} status={r.status} />
+                  </tr>
+                  {set.rows.map((r) => (
+                    <tr key={r.hand} data-status={r.status} ref={r.status === "current" ? currentRow : undefined}>
+                      <th scope="row" className="ok-hand">
+                        <b>{r.hand}</b>
+                        <span>{t("table.cardsShort", { n: r.cards })}</span>
+                      </th>
+                      {r.cells.map((c, s) => (
+                        <DealCell key={s} cell={c} status={r.status} />
+                      ))}
+                    </tr>
+                  ))}
+                  {adjusted && (
+                    <tr className="ok-adj-row">
+                      <th scope="row">{t("table.adjustments")}</th>
+                      {[0, 1, 2, 3].map((s) => (
+                        <td key={s}>
+                          {set.premia[s]! > 0 && (
+                            <span className="ok-adj" data-kind="premia">
+                              <Star size={11} aria-hidden="true" /> {signedPoints(set.premia[s]!)}
+                            </span>
+                          )}
+                          {set.erased[s]! > 0 && (
+                            <span className="ok-adj" data-kind="erase" title={t("table.erased")}>
+                              {signedPoints(-set.erased[s]!)}
+                            </span>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  )}
+                  <tr className="ok-sub-row">
+                    <th scope="row">{t("table.setTotal")}</th>
+                    {set.subtotal.map((v, s) => (
+                      <td key={s} data-sign={v < 0 ? "minus" : "plus"}>
+                        {anyDone ? sheetTotal(v) : "—"}
+                      </td>
                     ))}
                   </tr>
-                ))}
-                <tr className="scf-sub-row">
-                  <th scope="row">{t("table.setTotal")}</th>
-                  {set.subtotal.map((v, s) => (
-                    <td key={s}>
-                      <b data-sign={v < 0 ? "minus" : "plus"}>{set.rows.some((r) => r.status === "done") ? v : "—"}</b>
-                      {set.bonus[s] !== 0 && (
-                        <span className="scf-bonus" data-sign={set.bonus[s]! < 0 ? "minus" : "plus"}>
-                          {t("table.bonus")} {signedPoints(set.bonus[s]!)}
-                        </span>
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              </tbody>
-            ))}
+                </tbody>
+              );
+            })}
             <tfoot>
               <tr>
                 <th scope="row">{t("joker.total")}</th>
                 {sheet.totals.map((v, s) => (
-                  <td key={s} data-leader={sheet.leaders.includes(s) ? "true" : "false"}>
-                    {v}
+                  <td key={s} data-leader={sheet.leaders.includes(s) ? "true" : "false"} data-sign={v < 0 ? "minus" : "plus"}>
+                    {sheetTotal(v)}
                   </td>
                 ))}
               </tr>
             </tfoot>
           </table>
         </div>
-        <div className="scf-legend">
+        <div className="ok-legend">
           <span>
             <i className="lg-made" /> {t("table.legendMade")}
           </span>
@@ -231,9 +315,13 @@ export function FullScoreboard({ open, onClose, view, seats, mySeat }: { open: b
           <span>
             <i className="lg-minus" /> {t("table.legendMinus")}
           </span>
-          <span className="lg-decl">
-            <i>{bidLabel(t, 0)}</i> = 0 · {t("joker.bid")} / {t("joker.tricks")}
+          <span>
+            <Star size={11} className="lg-star" /> {t("table.legendPremia")}
           </span>
+          <span>
+            <s className="lg-erased">300</s> {t("table.legendErased")}
+          </span>
+          <span className="lg-units">{t("table.legendUnits")}</span>
         </div>
       </div>
     </div>

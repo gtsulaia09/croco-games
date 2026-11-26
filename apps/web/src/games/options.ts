@@ -2,7 +2,7 @@ import type { GameType } from "@croco/shared/client";
 
 /** Declarative per-game room options. Values are validated again by the engine schema on the server. */
 export type OptionSpec =
-  | { key: string; kind: "select"; options: Array<string | number>; default: string | number; labels?: Record<string, string> }
+  | { key: string; kind: "select"; options: Array<string | number>; default: string | number; labels?: Record<string, string>; hints?: boolean }
   | { key: string; kind: "number"; min: number; max: number; step?: number; default: number }
   | { key: string; kind: "boolean"; default: boolean };
 
@@ -16,6 +16,12 @@ const poker: OptionSpec[] = [
   { key: "blindLevelHands", kind: "number", min: 0, max: 100, default: 0 },
 ];
 
+/** Joker rules the table creator picks before the game (see the engine's `setBonus` / `hist`). */
+export const JOKER_PREMIA = ["eraseLast", "eraseHighest"] as const;
+export const JOKER_KHISHTI = ["perCard", "fixed100", "fixed200", "fixed300", "fixed500"] as const;
+export type JokerPremia = (typeof JOKER_PREMIA)[number];
+export type JokerKhishti = (typeof JOKER_KHISHTI)[number];
+
 function withDefault(specs: OptionSpec[], key: string, value: string): OptionSpec[] {
   return specs.map((o) => (o.key === key && o.kind === "select" ? { ...o, default: value } : o));
 }
@@ -23,8 +29,9 @@ function withDefault(specs: OptionSpec[], key: string, value: string): OptionSpe
 export const GAME_OPTIONS: Record<GameType, OptionSpec[]> = {
   joker: [
     { key: "ruleset", kind: "select", options: ["standard", "nines"], default: "standard" },
-    { key: "hist", kind: "select", options: ["none", "classic"], default: "none" },
-    { key: "setBonus", kind: "select", options: ["simple", "double", "none"], default: "simple" },
+    // Chosen by the table creator before the game: პრემია (ბოლო იშლება / არ იშლება) and ხიშტი.
+    { key: "setBonus", kind: "select", options: [...JOKER_PREMIA], default: "eraseLast", hints: true },
+    { key: "hist", kind: "select", options: [...JOKER_KHISHTI], default: "perCard", hints: true },
     { key: "nineTrump", kind: "select", options: ["lastCard", "choose"], default: "lastCard" },
     { key: "ledJokerTrumped", kind: "select", options: ["trumpWins", "jokerWins"], default: "trumpWins" },
   ],

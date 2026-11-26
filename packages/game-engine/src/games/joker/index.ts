@@ -2,7 +2,7 @@
  * Joker (ჯოკერი) — Georgian trick-taking game for four players. Default ruleset follows the
  * pagat.com description (A. Tvaladze): 36-card pack with jokers instead of the black sixes,
  * 24 hands in four sets (1→8, 4×9, 8→1, 4×9), exact bidding with the dealer restriction,
- * high/low jokers, hist penalty and set bonus. The "nines" game (ცხრიანები) plays four sets of
+ * high/low jokers, the ხიშტი penalty and the set premia, both chosen by the table creator. The "nines" game (ცხრიანები) plays four sets of
  * four nine-card deals (16 deals). Variations are configurable.
  */
 import { z } from "zod";
@@ -15,9 +15,19 @@ const PLAYERS = 4;
 export const jokerConfigSchema = z.strictObject({
   /** "standard": 24 deals (1→8, 4×9, 8→1, 4×9); "nines": 16 nine-card deals in four sets of four. */
   ruleset: z.enum(["standard", "nines"]).default("standard"),
-  /** House variant "khishti": a player who bids ≥1 and takes no tricks loses 200 (sets 1/3) / 500 (sets 2/4). Off in the base rules. */
-  hist: z.enum(["classic", "none"]).default("none"),
-  setBonus: z.enum(["simple", "double", "none"]).default("simple"),
+  /**
+   * ხიშტი — a player who bids ≥ 1 and takes no trick. Chosen by the table creator:
+   * "perCard" (სტანდარტული) loses 100 × the cards dealt (9 cards → −900, 5 → −500, 3 → −300);
+   * "fixedN" loses N in every deal. Legacy values: "classic" (−200, nine-card deals −500), "none".
+   */
+  hist: z.enum(["perCard", "fixed100", "fixed200", "fixed300", "fixed500", "classic", "none"]).default("perCard"),
+  /**
+   * პრემია — a player who makes every bid of a set adds their best deal of the set. Chosen by the
+   * table creator, it also erases one deal from every other player of that set:
+   * "eraseLast" (ბოლო იშლება) their last deal that scored points; "eraseHighest" (ბოლო არ იშლება)
+   * their highest deal. Legacy values: "simple" (no erasing), "double" (= eraseHighest), "none".
+   */
+  setBonus: z.enum(["eraseLast", "eraseHighest", "simple", "double", "none"]).default("eraseLast"),
   /** Nine-card hands: dealer's last card shows trump, or the player left of the dealer chooses after three cards. */
   nineTrump: z.enum(["lastCard", "choose"]).default("lastCard"),
   /** When a high joker is led naming a non-trump suit and someone trumps: does the trump win? */
@@ -53,6 +63,19 @@ export interface HandRecord {
   scores: number[];
 }
 
+/**
+ * A set-end adjustment on the score sheet: a premia bonus (positive) or an erased deal (negative).
+ * `hand` is the deal the amount was taken from. `kind`/`hand` are missing on matches saved before
+ * they were recorded; a positive amount is then a premia and a negative one an erasure.
+ */
+export interface SetAdjustment {
+  set: number;
+  seat: number;
+  amount: number;
+  kind?: "premia" | "erase";
+  hand?: number;
+}
+
 export interface JokerState {
   config: JokerConfig;
   schedule: number[][];
@@ -76,7 +99,7 @@ export interface JokerState {
   lastTrick: { plays: JokerPlay[]; winner: number } | null;
   totals: number[];
   history: HandRecord[];
-  bonuses: Array<{ set: number; seat: number; amount: number }>;
+  bonuses: SetAdjustment[];
 }
 
 export interface JokerView {
@@ -98,6 +121,8 @@ export interface JokerView {
   totals: number[];
   history: HandRecord[];
   bonuses: JokerState["bonuses"];
+  /** The table's scoring rules, shown on the score sheet. */
+  rules: { hist: JokerConfig["hist"]; setBonus: JokerConfig["setBonus"] };
   handCounts: number[];
   you: { seat: number; hand: Card[]; forbiddenBid: number | null; playable: Card[] } | null;
 }
@@ -148,16 +173,35 @@ export function forbiddenDealerBid(state: Pick<JokerState, "bids" | "cards" | "d
   return forbidden >= 0 && forbidden <= state.cards ? forbidden : null;
 }
 
-function handScore(bid: number, tricks: number, cards: number, hist: JokerConfig["hist"]): number {
+/** Points a ხიშტი costs under the table's rule (0 when there is no ხიშტი). */
+export function khishtiPenalty(cards: number, hist: JokerConfig["hist"]): number {
+  switch (hist) {
+    case "perCard":
+      return 100 * cards;
+    case "fixed100":
+      return 100;
+    case "fixed200":
+      return 200;
+    case "fixed300":
+      return 300;
+    case "fixed500":
+      return 500;
+    case "classic":
+      return cards === 9 ? 500 : 200;
+    case "none":
+      return 0;
+  }
+}
+
+export function handScore(bid: number, tricks: number, cards: number, hist: JokerConfig["hist"]): number {
   if (bid === tricks) {
     if (bid === cards) return 100 * cards;
     if (bid === 0) return 50;
     return 50 * bid + 50;
   }
   if (bid >= 1 && tricks === 0) {
-    if (hist === "none") return 0;
-    // Khishti costs more in nine-card deals.
-    return cards === 9 ? -500 : -200;
+    const penalty = khishtiPenalty(cards, hist);
+    return penalty ? -penalty : 0;
   }
   return 10 * tricks;
 }
@@ -212,24 +256,39 @@ export function trickWinner(trick: JokerPlay[], trump: Suit | null, ledJokerTrum
   return lead.seat; // low joker led and nobody followed, trumped or played a high joker
 }
 
+/**
+ * The deal erased from a player who did not take the premia, or null. "last": their most recent
+ * deal of the set that scored points; "highest": their best deal of the set (the earliest on a tie).
+ */
+export function erasedHand(setHands: HandRecord[], seat: number, mode: "last" | "highest"): HandRecord | null {
+  const scoring = setHands.filter((h) => (h.scores[seat] ?? 0) > 0);
+  if (!scoring.length) return null;
+  if (mode === "last") return scoring[scoring.length - 1]!;
+  return scoring.reduce((best, h) => (h.scores[seat]! > best.scores[seat]! ? h : best));
+}
+
 function applySetBonus(state: JokerState, events: PublicEvent[]): void {
-  if (state.config.setBonus === "none") return;
+  const rule = state.config.setBonus;
+  if (rule === "none") return;
   const setHands = state.history.filter((h) => h.set === state.setIndex);
   const premium = [0, 1, 2, 3].filter((s) => setHands.every((h) => h.bids[s] === h.tricks[s]));
   if (!premium.length) return;
-  const highest = (s: number) => Math.max(...setHands.map((h) => h.scores[s]!));
   for (const s of premium) {
-    const amount = highest(s);
+    // The premia repeats the player's best deal of the set (the earliest on a tie).
+    const best = setHands.reduce((a, h) => (h.scores[s]! > a.scores[s]! ? h : a));
+    const amount = best.scores[s]!;
     state.totals[s]! += amount;
-    state.bonuses.push({ set: state.setIndex, seat: s, amount });
+    state.bonuses.push({ set: state.setIndex, seat: s, amount, kind: "premia", hand: best.hand });
   }
-  if (state.config.setBonus === "double") {
+  const mode = rule === "eraseLast" ? "last" : rule === "eraseHighest" || rule === "double" ? "highest" : null;
+  if (mode) {
+    // Every other player loses one deal of the set, once, however many players took the premia.
     for (const s of [0, 1, 2, 3].filter((x) => !premium.includes(x))) {
-      const erase = Math.max(0, highest(s));
-      if (erase > 0) {
-        state.totals[s]! -= erase;
-        state.bonuses.push({ set: state.setIndex, seat: s, amount: -erase });
-      }
+      const erased = erasedHand(setHands, s, mode);
+      if (!erased) continue;
+      const amount = erased.scores[s]!;
+      state.totals[s]! -= amount;
+      state.bonuses.push({ set: state.setIndex, seat: s, amount: -amount, kind: "erase", hand: erased.hand });
     }
   }
   events.push({ type: "set_bonus", set: state.setIndex, seats: premium });
@@ -405,6 +464,7 @@ export const jokerEngine: GameEngine<JokerState, JokerAction, JokerConfig, Joker
       totals: [...state.totals],
       history: deepClone(state.history),
       bonuses: deepClone(state.bonuses),
+      rules: { hist: state.config.hist, setBonus: state.config.setBonus },
       handCounts: state.hands.map((h) => h.length),
       you:
         seat === null

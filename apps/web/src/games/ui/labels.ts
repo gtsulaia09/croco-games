@@ -18,3 +18,17 @@ export function signedPoints(points: number): string {
   if (points < 0) return `−${Math.abs(points)}`;
   return "0";
 }
+
+/** A deal's points as written in a score-sheet cell: 300, 30, −500 (no plus sign). */
+export function dealPoints(points: number): string {
+  return points < 0 ? `−${Math.abs(points)}` : String(points);
+}
+
+/**
+ * Joker totals count in hundreds, as players say them at the table: 300 → "3.0", 30 → "0.3",
+ * −950 → "−9.5". Every Joker score is a multiple of 10, so one decimal is exact.
+ */
+export function sheetTotal(points: number): string {
+  const text = (Math.abs(points) / 100).toFixed(1);
+  return points < 0 ? `−${text}` : text;
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { translate, type TFunction } from "../../i18n";
-import { bidLabel, signedPoints } from "./labels";
+import { bidLabel, dealPoints, sheetTotal, signedPoints } from "./labels";
 
 const ka: TFunction = (key, params) => translate("ka", key, params);
 const en: TFunction = (key, params) => translate("en", key, params);
@@ -31,5 +31,23 @@ describe("signedPoints (score cells)", () => {
   it("signs positive and negative results", () => {
     expect(signedPoints(150)).toBe("+150");
     expect(signedPoints(-200)).toBe("−200");
+  });
+});
+
+describe("Joker score sheet numbers", () => {
+  it("writes a deal's points as they are: 300, 30, −500", () => {
+    expect(dealPoints(300)).toBe("300");
+    expect(dealPoints(30)).toBe("30");
+    expect(dealPoints(0)).toBe("0");
+    expect(dealPoints(-500)).toBe("−500");
+  });
+
+  it("counts totals in hundreds: 300 → 3.0, 30 → 0.3, −900 → −9.0", () => {
+    expect(sheetTotal(300)).toBe("3.0");
+    expect(sheetTotal(30)).toBe("0.3");
+    expect(sheetTotal(0)).toBe("0.0");
+    expect(sheetTotal(-900)).toBe("−9.0");
+    expect(sheetTotal(1250)).toBe("12.5");
+    expect(sheetTotal(-50)).toBe("−0.5");
   });
 });

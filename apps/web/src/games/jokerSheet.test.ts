@@ -35,19 +35,38 @@ describe("buildSheet", () => {
     expect(sheet.sets[0]!.rows[3]!.status).toBe("upcoming");
   });
 
-  it("keeps the engine's scores and adds set bonuses to the set subtotal", () => {
-    const history = [
-      { hand: 1, set: 0, cards: 1, bids: [0, 1, 0, 0], tricks: [0, 1, 0, 0], scores: [50, 100, 50, 50] },
-      { hand: 2, set: 0, cards: 2, bids: [1, 0, 0, 0], tricks: [0, 1, 1, 0], scores: [-200, 10, 10, 50] },
-    ];
+  const history = [
+    { hand: 1, set: 0, cards: 1, bids: [0, 1, 0, 0], tricks: [0, 1, 0, 0], scores: [50, 100, 50, 50] },
+    { hand: 2, set: 0, cards: 2, bids: [1, 0, 0, 0], tricks: [0, 1, 1, 0], scores: [-200, 10, 10, 50] },
+  ];
+
+  it("keeps the engine's scores and adds a premia to the set subtotal (older matches without kind)", () => {
     const sheet = buildSheet(view({ handNumber: 3, history, bonuses: [{ set: 0, seat: 3, amount: 50 }], totals: [-150, 110, 60, 150] }));
     const set = sheet.sets[0]!;
     expect(set.subtotal).toEqual([-150, 110, 60, 150]);
-    expect(set.bonus).toEqual([0, 0, 0, 50]);
-    expect(set.rows[1]!.cells[0]).toEqual({ bid: 1, tricks: 0, points: -200, made: false });
+    expect(set.premia).toEqual([0, 0, 0, 50]);
+    expect(set.erased).toEqual([0, 0, 0, 0]);
+    expect(set.rows[1]!.cells[0]).toEqual({ bid: 1, tricks: 0, points: -200, made: false, erased: false, premia: false });
     // A declared pass that is met keeps its numeric 0 in the data (the UI shows "პასი").
-    expect(set.rows[0]!.cells[0]).toEqual({ bid: 0, tricks: 0, points: 50, made: true });
+    expect(set.rows[0]!.cells[0]).toEqual({ bid: 0, tricks: 0, points: 50, made: true, erased: false, premia: false });
     expect(sheet.leaders).toEqual([3]);
+  });
+
+  it("marks the premia deal and the erased deals and takes erasures off the subtotal", () => {
+    const bonuses = [
+      { set: 0, seat: 3, amount: 50, kind: "premia" as const, hand: 1 },
+      { set: 0, seat: 1, amount: -100, kind: "erase" as const, hand: 1 },
+      { set: 0, seat: 2, amount: -10, kind: "erase" as const, hand: 2 },
+    ];
+    const sheet = buildSheet(view({ handNumber: 3, history, bonuses, totals: [-150, 10, 50, 150] }));
+    const set = sheet.sets[0]!;
+    expect(set.rows[0]!.cells[3]!.premia).toBe(true);
+    expect(set.rows[0]!.cells[1]!.erased).toBe(true);
+    expect(set.rows[1]!.cells[2]!.erased).toBe(true);
+    expect(set.rows[1]!.cells[1]!.erased).toBe(false);
+    expect(set.premia).toEqual([0, 0, 0, 50]);
+    expect(set.erased).toEqual([0, 100, 10, 0]);
+    expect(set.subtotal).toEqual([-150, 10, 50, 150]);
   });
 
   it("has no current row once the match is over", () => {
