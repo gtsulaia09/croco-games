@@ -20,6 +20,7 @@ croco-games/
 │       ├── src/
 │       │   ├── http/            # Perimeter middleware (CORS, headers, JSON caps, rate limiting)
 │       │   ├── lobby/LobbyDO.ts # Singleton Durable Object: presence & live notifications
+│       │   ├── chat/GameChatDO.ts # One Durable Object per game type: that game's chat room
 │       │   ├── room/RoomDO.ts   # Per-room Durable Object: authoritative game engine, chat, bots, timers
 │       │   ├── routes/          # public, me, social, rooms, leaderboards, admin
 │       │   └── *.ts             # auth, audit, db, env, notify, ratings, settings, users
@@ -48,6 +49,9 @@ croco-games/
    - Zero-CPU Hibernation API auto-responds to `{"type":"hb"}` heartbeats.
 4. **Presence & Push Notifications (`LobbyDO`)**:
    - Singleton Durable Object tracks authenticated online/away/in-game sockets per user (capped at 5 tabs/devices), pushes persisted and ephemeral notifications, and fans out presence updates exclusively to friends of users with `showOnline = true`.
+5. **Game Chat Rooms (`GameChatDO`)**:
+   - One Durable Object per game type (`idFromName("chat:<game>")`), shown beside that game's room list: the Joker chat, the Bura chats and so on are separate rooms by construction.
+   - Same one-time ticket + Origin flow as the other sockets; last 200 messages kept (50 restored on connect), per-user sliding window (5 messages / 10 s), 3 sockets per user, 500 per room; reports carry `chatGame` + message id and the DO supplies the moderator snapshot.
 
 ## 3. Game Engine Architecture (`packages/game-engine`)
 

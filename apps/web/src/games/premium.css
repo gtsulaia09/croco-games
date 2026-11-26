@@ -204,6 +204,99 @@
   translate: 0 1px;
 }
 
+.phud-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border-color: #2d3f5c;
+  color: var(--ink);
+  translate: none;
+}
+
+/* Joker: the last trick taken (ბოლო წაყვანილი კარტები) */
+.plast {
+  display: grid;
+  gap: 14px;
+}
+
+.plast-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plast-play {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 6px 8px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.plast-play[data-winner="true"] {
+  background: rgba(217, 181, 109, 0.1);
+  border-color: rgba(217, 181, 109, 0.55);
+}
+
+.plast-order {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #9aa8b8;
+}
+
+.plast-name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  font-size: 12px;
+  font-weight: 800;
+  color: #cfd8e3;
+}
+
+.plast-play[data-winner="true"] .plast-name {
+  color: #ecd08f;
+}
+
+.plast-tag {
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #5ee3c3;
+  background: rgba(57, 214, 176, 0.12);
+}
+
+.plast-winner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #ecd08f;
+}
+
+@media (max-width: 420px) {
+  .plast-cards {
+    gap: 6px;
+  }
+
+  .plast-play {
+    padding: 8px 3px 6px;
+  }
+
+  .plast-name {
+    font-size: 10.5px;
+  }
+}
+
 /* ---------------------------------------------------------------------------
  * Table: navy leather rail, gold inlay, emerald felt
  * ------------------------------------------------------------------------- */

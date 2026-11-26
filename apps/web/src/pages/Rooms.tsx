@@ -8,6 +8,9 @@ import { Avatar, EmptyState, ErrorText, Modal, Spinner, UserName } from "../comp
 import { GameArtwork, GameBadgeIcon } from "../components/GameArt";
 import { BuraArt, JapaneseJokerArt, JokerArt } from "../components/lobby/LobbyArt";
 import { defaultOptions, GAME_OPTIONS } from "../games/options";
+import { ChatPanel } from "../components/ChatPanel";
+import { useGameChat } from "../hooks/useGameChat";
+import { useSession } from "../store/session";
 
 const FILTERS = ["all", "public", "password", "invite", "waiting", "active", "seats"] as const;
 
@@ -96,133 +99,140 @@ function RoomBrowser({ game }: { game: GameType }) {
         </div>
       </section>
 
-      {/* Search & Tactical Filter Strip */}
-      <div className="card p-3 flex flex-wrap gap-2.5 items-center">
-        <div className="relative w-full sm:w-64">
-          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-          <input className="input pl-9 h-9 text-xs" placeholder={t("rooms.searchPlaceholder")} value={q} maxLength={40} onChange={(e) => setQ(e.target.value)} aria-label={t("common.search")} />
-        </div>
-        <div className="flex flex-wrap gap-1" role="tablist">
-          {FILTERS.map((f) => (
-            <button
-              key={f}
-              role="tab"
-              aria-selected={filter === f}
-              className={`h-8 px-3 rounded-full text-xs font-semibold transition-colors ${
-                filter === f ? "bg-primary text-[#04180b]" : "bg-surface-2 border border-line text-text-2 hover:border-line-strong hover:text-white"
-              }`}
-              onClick={() => setFilter(f)}
-            >
-              {t(`rooms.filters.${f}`)}
-            </button>
-          ))}
-        </div>
-      </div>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] items-start">
+        <div className="grid gap-4 min-w-0">
+          {/* Search & Tactical Filter Strip */}
+          <div className="card p-3 flex flex-wrap gap-2.5 items-center">
+            <div className="relative w-full sm:w-64">
+              <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+              <input className="input pl-9 h-9 text-xs" placeholder={t("rooms.searchPlaceholder")} value={q} maxLength={40} onChange={(e) => setQ(e.target.value)} aria-label={t("common.search")} />
+            </div>
+            <div className="flex flex-wrap gap-1" role="tablist">
+              {FILTERS.map((f) => (
+                <button
+                  key={f}
+                  role="tab"
+                  aria-selected={filter === f}
+                  className={`h-8 px-3 rounded-full text-xs font-semibold transition-colors ${
+                    filter === f ? "bg-primary text-[#04180b]" : "bg-surface-2 border border-line text-text-2 hover:border-line-strong hover:text-white"
+                  }`}
+                  onClick={() => setFilter(f)}
+                >
+                  {t(`rooms.filters.${f}`)}
+                </button>
+              ))}
+            </div>
+          </div>
 
-      <ErrorText error={error} />
+          <ErrorText error={error} />
 
-      {/* Room Server List */}
-      <div className="card overflow-x-auto">
-        {rooms === null ? (
-          <Spinner />
-        ) : rooms.length === 0 ? (
-          <EmptyState icon={<Users size={20} />}>{t("rooms.empty")}</EmptyState>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-surface-2 text-muted text-[11px] uppercase tracking-wider border-b border-line">
-              <tr>
-                <th className="text-left px-3.5 py-2.5 w-10" aria-label={t("rooms.cols.access")} />
-                <th className="text-left px-3 py-2.5">{t("rooms.cols.name")}</th>
-                <th className="text-left px-3 py-2.5 hidden md:table-cell">{t("rooms.cols.host")}</th>
-                <th className="text-left px-3 py-2.5">{t("rooms.cols.players")}</th>
-                <th className="text-left px-3 py-2.5 hidden sm:table-cell">{t("rooms.cols.status")}</th>
-                <th className="text-left px-3 py-2.5 hidden lg:table-cell">{t("rooms.cols.stage")}</th>
-                <th className="px-3.5 py-2.5" />
-              </tr>
-            </thead>
-            <tbody>
-              {rooms.map((r) => {
-                const full = r.players >= r.maxPlayers;
-                const fillPct = Math.min(100, Math.round((r.players / Math.max(1, r.maxPlayers)) * 100));
-                return (
-                  <tr key={r.id} className="table-row hover:bg-surface-hover/70">
-                    <td className="px-3.5 py-3">
-                      {r.visibility === "invite" ? (
-                        <span className="inline-flex size-7 rounded-lg bg-accent/15 border border-accent/30 text-accent items-center justify-center" title={t("create.invite")}>
-                          <Mail size={13} />
-                        </span>
-                      ) : r.hasPassword ? (
-                        <span className="inline-flex size-7 rounded-lg bg-warning/15 border border-warning/35 text-warning items-center justify-center" title={t("rooms.filters.password")}>
-                          <Lock size={13} />
-                        </span>
-                      ) : (
-                        <span className="inline-flex size-7 rounded-lg bg-primary/12 border border-primary/25 text-primary items-center justify-center" title={t("create.public")}>
-                          <Globe size={13} />
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-3 py-3">
-                      <div className="font-bold text-white max-w-[14rem] truncate">{r.name}</div>
-                      <div className="text-[11px] text-muted md:hidden truncate">{r.host.username}</div>
-                    </td>
-                    <td className="px-3 py-3 hidden md:table-cell">
-                      <div className="flex items-center gap-2">
-                        <Avatar id={r.host.avatar} size={24} />
-                        <UserName user={r.host} className="text-xs font-semibold text-text-2" />
-                      </div>
-                    </td>
-                    <td className="px-3 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-white tabular-nums text-xs">
-                          {r.players}/{r.maxPlayers}
-                        </span>
-                        <span className="hidden sm:block w-14 h-1.5 rounded-full bg-surface-3 overflow-hidden border border-line/70">
-                          <span className={`block h-full rounded-full ${full ? "bg-danger" : "bg-primary"}`} style={{ width: `${fillPct}%` }} />
-                        </span>
-                        {r.spectators > 0 && (
-                          <span className="inline-flex items-center gap-1 text-muted text-[11px] tabular-nums">
-                            <Eye size={12} /> {r.spectators}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-3 py-3 hidden sm:table-cell">
-                      <span
-                        className={`chip border ${
-                          r.phase === "playing"
-                            ? "bg-gold/15 text-gold border-gold/35"
-                            : full
-                              ? "bg-danger/15 text-danger border-danger/35"
-                              : "bg-primary/15 text-primary border-primary/35"
-                        }`}
-                      >
-                        {r.phase === "playing" ? t("rooms.status.playing") : full ? t("rooms.status.full") : t("rooms.status.waiting")}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 hidden lg:table-cell text-muted text-xs">{r.stage ?? "—"}</td>
-                    <td className="px-3.5 py-3 text-right whitespace-nowrap">
-                      <div className="inline-flex items-center gap-1.5">
-                        <button className="btn-ghost btn-sm size-8 px-0" onClick={() => setDetailsFor(r)} title={t("rooms.details")} aria-label={t("rooms.details")}>
-                          <Info size={14} />
-                        </button>
-                        {r.allowSpectators && (
-                          <button className="btn-secondary btn-sm size-8 px-0" onClick={() => void join(r, { asSpectator: true }).catch(setError)} title={t("rooms.spectate")} aria-label={t("rooms.spectate")}>
-                            <Eye size={14} />
-                          </button>
-                        )}
-                        {!full && r.phase === "waiting" && (
-                          <button className="btn-primary btn-sm" onClick={() => (r.hasPassword ? setPasswordFor(r) : void join(r).catch(setError))}>
-                            {t("rooms.join")}
-                          </button>
-                        )}
-                      </div>
-                    </td>
+          {/* Room Server List */}
+          <div className="card overflow-x-auto">
+            {rooms === null ? (
+              <Spinner />
+            ) : rooms.length === 0 ? (
+              <EmptyState icon={<Users size={20} />}>{t("rooms.empty")}</EmptyState>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="bg-surface-2 text-muted text-[11px] uppercase tracking-wider border-b border-line">
+                  <tr>
+                    <th className="text-left px-3.5 py-2.5 w-10" aria-label={t("rooms.cols.access")} />
+                    <th className="text-left px-3 py-2.5">{t("rooms.cols.name")}</th>
+                    <th className="text-left px-3 py-2.5 hidden md:table-cell">{t("rooms.cols.host")}</th>
+                    <th className="text-left px-3 py-2.5">{t("rooms.cols.players")}</th>
+                    <th className="text-left px-3 py-2.5 hidden sm:table-cell">{t("rooms.cols.status")}</th>
+                    <th className="text-left px-3 py-2.5 hidden lg:table-cell">{t("rooms.cols.stage")}</th>
+                    <th className="px-3.5 py-2.5" />
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
+                </thead>
+                <tbody>
+                  {rooms.map((r) => {
+                    const full = r.players >= r.maxPlayers;
+                    const fillPct = Math.min(100, Math.round((r.players / Math.max(1, r.maxPlayers)) * 100));
+                    return (
+                      <tr key={r.id} className="table-row hover:bg-surface-hover/70">
+                        <td className="px-3.5 py-3">
+                          {r.visibility === "invite" ? (
+                            <span className="inline-flex size-7 rounded-lg bg-accent/15 border border-accent/30 text-accent items-center justify-center" title={t("create.invite")}>
+                              <Mail size={13} />
+                            </span>
+                          ) : r.hasPassword ? (
+                            <span className="inline-flex size-7 rounded-lg bg-warning/15 border border-warning/35 text-warning items-center justify-center" title={t("rooms.filters.password")}>
+                              <Lock size={13} />
+                            </span>
+                          ) : (
+                            <span className="inline-flex size-7 rounded-lg bg-primary/12 border border-primary/25 text-primary items-center justify-center" title={t("create.public")}>
+                              <Globe size={13} />
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-3 py-3">
+                          <div className="font-bold text-white max-w-[14rem] truncate">{r.name}</div>
+                          <div className="text-[11px] text-muted md:hidden truncate">{r.host.username}</div>
+                        </td>
+                        <td className="px-3 py-3 hidden md:table-cell">
+                          <div className="flex items-center gap-2">
+                            <Avatar id={r.host.avatar} size={24} />
+                            <UserName user={r.host} className="text-xs font-semibold text-text-2" />
+                          </div>
+                        </td>
+                        <td className="px-3 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-white tabular-nums text-xs">
+                              {r.players}/{r.maxPlayers}
+                            </span>
+                            <span className="hidden sm:block w-14 h-1.5 rounded-full bg-surface-3 overflow-hidden border border-line/70">
+                              <span className={`block h-full rounded-full ${full ? "bg-danger" : "bg-primary"}`} style={{ width: `${fillPct}%` }} />
+                            </span>
+                            {r.spectators > 0 && (
+                              <span className="inline-flex items-center gap-1 text-muted text-[11px] tabular-nums">
+                                <Eye size={12} /> {r.spectators}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 hidden sm:table-cell">
+                          <span
+                            className={`chip border ${
+                              r.phase === "playing"
+                                ? "bg-gold/15 text-gold border-gold/35"
+                                : full
+                                  ? "bg-danger/15 text-danger border-danger/35"
+                                  : "bg-primary/15 text-primary border-primary/35"
+                            }`}
+                          >
+                            {r.phase === "playing" ? t("rooms.status.playing") : full ? t("rooms.status.full") : t("rooms.status.waiting")}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 hidden lg:table-cell text-muted text-xs">{r.stage ?? "—"}</td>
+                        <td className="px-3.5 py-3 text-right whitespace-nowrap">
+                          <div className="inline-flex items-center gap-1.5">
+                            <button className="btn-ghost btn-sm size-8 px-0" onClick={() => setDetailsFor(r)} title={t("rooms.details")} aria-label={t("rooms.details")}>
+                              <Info size={14} />
+                            </button>
+                            {r.allowSpectators && (
+                              <button className="btn-secondary btn-sm size-8 px-0" onClick={() => void join(r, { asSpectator: true }).catch(setError)} title={t("rooms.spectate")} aria-label={t("rooms.spectate")}>
+                                <Eye size={14} />
+                              </button>
+                            )}
+                            {!full && r.phase === "waiting" && (
+                              <button className="btn-primary btn-sm" onClick={() => (r.hasPassword ? setPasswordFor(r) : void join(r).catch(setError))}>
+                                {t("rooms.join")}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+
+        {/* This game's own chat room: only players of this game are in it. */}
+        <GameChat game={game} />
       </div>
 
       <PasswordDialog room={passwordFor} onClose={() => setPasswordFor(null)} onJoin={(password) => join(passwordFor!, { password })} />
@@ -237,6 +247,34 @@ function RoomBrowser({ game }: { game: GameType }) {
       />
       <InviteCodeDialog open={inviteOpen} onClose={() => setInviteOpen(false)} onCode={(code) => navigate(`/invite/${encodeURIComponent(code)}`)} />
       <CreateRoomDialog game={game} open={creating} onClose={() => setCreating(false)} onCreated={(id) => navigate(`/room/${id}`)} />
+    </div>
+  );
+}
+
+/** The chat room of one game, beside its room list. Each game has its own, separate room. */
+function GameChat({ game }: { game: GameType }) {
+  const t = useT();
+  const myUserId = useSession((s) => s.me?.profile?.id);
+  const chat = useGameChat(game);
+  const live = chat.status === "open";
+  return (
+    <div className="lg:sticky lg:top-18 h-[24rem] lg:h-[calc(100dvh-7rem)] min-h-80">
+      <ChatPanel
+        key={game}
+        messages={chat.messages}
+        enabled={live}
+        myUserId={myUserId}
+        chatGame={game}
+        title={t("chat.gameTitle", { game: t(`games.${game}.name`) })}
+        meta={
+          <span className="chip bg-primary/12 border border-primary/30 text-primary tabular-nums" title={t("chat.gameOnly")}>
+            {live ? t("chat.online", { n: chat.online }) : t("chat.connecting")}
+          </span>
+        }
+        disabledText={chat.status === "closed" ? t("chat.unavailable") : t("chat.connecting")}
+        onSend={chat.send}
+      />
+      {chat.lastError === "rate_limited" && <p className="mt-1.5 text-[11px] text-warning">{t("errors.rate_limited")}</p>}
     </div>
   );
 }

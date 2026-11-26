@@ -8,6 +8,7 @@
 | `/api/*` REST | HTTPS | Bearer Firebase ID token (except 3 public routes) | 16 KB JSON | See `AUTHORIZATION_MATRIX.md` for the full route list |
 | `/api/rooms/:id/ws` | WSS | one-time ticket (subprotocol) + Origin | 4 KB per frame | Hibernation API, RoomDO |
 | `/api/lobby/ws` | WSS | one-time ticket (subprotocol) + Origin | 1 KB per frame | LobbyDO singleton |
+| `/api/chat/:game/ws` | WSS | one-time ticket (subprotocol) + Origin; `:game` allowlisted | 4 KB per frame; `ping` / `chat.send` only | GameChatDO, one per game type |
 | Durable Object alarms | internal | n/a | n/a | Timers, bot moves, grace periods; re-validate state |
 | Firebase Auth endpoints | HTTPS (Google) | Firebase | Google | Out of our code, configured by operator |
 | GitHub Actions | CI | GitHub | n/a | `push` to `main` deploys only via protected environment |

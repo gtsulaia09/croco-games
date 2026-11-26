@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
-import { ClipboardList, Crown, Sparkles, Trophy } from "lucide-react";
+import { ClipboardList, Crown, History, Sparkles, Trophy } from "lucide-react";
 import type { JokerView } from "@croco/game-engine/games/joker";
 import { useT } from "../i18n";
 import { SuitIcon, suitSymbol } from "../components/ui";
@@ -34,6 +34,39 @@ function TrickPips({ bid, won }: { bid: number | null | undefined; won: number }
   );
 }
 
+/**
+ * ბოლო წაყვანილი კარტები: the last trick taken, in play order — who played which card, how a
+ * joker was played, and who took it. Every player (and spectator) can open it at any time.
+ */
+function LastTrick({ trick, name, jokerLabel }: { trick: NonNullable<JokerView["lastTrick"]>; name(seat: number): string; jokerLabel(mode: "high" | "low", lead: boolean): string }) {
+  const t = useT();
+  return (
+    <div className="plast">
+      <ol className="plast-cards">
+        {trick.plays.map((p, i) => (
+          <li key={`${p.seat}-${p.card}`} className="plast-play" data-winner={p.seat === trick.winner ? "true" : "false"}>
+            <span className="plast-order">{i === 0 ? t("joker.ledFirst") : i + 1}</span>
+            <PlayingCard card={p.card} size="pile" highlight={p.seat === trick.winner ? "winner" : undefined} />
+            <span className="plast-name">
+              {p.seat === trick.winner && <Crown size={11} aria-hidden="true" />}
+              <span className="truncate">{name(p.seat)}</span>
+            </span>
+            {p.joker && (
+              <span className="plast-tag">
+                {jokerLabel(p.joker.mode, i === 0)}
+                {p.joker.suit ? ` ${suitSymbol(p.joker.suit)}` : ""}
+              </span>
+            )}
+          </li>
+        ))}
+      </ol>
+      <p className="plast-winner">
+        <Crown size={14} /> {t("table.takesTrick", { name: name(trick.winner) })}
+      </p>
+    </div>
+  );
+}
+
 /** One card on the felt; it flies in from the hand or the seat that played it. */
 function TrickCard({ play, pos, highlight, tag, scope, animate }: { play: Play; pos: Pos; highlight?: "winner" | "latest"; tag?: string; scope: RefObject<HTMLDivElement | null>; animate: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -56,6 +89,7 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
   const boardRef = useRef<HTMLDivElement>(null);
   const [jokerCard, setJokerCard] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
+  const [lastOpen, setLastOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -110,6 +144,7 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
 
   const closeJoker = useCallback(() => setJokerCard(null), []);
   const closeSheet = useCallback(() => setSheet(false), []);
+  const closeLast = useCallback(() => setLastOpen(false), []);
 
   function seatBadge(s: number) {
     const bid = view.bids[s];
@@ -226,9 +261,21 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
           </>
         }
         actions={
-          <button type="button" className="phud-btn" onClick={() => setSheet(true)}>
-            <ClipboardList size={15} /> <span>{t("joker.sheet")}</span>
-          </button>
+          <>
+            <button
+              type="button"
+              className="phud-btn"
+              onClick={() => setLastOpen(true)}
+              disabled={!view.lastTrick}
+              title={t("joker.lastTrickTitle")}
+              aria-label={t("joker.lastTrickTitle")}
+            >
+              <History size={15} /> <span>{t("joker.lastTrick")}</span>
+            </button>
+            <button type="button" className="phud-btn" onClick={() => setSheet(true)}>
+              <ClipboardList size={15} /> <span>{t("joker.sheet")}</span>
+            </button>
+          </>
         }
       />
 
@@ -354,6 +401,10 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
             ))}
           </div>
         )}
+      </ActionSheet>
+
+      <ActionSheet open={lastOpen && Boolean(view.lastTrick)} onClose={closeLast} title={t("joker.lastTrickTitle")} subtitle={t("joker.lastTrickHint")}>
+        {view.lastTrick && <LastTrick trick={view.lastTrick} name={name} jokerLabel={jokerLabel} />}
       </ActionSheet>
 
       <FullScoreboard open={sheet} onClose={closeSheet} view={view} seats={seats} mySeat={mySeat} />

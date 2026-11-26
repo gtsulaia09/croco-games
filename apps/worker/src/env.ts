@@ -1,4 +1,5 @@
 import { decodeKey, parseAllowedOrigins } from "@croco/security";
+import type { GameChatDO } from "./chat/GameChatDO";
 import type { LobbyDO } from "./lobby/LobbyDO";
 import type { RoomDO } from "./room/RoomDO";
 
@@ -6,6 +7,8 @@ export interface Env {
   DB: D1Database;
   ROOM: DurableObjectNamespace<RoomDO>;
   LOBBY: DurableObjectNamespace<LobbyDO>;
+  /** One chat room per game type. */
+  GAME_CHAT: DurableObjectNamespace<GameChatDO>;
   RL_AUTH?: RateLimit;
   RL_WRITE?: RateLimit;
   RL_READ?: RateLimit;

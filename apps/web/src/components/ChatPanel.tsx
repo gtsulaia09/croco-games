@@ -1,26 +1,43 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { EyeOff, Flag, MessageSquare, Send } from "lucide-react";
-import type { ChatMessage } from "@croco/shared/client";
+import type { ChatMessage, GameType } from "@croco/shared/client";
 import { post } from "../lib/api";
 import { useT } from "../i18n";
 import { Avatar, UserName } from "./ui";
 
 const QUICK_REACTIONS = ["GG", "WP", "NH", "GL", "👏", "🔥"];
 
+/**
+ * A chat: a table's room chat (`roomId`) or a game's chat room (`chatGame`). Messages are rendered
+ * as text only; reports carry the message id so moderators get a server-side snapshot.
+ */
 export function ChatPanel({
   messages,
   onSend,
   enabled,
   myUserId,
   roomId,
+  chatGame,
   muted,
+  title,
+  meta,
+  disabledText,
+  className = "",
 }: {
   messages: ChatMessage[];
   onSend(text: string): void;
   enabled: boolean;
   myUserId?: string;
-  roomId: string;
+  roomId?: string;
+  chatGame?: GameType;
   muted?: boolean;
+  /** Header title (default "ჩატი"). */
+  title?: string;
+  /** Shown in the header instead of the message count (e.g. who is online). */
+  meta?: ReactNode;
+  /** Shown instead of the input when sending is not possible. */
+  disabledText?: string;
+  className?: string;
 }) {
   const t = useT();
   const [text, setText] = useState("");
@@ -45,7 +62,7 @@ export function ChatPanel({
   async function report(m: ChatMessage) {
     if (!m.user) return;
     try {
-      await post("/api/reports", { targetUserId: m.user.id, roomId, messageId: m.id, reason: "abuse" });
+      await post("/api/reports", { targetUserId: m.user.id, ...(roomId ? { roomId } : { chatGame }), messageId: m.id, reason: "abuse" });
       setNotice(t("chat.reported"));
     } catch {
       setNotice(t("errors.generic"));
@@ -54,13 +71,13 @@ export function ChatPanel({
   }
 
   return (
-    <div className="card flex flex-col h-full min-h-72 overflow-hidden">
+    <div className={`card flex flex-col h-full min-h-72 overflow-hidden ${className}`}>
       <div className="px-3.5 py-2.5 border-b border-line bg-surface-2 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-sm font-bold text-white">
-          <MessageSquare size={15} className="text-primary" />
-          <span>{t("chat.title")}</span>
+        <div className="flex items-center gap-2 text-sm font-bold text-white min-w-0">
+          <MessageSquare size={15} className="text-primary shrink-0" />
+          <span className="truncate">{title ?? t("chat.title")}</span>
         </div>
-        <span className="chip bg-surface-3 border border-line text-muted tabular-nums">{visible.length}</span>
+        {meta ?? <span className="chip bg-surface-3 border border-line text-muted tabular-nums">{visible.length}</span>}
       </div>
 
       <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-2.5 grid gap-2 content-start text-sm" aria-live="polite">
@@ -131,7 +148,7 @@ export function ChatPanel({
           </form>
         </div>
       ) : (
-        <p className="p-3 text-xs text-muted border-t border-line bg-surface-2/60">{t("chat.disabled")}</p>
+        <p className="p-3 text-xs text-muted border-t border-line bg-surface-2/60">{disabledText ?? t("chat.disabled")}</p>
       )}
     </div>
   );

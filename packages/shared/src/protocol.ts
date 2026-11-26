@@ -39,6 +39,13 @@ export const clientRoomMessageSchema = z.discriminatedUnion("type", [
 ]);
 export type ClientRoomMessage = z.infer<typeof clientRoomMessageSchema>;
 
+/** Client → server messages in a game's chat room (one room per game type). */
+export const clientGameChatMessageSchema = z.discriminatedUnion("type", [
+  z.strictObject({ type: z.literal("ping"), id: msgId }),
+  z.strictObject({ type: z.literal("chat.send"), id: msgId, text: chatTextSchema }),
+]);
+export type ClientGameChatMessage = z.infer<typeof clientGameChatMessageSchema>;
+
 export const clientLobbyMessageSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("ping"), id: msgId }),
   z.strictObject({ type: z.literal("presence.set"), id: msgId, status: z.enum(["online", "away"]) }),
@@ -161,6 +168,14 @@ export interface NotificationDto {
   actor?: PublicUser;
   data: Record<string, string | number | boolean | null>;
 }
+
+export type ServerGameChatMessage =
+  | { type: "hello"; seq: number; gameType: GameType; chat: ChatMessage[]; online: number }
+  | { type: "chat"; seq: number; message: ChatMessage }
+  | { type: "online"; seq: number; online: number }
+  | { type: "ack"; seq: number; id: string }
+  | { type: "pong"; seq: number; id: string; serverTime: number }
+  | { type: "error"; seq: number; id?: string; code: string };
 
 export type ServerLobbyMessage =
   | { type: "hello"; seq: number; unread: number }

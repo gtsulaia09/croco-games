@@ -128,6 +128,8 @@ export const REPORT_REASONS = ["cheating", "abuse", "spam", "impersonation", "in
 export const reportCreateSchema = z.strictObject({
   targetUserId: userIdSchema,
   roomId: roomIdSchema.optional(),
+  /** A message in a game's chat room (instead of a table's chat). */
+  chatGame: gameTypeSchema.optional(),
   messageId: z.string().regex(/^m_[A-Za-z0-9]{8,32}$/).optional(),
   reason: z.enum(REPORT_REASONS),
   details: z

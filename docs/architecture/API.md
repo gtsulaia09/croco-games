@@ -67,6 +67,8 @@ Error responses always follow `{ "error": { "code": "<ErrorCode>", "ref": "<requ
 | `GET` | `/api/rooms/:id/ws` | Ticket + Origin | Upgrades to `RoomDO` (`Sec-WebSocket-Protocol: croco.v1, t.<ticket>`) |
 | `POST` | `/api/lobby/ticket` | Profile | Issues one-time 30s lobby WS ticket |
 | `GET` | `/api/lobby/ws` | Ticket + Origin | Upgrades to `LobbyDO` |
+| `POST` | `/api/chat/:game/ticket` | Profile | Issues a one-time 30s ticket for that game's chat room (`:game` must be a known game type) |
+| `GET` | `/api/chat/:game/ws` | Ticket + Origin | Upgrades to that game's `GameChatDO` — client sends `ping` / `chat.send`; server sends `hello` (last 50 messages, online count), `chat`, `online`, `ack`, `error` |
 | `POST` | `/api/reports` | Profile | `{ targetUserId, roomId?, messageId?, reason, details? }` (max 10/day) |
 
 ## 5. Leaderboards (`apps/worker/src/routes/leaderboards.ts`)

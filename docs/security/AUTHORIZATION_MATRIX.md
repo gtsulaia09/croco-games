@@ -77,6 +77,14 @@ Legend: **Anon** = no token · **User** = verified token + active profile ·
 | `game.action` | the seat owner (human, not bot-controlled) | engine says it is this seat's turn; `rev` matches; action id unseen; action legal |
 | `room.leave` | member | during match: seat becomes bot-controlled until match end (no forfeit of others) |
 
+## GameChatDO messages (one chat room per game type)
+
+| Message | Who | Rule |
+|---|---|---|
+| ticket `POST /api/chat/:game/ticket` | signed-in user with a profile | `:game` must be a known game type; `RL_TICKET` |
+| `chat.send` | the socket's user | sanitised text 1–300 chars; 5 per 10 s per user; socket token bucket 20 / 10 per s |
+| server → `chat`, `online` | — | delivered only to sockets of the same game's chat room |
+
 ## LobbyDO messages
 
 | Message | Who | Rule |

@@ -20,6 +20,7 @@ import { parseOrThrow, query, readJson } from "../http/app";
 import { ApiError } from "../http/errors";
 import { rateLimit } from "../http/ratelimit";
 import { lobbyStub } from "../notify";
+import { gameChatStub } from "./chat";
 import { getSettings } from "../settings";
 import { isBlockedEitherWay, publicUser } from "../users";
 
@@ -302,11 +303,13 @@ roomRoutes.post("/reports", authenticate, requireProfile, async (c) => {
   if (input.targetUserId === user.id) throw new ApiError("bad_request");
   const today = await one<{ n: number }>(c.env.DB, "SELECT COUNT(*) AS n FROM reports WHERE reporter_id = ? AND created_at > ?", user.id, Date.now() - 86_400_000);
   if ((today?.n ?? 0) >= LIMITS.report.perDay) throw new ApiError("rate_limited");
+  if (input.roomId && input.chatGame) throw new ApiError("bad_request");
   let snapshot: string | null = null;
   if (input.roomId && input.messageId) {
     const stub = roomStub(c, input.roomId);
     snapshot = await stub.chatSnapshot(user.id, input.messageId, input.targetUserId);
   }
+  if (input.chatGame && input.messageId) snapshot = await gameChatStub(c.env, input.chatGame).chatSnapshot(input.messageId, input.targetUserId);
   const id = randomId("rp");
   await run(
     c.env.DB,
@@ -314,7 +317,7 @@ roomRoutes.post("/reports", authenticate, requireProfile, async (c) => {
     id,
     user.id,
     input.targetUserId,
-    input.roomId ?? null,
+    input.roomId ?? (input.chatGame ? `chat:${input.chatGame}` : null),
     input.messageId ?? null,
     snapshot,
     input.reason,

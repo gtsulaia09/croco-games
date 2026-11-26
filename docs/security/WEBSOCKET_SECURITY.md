@@ -6,7 +6,7 @@ Real-time communication uses secure WebSockets (`wss://` in all deployed environ
 
 Long-lived Firebase ID tokens are **never** sent in WebSocket query strings (which leak into proxy/access logs and browser histories). Instead, Croco Games uses a two-step one-time ticket flow:
 
-1. Client calls `POST /api/rooms/:id/ticket` (or `POST /api/lobby/ticket`) with its Bearer Firebase ID token.
+1. Client calls `POST /api/rooms/:id/ticket` (or `POST /api/lobby/ticket`, or `POST /api/chat/:game/ticket` for a game's chat room) with its Bearer Firebase ID token.
 2. The Worker verifies the token, enforces rate limits (`RL_TICKET`), and calls `RoomDO.issueTicket(userId)` (or `LobbyDO.issueTicket(userId)`).
    - `RoomDO` verifies the room is open, the user is a current member, and the user has < 5 outstanding tickets.
    - Generates a 256-bit cryptographically random ticket (`randomToken(32)`), persists only `SHA-256(ticket)` + `userId` + `exp = now + 30s` in DO storage, and returns the raw ticket.
