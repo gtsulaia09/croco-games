@@ -7,6 +7,10 @@
  *    distinct higher card of its suit or a trump, or throwing (partners may feed points);
  *  - malutka: when an opponent leads a single card and all five of your cards are of one suit and
  *    beat it, you may lay all five at once — they become the new target;
+ *  - host option "malutka with any suit" (მალუტკა ნებისმიერი ფერით, parabura.ge): a full hand of
+ *    one suit goes down on your turn whatever the lead size; everyone else answers it — players who
+ *    already played top up to five (earlier cards count), the rest lay five — and takes it only by
+ *    beating all five one-for-one;
  *  - bura: a full hand of five trumps, shown on your turn, wins the deal at once;
  *  - raises on your own turn — davi ×2, se ×3, chari ×4, panji ×5, shashi ×6 — the teams alternate;
  *    the other team accepts, raises again or concedes (the raisers then score the value before the
@@ -20,15 +24,19 @@ import { deepClone, fail, placementsFromScores, type EngineContext, type GameEng
 import { pick, shuffle } from "../../core/rng";
 import { combos } from "../poker/evaluator";
 import {
+  addAnswer,
+  answerBeats,
   beats,
   BURA_DECK_36,
   buraRank,
-  canBeatSet,
   cardPoints,
   cheapestBeat,
   cheapestDiscard,
+  isMalutkaHand,
   isValidLead,
   leadOptions,
+  owedBy,
+  playedBy,
   sumPoints,
   trickCards,
   type Trick,
@@ -48,6 +56,8 @@ export const bura5ConfigSchema = z.strictObject({
   /** Allow raising the deal value (davi … shashi). */
   raises: z.boolean().default(true),
   malutka: z.boolean().default(true),
+  /** Host option (parabura.ge): a five-card one-suit malutka against a lead of any size. */
+  malutkaAnySuit: z.boolean().default(false),
 });
 export type Bura5Config = z.infer<typeof bura5ConfigSchema>;
 
@@ -213,11 +223,12 @@ function canRaise(state: Bura5State, seat: number): boolean {
 export function malutkaFor(state: Pick<Bura5State, "config" | "phase" | "trick" | "hands" | "trump">, seat: number): Card[] | null {
   if (!state.config.malutka || state.phase !== "respond") return null;
   const trick = state.trick;
-  if (!trick || trick.count !== 1 || trick.pending[0] !== seat) return null;
-  if (teamOf(trick.leader) === teamOf(seat) || trick.plays.length !== 1) return null;
+  if (!trick || trick.pending[0] !== seat || playedBy(trick, seat).length > 0) return null;
   const hand = state.hands[seat]!;
-  if (hand.length !== HAND || !hand.every((c) => suitOf(c) === suitOf(hand[0]!))) return null;
-  if (hand.every((c) => suitOf(c) === state.trump)) return null; // five trumps are a bura
+  if (!isMalutkaHand(hand, HAND, state.trump)) return null;
+  // Any suit, any lead size (the lead is not already five cards); it need not beat the table.
+  if (state.config.malutkaAnySuit && trick.count < HAND) return [...hand];
+  if (trick.count !== 1 || teamOf(trick.leader) === teamOf(seat) || trick.plays.length !== 1) return null;
   const led = trick.best[0]!;
   if (!hand.every((c) => beats(c, led, state.trump))) return null;
   // Everyone still to answer must be able to answer five cards.
@@ -265,8 +276,8 @@ function legal(state: Bura5State, seat: number): Bura5Action[] {
   const trick = state.trick!;
   const mal = malutkaFor(state, seat);
   if (mal) out.push({ type: "malutka", cards: mal });
-  for (const o of combos(hand, trick.count)) {
-    if (canBeatSet(o, trick.best, state.trump)) out.push({ type: "beat", cards: o });
+  for (const o of combos(hand, owedBy(trick, seat, hand.length))) {
+    if (answerBeats(trick, seat, o, state.trump)) out.push({ type: "beat", cards: o });
     out.push({ type: "discard", cards: o });
   }
   return out;
@@ -388,7 +399,14 @@ export const bura5Engine: GameEngine<Bura5State, Bura5Action, Bura5Config, Bura5
         trick.best = [...action.cards];
         trick.bestSeat = seat;
         trick.count = HAND;
-        trick.pending.shift();
+        if (next.config.malutkaAnySuit) {
+          // Everyone else answers the malutka in turn, topping up to five or laying their hand.
+          trick.pending = order(seat)
+            .slice(1)
+            .filter((s) => owedBy(trick, s, next.hands[s]!.length) > 0);
+        } else {
+          trick.pending.shift();
+        }
         events.push({ type: "malutka", seat, cards: [...action.cards] });
         if (trick.pending.length === 0) resolveTrick(next, ctx, events);
         return { ok: true, state: next, events };
@@ -397,16 +415,12 @@ export const bura5Engine: GameEngine<Bura5State, Bura5Action, Bura5Config, Bura5
       case "discard": {
         const trick = next.trick;
         if (next.phase !== "respond" || !trick) return fail("not_your_turn");
-        if (action.cards.length !== trick.count) return fail("wrong_card_count");
+        if (action.cards.length !== owedBy(trick, seat, hand.length)) return fail("wrong_card_count");
         if (!holds(hand, action.cards)) return fail("card_not_in_hand");
-        if (action.type === "beat" && !canBeatSet(action.cards, trick.best, next.trump)) return fail("does_not_beat");
+        if (action.type === "beat" && !answerBeats(trick, seat, action.cards, next.trump)) return fail("does_not_beat");
         next.hands[seat] = hand.filter((c) => !action.cards.includes(c));
         const faceUp = action.type === "beat" || !next.config.closedDiscards ? [...action.cards] : null;
-        trick.plays.push({ seat, faceUp, cards: [...action.cards] });
-        if (action.type === "beat") {
-          trick.best = [...action.cards];
-          trick.bestSeat = seat;
-        }
+        addAnswer(trick, seat, action.cards, action.type === "beat", next.config.closedDiscards);
         trick.pending.shift();
         events.push({ type: action.type, seat, cards: faceUp ?? undefined, count: action.cards.length });
         if (trick.pending.length === 0) resolveTrick(next, ctx, events);
@@ -434,7 +448,7 @@ export const bura5Engine: GameEngine<Bura5State, Bura5Action, Bura5Config, Bura5
             leader: state.trick.leader,
             count: state.trick.count,
             bestSeat: state.trick.bestSeat,
-            plays: state.trick.plays.map((p) => ({ seat: p.seat, faceUp: p.faceUp ? [...p.faceUp] : seat === p.seat ? [...p.cards] : null, count: p.cards.length })),
+            plays: state.trick.plays.map((p) => ({ seat: p.seat, faceUp: seat === p.seat ? [...p.cards] : p.faceUp ? [...p.faceUp] : null, count: p.cards.length })),
           }
         : null,
       you:
@@ -451,7 +465,7 @@ export const bura5Engine: GameEngine<Bura5State, Bura5Action, Bura5Config, Bura5
       lastTrick: state.lastTrick
         ? {
             winner: state.lastTrick.winner,
-            plays: state.lastTrick.plays.map((p) => ({ seat: p.seat, faceUp: p.faceUp ? [...p.faceUp] : seat === p.seat ? [...p.cards] : null, count: p.cards.length })),
+            plays: state.lastTrick.plays.map((p) => ({ seat: p.seat, faceUp: seat === p.seat ? [...p.cards] : p.faceUp ? [...p.faceUp] : null, count: p.cards.length })),
           }
         : null,
       lastHand: state.lastHand ? deepClone(state.lastHand) : null,
@@ -466,7 +480,10 @@ export const bura5Engine: GameEngine<Bura5State, Bura5Action, Bura5Config, Bura5
 
   timeoutAction(state, seat, ctx) {
     if (state.phase === "raise") return { type: "accept" };
-    if (state.phase === "respond" && state.trick) return { type: "discard", cards: cheapestDiscard(state.hands[seat]!, state.trick.count, state.trump) };
+    if (state.phase === "respond" && state.trick) {
+      const hand = state.hands[seat]!;
+      return { type: "discard", cards: cheapestDiscard(hand, owedBy(state.trick, seat, hand.length), state.trump) };
+    }
     const options = legal(state, seat).filter((o) => o.type === "lead");
     return options.find((o) => o.type === "lead" && o.cards.length === 1) ?? pick(options, ctx.rng);
   },
@@ -488,7 +505,14 @@ export const bura5Engine: GameEngine<Bura5State, Bura5Action, Bura5Config, Bura5
     if (view.phase === "respond" && view.trick) {
       const best = view.trick.plays.find((p) => p.seat === view.trick!.bestSeat)?.faceUp ?? [];
       const partnerWinning = teamOf(view.trick.bestSeat) === you.team;
-      const count = view.trick.count;
+      const mine = view.trick.plays.find((p) => p.seat === you.seat)?.count ?? 0;
+      const count = Math.min(view.trick.count - mine, you.hand.length);
+      if (mine > 0) {
+        // Answering a malutka with cards already on the felt: beat it as cheaply as the rules allow.
+        const beats = options.filter((o): o is Extract<Bura5Action, { type: "beat" }> => o.type === "beat");
+        if (beats.length && !partnerWinning) return beats.sort((a, b) => sumPoints(a.cards) - sumPoints(b.cards))[0]!;
+        return { type: "discard", cards: cheapestDiscard(you.hand, count, trump) };
+      }
       if (partnerWinning && difficulty !== "easy") {
         // Feed points to a winning partner when nobody after us can still take the trick cheaply.
         const lastToAnswer = view.trick.plays.length === 3;

@@ -3,7 +3,7 @@ import { Award, Crown, Flame, Swords, Trophy } from "lucide-react";
 import type { Bura5View } from "@croco/game-engine/games/bura5";
 import { useT } from "../i18n";
 import { sortHand } from "./cardOrder";
-import { BuraTrick, CapturedPile, rememberSelection, Stock, type BuraPos } from "./buraParts";
+import { BuraTrick, CapturedPile, owedCards, rememberSelection, Stock, type BuraPos } from "./buraParts";
 import { useSeatName, type BoardProps } from "./common";
 import { GameHud, HudFact, TrumpFact } from "./ui/GameHud";
 import { GameNotification, type TableNotice } from "./ui/GameNotification";
@@ -27,10 +27,12 @@ export default function Bura5Board({ view, mySeat, seats, deadline, onAction }: 
 
   const myTurn = view.toAct !== null && view.toAct === mySeat;
   const responding = view.phase === "respond";
-  const need = responding ? (view.trick?.count ?? 0) : 0;
   const hand = sortHand(view.you?.hand ?? [], { order: "bura", trump: view.trump });
-  const selection = selected.filter((c) => hand.includes(c));
   const me = mySeat ?? 0;
+  // Against a malutka a player who already played tops up to five: only the missing cards are chosen.
+  const need = responding ? owedCards(view.trick, me, hand.length) : 0;
+  const toppingUp = responding && (view.trick?.plays.some((p) => p.seat === me) ?? false);
+  const selection = selected.filter((c) => hand.includes(c));
   const myTeam = me % 2;
   const raiseName = (v: number) => t(`bura.raises.${v}`);
   const teamName = (team: number) => (mySeat === null ? `${name(team)} + ${name(team + 2)}` : team === myTeam ? t("bura.us") : t("bura.them"));
@@ -228,7 +230,7 @@ export default function Bura5Board({ view, mySeat, seats, deadline, onAction }: 
               {responding && (
                 <>
                   <span className="pactions-hint">
-                    {t("bura.selectRespond", { n: need })} ({t("ui.selectedCount", { n: selection.length })})
+                    {toppingUp ? t("bura.topUp", { n: need, total: view.trick?.count ?? need }) : t("bura.selectRespond", { n: need })} ({t("ui.selectedCount", { n: selection.length })})
                   </span>
                   <button className="btn-primary btn-lg px-7" disabled={selection.length !== need} onClick={() => submit("beat")}>
                     {t("bura.beat")}

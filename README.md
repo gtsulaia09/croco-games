@@ -12,8 +12,8 @@ Every game runs as a pure, server-authoritative engine in `packages/game-engine`
 
 1. **Joker (`joker`)** — Georgian 4-player classic (24 deals in four sets, dealer bid restriction, high/low jokers; პრემია "ბოლო იშლება / არ იშლება" and ხიშტი (standard −100 × cards or fixed −100/−200/−300/−500) chosen before the game; paper score sheet counting in hundreds)
 2. **Japanese Joker (`japanese_joker`)** — 2-player Georgian game (open/covered table cards, first card from the hand, suit-demanding joker, trick-difference scoring to 1/3/7/11/21)
-3. **Bura — Three-Card (`bura3`)** — 1 v 1 with 20 cards (10–A): 61 points wins the deal, "var" (31+) right after a won trick, bura of three trumps
-4. **Bura — Five-Card (`bura5`)** — 2 v 2 team game with malutka, bura of five trumps and raises davi … shashi (×2…×6)
+3. **Bura — Three-Card (`bura3`)** — 1 v 1 with 20 cards (10–A): 61 points wins the deal, "var" (31+) right after a won trick, bura of three trumps, three-card malutka of any suit, raises davi … shashi
+4. **Bura — Five-Card (`bura5`)** — 2 v 2 team game with malutka (host option: malutka with any suit), bura of five trumps and raises davi … shashi (×2…×6)
 5. **Texas Hold'em (`holdem`)** — 2–10 players, virtual chips only, blinds/antes, No/Pot/Fixed Limit, side pots, full showdown evaluation
 6. **Short Deck / 6+ Hold'em (`shortdeck`)** — 36-card deck (`6`–`A`), Ante + Button Blind, Flush > Full House, `A-6-7-8-9` wheel
 7. **Omaha (`omaha`)** — 4 hole cards; strict **exact-2 hole + exact-3 board** evaluation; Pot-Limit by default

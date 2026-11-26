@@ -35,8 +35,19 @@ export function Stock({ trumpCard, count }: { trumpCard: string | null | undefin
 
 export interface BuraPlay {
   seat: number;
+  /** Face-up cards; after a malutka top-up only the earlier face-up part may be shown. */
   faceUp: string[] | null;
   count: number;
+}
+
+/**
+ * How many cards a seat still has to answer with: the trick's count, less what it already put
+ * down (a player topping up against a malutka), capped by the hand.
+ */
+export function owedCards(trick: { count: number; plays: BuraPlay[] } | null, seat: number, handSize: number): number {
+  if (!trick) return 0;
+  const already = trick.plays.find((p) => p.seat === seat)?.count ?? 0;
+  return Math.max(0, Math.min(trick.count - already, handSize));
 }
 
 export type BuraPos = "n" | "s" | "w" | "e";
@@ -53,17 +64,16 @@ function TrickGroup({ play, pos, best, label, scope, animate }: { play: BuraPlay
   return (
     <div ref={ref} className="pbtrick-group" data-pos={pos} data-best={best ?? undefined} data-trick-card="true">
       <div className="pbtrick-cards">
-        {play.faceUp
-          ? play.faceUp.map((c) => (
-              <span key={c} data-fly={c} style={{ "--tilt": tiltFor(c, 3) } as CSSProperties}>
-                <PlayingCard card={c} size="trick" highlight={best === "winner" ? "winner" : undefined} />
-              </span>
-            ))
-          : Array.from({ length: play.count }, (_, i) => (
-              <span key={i} data-fly={`back-${play.seat}-${i}`}>
-                <PlayingCard back size="trick" />
-              </span>
-            ))}
+        {(play.faceUp ?? []).map((c) => (
+          <span key={c} data-fly={c} style={{ "--tilt": tiltFor(c, 3) } as CSSProperties}>
+            <PlayingCard card={c} size="trick" highlight={best === "winner" ? "winner" : undefined} />
+          </span>
+        ))}
+        {Array.from({ length: Math.max(0, play.count - (play.faceUp?.length ?? 0)) }, (_, i) => (
+          <span key={`back-${i}`} data-fly={`back-${play.seat}-${i}`}>
+            <PlayingCard back size="trick" />
+          </span>
+        ))}
       </div>
       <span className="pbtrick-tag" data-best={best ?? undefined}>
         {label}

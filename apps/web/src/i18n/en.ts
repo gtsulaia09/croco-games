@@ -287,6 +287,8 @@ export const en = {
     fold: "Concede",
     reraise: "Raise again: {raise} (×{n})",
     malutka: "Malutka",
+    malutkaHint3: "All three cards of one suit at once — the opponent must beat each of them",
+    topUp: "Answer the malutka: add {n} cards (up to {total})",
     showBura: "Bura!",
     teamWins: "{team} scores +{n}",
     folded: "{name} conceded — {team} +{n}",
@@ -651,6 +653,7 @@ export const en = {
     jokerLow: "A joker on the opponent's card may go low",
     raises: "Raises (davi … shashi)",
     malutka: "Malutka",
+    malutkaAnySuit: "Malutka with any suit",
     shortDeckBlinds: "Forced bets",
     values: {
       standard: "Standard (24 hands)",

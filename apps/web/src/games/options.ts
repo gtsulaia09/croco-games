@@ -44,6 +44,7 @@ export const GAME_OPTIONS: Record<GameType, OptionSpec[]> = {
   bura3: [
     { key: "targetPoints", kind: "select", options: [6, 11, 21], default: 11 },
     { key: "deck", kind: "select", options: ["20", "32", "36"], default: "20" },
+    { key: "raises", kind: "boolean", default: true },
     { key: "closedDiscards", kind: "boolean", default: true },
     { key: "memoryAid", kind: "boolean", default: false },
   ],
@@ -51,6 +52,7 @@ export const GAME_OPTIONS: Record<GameType, OptionSpec[]> = {
     { key: "targetPoints", kind: "select", options: [6, 11, 21], default: 11 },
     { key: "raises", kind: "boolean", default: true },
     { key: "malutka", kind: "boolean", default: true },
+    { key: "malutkaAnySuit", kind: "boolean", default: false },
     { key: "closedDiscards", kind: "boolean", default: true },
   ],
   holdem: poker,

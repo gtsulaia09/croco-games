@@ -2,7 +2,7 @@
 
 All ten game modes run as independent, server-authoritative engines inside `packages/game-engine/src/games/`. Every rule variation documented here is configurable at room creation and validated strictly on the server.
 
-**Source of the rules (2026-11-25):** the owner's handbook *„თამაშების წესები და ტერმინების ლექსიკონი"* (10 games, rules and glossary), which cites pagat.com (Joker), mygame.ge (Japanese Joker), parabura.ge (Bura), nardeon.com (long nardi), tamashebi.cc (dominoes) and PokerStars (poker). Where the handbook leaves a detail open, the choice made here is marked **Interpretation**. House variants stay available as room options but are off by default.
+**Source of the rules (2026-11-25):** the owner's handbook _„თამაშების წესები და ტერმინების ლექსიკონი"_ (10 games, rules and glossary), which cites pagat.com (Joker), mygame.ge (Japanese Joker), parabura.ge (Bura), nardeon.com (long nardi), tamashebi.cc (dominoes) and PokerStars (poker). Where the handbook leaves a detail open, the choice made here is marked **Interpretation**. House variants stay available as room options but are off by default.
 
 ---
 
@@ -41,10 +41,11 @@ All ten game modes run as independent, server-authoritative engines inside `pack
 - **Players**: 2 (one against one) · **Deck**: 20 cards — 10, J, Q, K, A (6–9 removed); house variants 32/36 cards. Strength `A > 10 > K > Q > J`; points A 11, 10 10, K 4, Q 3, J 2 — **120 in the pack**.
 - **Deal**: 3 cards each; one card is turned for trump and lies at the bottom of the stock (drawn last).
 - **Trick**: lead 1–3 cards of one suit; the opponent answers with the same number — every card beaten by a distinct higher card of its suit or a trump, or the cards are thrown (face down, `closedDiscards`). Following suit is not required. The trick winner takes its points.
-- **ვარი (var)**: right after winning a trick, **before the hands are refilled**, the taker chooses "var" or "continue". Var with **31+ captured points wins the deal**; with fewer the opponent wins it.
-- **ბურა**: three trumps in hand on your turn win the deal at once.
-- **მალუტკა**: three cards of one suit led together (a normal 3-card lead).
-- **End of deal**: otherwise the deal is played out — **61+ card points wins**, 60:60 scores nothing. Each deal won is worth 1 point; match to **6, 11 or 21** (default 11).
+- **ვარ (var)**: right after winning a trick, **before the hands are refilled**, the taker chooses "var" or "continue". Var with **31+ captured points wins the deal**; with fewer the opponent wins it.
+- **ბურა**: three trumps in hand on your turn win the deal at once, at its current value (played automatically).
+- **მალუტკა** (any suit, standard in three-card Bura — parabura.ge, checked 2026-11-27): on your turn all three cards of one suit go down at once — as a 3-card lead, or **over a one- or two-card lead** even if they do not beat it. The leader then tops up to three (the led cards count together with the added ones) and takes the trick only by beating all three one-for-one; otherwise the malutka takes it. Three trumps are a bura, not a malutka.
+- **Raises (`raises`, on by default)**: as in five-card Bura — on your own turn (leading or answering), the two players alternating: დავი ×2, სე ×3, ჩარი ×4, პანჯი ×5, შაში ×6. The other player accepts, raises again or concedes (the raiser scores the value before the raise). parabura.ge lists the calls as a general Bura rule and says var wins "at the current value".
+- **End of deal**: otherwise the deal is played out — **61+ card points wins**, 60:60 scores nothing. A deal won scores its current value (1 unless raised) — by points, var, false var (to the opponent) or bura; match to **6, 11 or 21** (default 11).
 - **Interpretation**: the deal winner deals next; after 60:60 the deal passes on. A short stock is shared equally between both hands.
 
 ---
@@ -55,6 +56,7 @@ All ten game modes run as independent, server-authoritative engines inside `pack
 - **Deal**: 5 cards each; one card turned for trump at the bottom of the stock; hands are refilled after every trick (winner first, as far as the stock goes).
 - **Trick**: lead 1–5 cards of one suit; everyone answers with the same number. A player takes the trick only by beating **every** card of the current best set with a distinct higher card of its suit or a trump. Partners may throw point cards (A, 10) onto a trick their partner is winning.
 - **მალუტკა**: when an **opponent leads a single card** and all five of your cards are of one suit and beat it, you may lay all five at once — they become the new target (the players still to answer must beat all five).
+- **Host option "მალუტკა ნებისმიერი ფერით"** (`malutkaAnySuit`, off by default; parabura.ge): a full hand of one suit (not all trumps) goes down on your turn **whatever the size of the lead** (one to four cards) and need not beat it. Everyone else then answers it in turn: players who already played **top up to five** (their earlier cards count together with the added ones), the others lay five. A player takes over only by beating all five one-for-one; the set to beat is always the last one that did.
 - **ბურა**: a full hand of five trumps, shown on your turn, wins the deal at once at its current value (including accepted raises).
 - **Raises (გამოძახებები)** — only on your own turn, teams alternate: ჩვეულებრივი ×1, დავი ×2, სე ×3, ჩარი ×4, პანჯი ×5, შაში ×6. The next opponent answers: **accept** (play on at the new value), **raise again** (one step more) or **concede** (the deal ends; the raising team scores the value before the raise; card points are not counted).
 - **End of deal**: the team with **61+ points** scores the deal value; 60:60 scores nothing. Match to **6, 11 or 21** (default 11).
@@ -69,17 +71,21 @@ All ten game modes run as independent, server-authoritative engines inside `pack
 Common mechanics: Preflop → Flop (3) → Turn (1) → River (1) → Showdown, burn cards, rotating button, `fold` / `check` / `call` / `raise { to }` / `allin`, No-Limit, Pot-Limit (max raise = pot after the call) and Fixed-Limit (4-bet cap), side pots, refunds of uncalled bets, chip conservation on every step.
 
 ### 5.1 Texas Hold'em (`holdem`) — ტეხას ჰოლდემი
+
 - **Players**: 2–10 · 52 cards · 2 hole cards · best five of seven (both, one or none of the hole cards). Small and big blind left of the button.
 
 ### 5.2 6+ Hold'em / Short Deck (`shortdeck`)
+
 - **Players**: 2–6 · 36 cards (6–A) · 2 hole cards.
 - **Forced bets (`shortDeckBlinds: "button"`, default)**: everyone pays the **ante** (the small-blind amount unless an ante is set) and the button pays the **Button Blind** (the big-blind amount); there are no small/big blinds; action starts left of the button. House variant `"blinds"`: classic SB/BB.
 - **Ranking**: Royal Flush › Straight Flush › Four of a Kind › **Flush › Full House** › Straight › Three of a Kind › Two Pair › Pair › High Card; `A-6-7-8-9` is the lowest straight. House variant `tripsBeatStraight` (off by default).
 
 ### 5.3 Omaha (`omaha`)
+
 - **Players**: 2–10 · 52 cards · 4 hole cards · default **Pot-Limit (PLO)**. Exactly **2 hole + 3 board** cards (all 60 combinations evaluated).
 
 ### 5.4 Omaha Hi-Lo (`omaha_hilo`)
+
 - **Players**: 2–10 · 4 hole cards · default Pot-Limit. Half the pot to the best High, half to the best **8-or-better Low** (five distinct ranks ≤ 8, ace low, exactly 2 hole + 3 board, `5-4-3-2-A` is best); no qualifying low → High scoops; ties split each half.
 
 ---
