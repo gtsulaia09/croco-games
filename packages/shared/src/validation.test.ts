@@ -42,7 +42,7 @@ describe("text sanitization", () => {
   });
 
   it("keeps emoji sequences joined with U+200D but removes a joiner anywhere else", () => {
-    for (const emoji of ["🤷‍♂️", "❤️‍🔥", "👩‍💻", "🐻‍❄️", "🏳️‍🌈", "🙋🏽‍♀️"]) expect(sanitizeText(`gg ${emoji}`)).toBe(`gg ${emoji}`);
+    for (const emoji of ["🤷\u200D♂️", "❤️\u200D🔥", "👩\u200D💻", "🐻\u200D❄️", "🏳️\u200D🌈", "🙋🏽\u200D♀️"]) expect(sanitizeText(`gg ${emoji}`)).toBe(`gg ${emoji}`);
     expect(sanitizeText("ad\u200Dmin")).toBe("admin");
     expect(sanitizeText("😀\u200D")).toBe("😀");
     expect(sanitizeText("\u200D😀")).toBe("😀");

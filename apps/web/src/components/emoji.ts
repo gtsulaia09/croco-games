@@ -1,6 +1,6 @@
 /**
  * Emoji for the chat picker, by category. Plain Unicode text (system emoji font, no images, no
- * library). Sequences joined with U+200D (🤷‍♂️, ❤️‍🔥) survive the server's text cleaning, which
+ * library). Sequences joined with U+200D (🤷\u200D♂️, ❤️\u200D🔥) survive the server's text cleaning, which
  * keeps a joiner only between emoji.
  */
 export interface EmojiCategory {
@@ -18,7 +18,7 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
     emoji: split(`
       😀 😃 😄 😁 😆 😅 😂 🤣 🥲 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😝 😜 🤪 🤨 🧐 🤓 😎
       🥸 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 ☹️ 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥
-      😓 🤗 🤔 🫣 🤭 🫢 🤫 🤥 😶 😐 😑 😬 🫠 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵 😵‍💫 🤐 🥴 🤢 🤮 🤧
+      😓 🤗 🤔 🫣 🤭 🫢 🤫 🤥 😶 😐 😑 😬 🫠 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵 😵\u200D💫 🤐 🥴 🤢 🤮 🤧
       😷 🤒 🤕 🤑 🤠 😈 👿 🤡 💩 👻 💀 ☠️ 👽 🤖 🎃 😺 😸 😹 😻 😼 😽 🙀 😿 😾 🙈 🙉 🙊
     `),
   },
@@ -27,15 +27,15 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
     icon: "👍",
     emoji: split(`
       👋 🤚 🖐️ ✋ 🖖 👌 🤌 🤏 ✌️ 🤞 🫰 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ 🫵 👍 👎 ✊ 👊 🤛 🤜 👏 🙌 🫶 👐
-      🤲 🤝 🙏 ✍️ 💪 🫡 🤷 🤷‍♂️ 🤷‍♀️ 🤦 🤦‍♂️ 🤦‍♀️ 🙋 🙋‍♂️ 🙋‍♀️ 🙇 🙇‍♂️ 🙇‍♀️ 💁 💁‍♂️ 💁‍♀️ 🙆 🙆‍♂️ 🙆‍♀️ 🙅 🙅‍♂️ 🙅‍♀️ 🧏 🙎 🙍
-      👀 👁️ 👂 👃 👄 🧠 🫀 👶 🧒 👦 👧 🧑 👨 👩 🧓 👴 👵 👨‍💻 👩‍💻 🕵️ 👮 💂 🧙 🧛 🧟 🦸 🦹 🥷 💃 🕺
+      🤲 🤝 🙏 ✍️ 💪 🫡 🤷 🤷\u200D♂️ 🤷\u200D♀️ 🤦 🤦\u200D♂️ 🤦\u200D♀️ 🙋 🙋\u200D♂️ 🙋\u200D♀️ 🙇 🙇\u200D♂️ 🙇\u200D♀️ 💁 💁\u200D♂️ 💁\u200D♀️ 🙆 🙆\u200D♂️ 🙆\u200D♀️ 🙅 🙅\u200D♂️ 🙅\u200D♀️ 🧏 🙎 🙍
+      👀 👁️ 👂 👃 👄 🧠 🫀 👶 🧒 👦 👧 🧑 👨 👩 🧓 👴 👵 👨\u200D💻 👩\u200D💻 🕵️ 👮 💂 🧙 🧛 🧟 🦸 🦹 🥷 💃 🕺
     `),
   },
   {
     id: "hearts",
     icon: "❤️",
     emoji: split(`
-      ❤️ 🧡 💛 💚 💙 🩵 💜 🤎 🖤 🩶 🤍 🩷 💔 ❤️‍🔥 ❤️‍🩹 ❣️ 💕 💞 💓 💗 💖 💘 💝 💟 💌 💋 😘 🥰 😍 🫶
+      ❤️ 🧡 💛 💚 💙 🩵 💜 🤎 🖤 🩶 🤍 🩷 💔 ❤️\u200D🔥 ❤️\u200D🩹 ❣️ 💕 💞 💓 💗 💖 💘 💝 💟 💌 💋 😘 🥰 😍 🫶
       💐 🌹 🥀 🌷 🌸 💮 🌺 🌻 🌼 💫 ⭐ 🌟 ✨ 💥 💢 💦 💨 🕊️ 🌈 ☀️ 🌙 ⛅ 🌧️ ⛈️ ❄️ ☃️ 🔥 💧 🌊 🍀
     `),
   },
@@ -61,9 +61,9 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
     id: "animals",
     icon: "🐻",
     emoji: split(`
-      🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐻‍❄️ 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐔 🐧 🐦 🐤 🦆 🦅 🦉 🦇 🐺 🐗 🐴 🦄 🐝 🦋
+      🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐻\u200D❄️ 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐔 🐧 🐦 🐤 🦆 🦅 🦉 🦇 🐺 🐗 🐴 🦄 🐝 🦋
       🐌 🐞 🐜 🕷️ 🦂 🐢 🐍 🦎 🦖 🦕 🐙 🦑 🦐 🦀 🐡 🐠 🐟 🐬 🐳 🐋 🦈 🐊 🐅 🐆 🦓 🦍 🐘 🦛 🦏 🐪
-      🦒 🦘 🐃 🐂 🐄 🐎 🐖 🐏 🐑 🦙 🐐 🦌 🐕 🐩 🐈 🐈‍⬛ 🐓 🦃 🦚 🦜 🦢 🦩 🐇 🦝 🦨 🦡 🦫 🦦 🦥 🐿️
+      🦒 🦘 🐃 🐂 🐄 🐎 🐖 🐏 🐑 🦙 🐐 🦌 🐕 🐩 🐈 🐈\u200D⬛ 🐓 🦃 🦚 🦜 🦢 🦩 🐇 🦝 🦨 🦡 🦫 🦦 🦥 🐿️
     `),
   },
   {

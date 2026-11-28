@@ -84,6 +84,7 @@ const ALLOWED_VITE = new Set([
   "VITE_TURNSTILE_SITE_KEY",
   "VITE_DEPLOYMENT",
   "VITE_BASE_PATH",
+  "VITE_FACEBOOK_LOGIN",
 ]);
 for (const f of files.filter((p) => norm(p).startsWith("apps/web/"))) {
   const text = readFileSync(f, "utf8");
