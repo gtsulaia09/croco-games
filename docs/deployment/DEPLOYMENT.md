@@ -6,6 +6,23 @@ Croco Games runs exclusively on **free-tier infrastructure** with strict environ
 
 ---
 
+## Current Production Setup (Automatic Deploys)
+
+Every push to `main` runs `.github/workflows/deploy-production.yml`: the full verification gate (`pnpm run ci`), then D1 migrations, the API Worker (`croco-games-api.giowulaia76.workers.dev`) and the web site — a static-assets Worker configured in `apps/web/wrangler.jsonc` (`https://croco-games.giowulaia76.workers.dev`; Cloudflare's successor to Pages, which honours the build's `_headers`).
+
+One-time GitHub setup (Settings → Secrets and variables → Actions):
+
+| Kind | Name | Value |
+|---|---|---|
+| Secret | `CLOUDFLARE_API_TOKEN` | Cloudflare API token with Workers Scripts: Edit and D1: Edit |
+| Variable | `VITE_FIREBASE_API_KEY` | Firebase web API key (public, kept out of Git so secret scanners do not flag it) |
+| Variable (optional) | `VITE_FACEBOOK_LOGIN` | `true` once Facebook login is enabled in Firebase |
+| Secret (optional) | `BACKUP_ENCRYPTION_KEY` | Enables the nightly encrypted D1 backup (`backup-d1.yml`); skipped until set |
+
+GitHub Actions must be enabled for the repository (Settings → Actions → General). The GitHub Pages demo (`deploy-pages-demo.yml`) is manual-only. Staging and demo Cloudflare environments are deployed by hand with `deploy-cloudflare.yml`.
+
+---
+
 ## Free-Tier Limits (Verified Baseline)
 
 | Service | Free-Tier Quota | Operational Notes |

@@ -1,7 +1,7 @@
-name: Deploy to Cloudflare (Staging / Demo / Production)
+name: Deploy to Cloudflare (Staging / Demo)
 
-# Controlled deployment pipeline using separate GitHub Environments.
-# Configure required reviewers on the `production` environment in GitHub repository settings.
+# Manual deployment pipeline for the staging and demo environments (separate GitHub Environments).
+# Production deploys automatically on every push to main: see deploy-production.yml.
 # Never runs on pull requests; untrusted code never has access to deployment tokens.
 
 on:
@@ -14,7 +14,6 @@ on:
         options:
           - staging
           - demo
-          - production
 
 permissions:
   contents: read

@@ -4,10 +4,11 @@ name: Deploy GitHub Pages Demo
 # SECURITY INVARIANT: This workflow NEVER accesses production secrets, production origins,
 # production databases, or production admin endpoints. When DEMO_API_BASE is unset, the app
 # runs in clearly labelled local practice-vs-bots mode with zero external requests.
+#
+# Manual only: the live site is on Cloudflare (deploy-production.yml). To use this demo, enable
+# GitHub Pages (Settings → Pages → Source: GitHub Actions), then run it from the Actions tab.
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:

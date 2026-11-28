@@ -1,0 +1,114 @@
+name: Deploy Production (Cloudflare)
+
+# Every push to main deploys production on Cloudflare:
+#   - the API Worker (croco-games-api) with its D1 migrations and Durable Objects
+#   - the web site, a static-assets Worker (croco-games): https://croco-games.giowulaia76.workers.dev
+# The full verification gate runs first; nothing is deployed if lint, types, tests or the build fail.
+# It can also be started by hand: Actions → "Deploy Production (Cloudflare)" → Run workflow.
+#
+# Needs, in GitHub → Settings → Secrets and variables → Actions:
+#   Secret   CLOUDFLARE_API_TOKEN   Cloudflare API token (Workers Scripts: Edit, D1: Edit)
+#   Variable VITE_FIREBASE_API_KEY  Firebase web API key. Public by design (it ships in the site),
+#                                   but kept out of Git so secret scanners do not flag it.
+# Optional variables: VITE_FACEBOOK_LOGIN=true (once Facebook login is enabled in Firebase),
+#                     VITE_TURNSTILE_SITE_KEY.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One production deploy at a time; a newer push waits for the running one instead of cancelling it.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  CLOUDFLARE_ACCOUNT_ID: fb1c0b054c0d53dd3b816809024e4021
+  WRANGLER_SEND_METRICS: "false"
+
+jobs:
+  deploy:
+    name: Verify and deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://croco-games.giowulaia76.workers.dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22.12"
+          cache: "pnpm"
+
+      - name: Check deploy settings
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+        run: |
+          missing=0
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::Add the CLOUDFLARE_API_TOKEN secret: Settings → Secrets and variables → Actions → Secrets."
+            missing=1
+          fi
+          if [ -z "$VITE_FIREBASE_API_KEY" ]; then
+            echo "::error::Add the VITE_FIREBASE_API_KEY variable: Settings → Secrets and variables → Actions → Variables."
+            missing=1
+          fi
+          exit $missing
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verification gate (lint, typecheck, security checks, tests, build)
+        run: pnpm run ci
+
+      - name: Apply D1 database migrations
+        working-directory: apps/worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: pnpm exec wrangler d1 migrations apply DB --remote --env production
+
+      - name: Deploy API Worker + Durable Objects
+        working-directory: apps/worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: pnpm exec wrangler deploy --env production
+
+      - name: Build web site (with _headers CSP/HSTS)
+        env:
+          VITE_DEPLOYMENT: cloudflare-pages
+          VITE_BASE_PATH: /
+          VITE_API_BASE: https://croco-games-api.giowulaia76.workers.dev
+          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: croco-games.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: croco-games
+          VITE_FIREBASE_APP_ID: "1:448596738408:web:97d236dd816620570f56dd"
+          VITE_FACEBOOK_LOGIN: ${{ vars.VITE_FACEBOOK_LOGIN }}
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
+        run: |
+          pnpm run build
+          node scripts/bundle-budget.mjs
+          pnpm run check:security
+
+      # The site's config lives in apps/web/wrangler.jsonc; wrangler is a dependency of apps/worker.
+      - name: Deploy web site
+        working-directory: apps/worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: pnpm exec wrangler deploy --config ../web/wrangler.jsonc
+
+      - name: Smoke test
+        run: |
+          curl -fsS https://croco-games-api.giowulaia76.workers.dev/api/health
+          curl -fsS -o /dev/null https://croco-games.giowulaia76.workers.dev/
+          echo "Production is up: https://croco-games.giowulaia76.workers.dev"
