@@ -155,7 +155,7 @@ function MfaGate({ enrolled, onUnlocked }: { enrolled: boolean; onUnlocked(): vo
         void submit();
       }}
     >
-      <div className="bg-gradient-to-br from-gold/12 via-surface-2 to-surface px-6 py-5 border-b border-line flex items-center gap-3">
+      <div className="bg-surface-2 px-6 py-5 border-b border-line flex items-center gap-3">
         <span className="size-10 rounded-xl bg-gold/15 border border-gold/40 text-gold flex items-center justify-center">
           <ShieldCheck size={20} />
         </span>

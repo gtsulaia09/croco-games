@@ -7,18 +7,18 @@
  * ============================================================================ */
 
 .board {
-  --brand: #15c481;
-  --brand-hi: #22e59b;
-  --navy: #080c14;
-  --navy-2: #121a2b;
-  --navy-3: #0d1320;
-  --navy-4: #182338;
-  --ink: #f8fafc;
-  --ink-2: #8b9bb4;
-  --gold: #f4c566;
-  --gold-deep: #d4a74a;
-  --select: #f4c566;
-  --danger: #ff5c72;
+  --brand: #dfb86b;
+  --brand-hi: #f3efe6;
+  --navy: #0b0b0d;
+  --navy-2: #151519;
+  --navy-3: #0e0e11;
+  --navy-4: #1c1c22;
+  --ink: #f5f2eb;
+  --ink-2: #87837b;
+  --gold: #dfb86b;
+  --gold-deep: #c69d4d;
+  --select: #dfb86b;
+  --danger: #dc5353;
   --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
   --dh: 30px;
   container-type: inline-size;
@@ -124,14 +124,13 @@ button.hud-chip:hover {
 }
 
 .turn-pill[data-state="mine"] {
-  background: linear-gradient(180deg, #4bf0b0, #18d48c);
-  color: #032215;
-  border-color: transparent;
-  box-shadow: 0 6px 18px rgba(34, 229, 155, 0.3);
+  background-color: #f3efe6;
+  color: #0c0c0e;
+  border-color: #f3efe6;
 }
 
 .turn-pill[data-state="mine"]::before {
-  background: #032215;
+  background-color: #0c0c0e;
   animation: turn-pulse 1.6s ease-in-out infinite;
 }
 
@@ -552,10 +551,9 @@ button.hud-chip:hover {
   justify-content: center;
   gap: 8px 10px;
   padding: 10px 12px;
-  border-radius: 20px;
-  background: linear-gradient(180deg, var(--navy-3), var(--navy-2));
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  border-radius: 14px;
+  background-color: var(--navy-2);
+  border: 1px solid #282832;
 }
 
 .action-title {

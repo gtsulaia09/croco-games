@@ -5,30 +5,30 @@ import { ApiError } from "../lib/api";
 import { useT } from "../i18n";
 
 const AVATAR_PALETTES = [
-  { bg: "#093826", fg: "#22e59b", accent: "#f4c566", shape: "crown" },
-  { bg: "#0f2e4a", fg: "#5cc8ff", accent: "#e0f2fe", shape: "spade" },
-  { bg: "#421628", fg: "#ff5c72", accent: "#fde68a", shape: "heart" },
-  { bg: "#35260f", fg: "#f4c566", accent: "#fef3c7", shape: "diamond" },
-  { bg: "#0d3834", fg: "#2dd4bf", accent: "#ccfbf1", shape: "club" },
-  { bg: "#281b47", fg: "#a78bfa", accent: "#f4c566", shape: "star" },
-  { bg: "#142f42", fg: "#67e8f9", accent: "#22e59b", shape: "shield" },
-  { bg: "#3f2010", fg: "#fb923c", accent: "#fef08a", shape: "bolt" },
-  { bg: "#0a362e", fg: "#34d399", accent: "#ffffff", shape: "hex" },
-  { bg: "#351739", fg: "#e879f9", accent: "#fde68a", shape: "gem" },
-  { bg: "#172d4c", fg: "#60a5fa", accent: "#f4c566", shape: "dice" },
-  { bg: "#352b0f", fg: "#facc15", accent: "#fef9c3", shape: "chip" },
-  { bg: "#0f3c24", fg: "#4ade80", accent: "#dcfce7", shape: "spade" },
-  { bg: "#43161d", fg: "#fb7185", accent: "#fee2e2", shape: "crown" },
-  { bg: "#102f42", fg: "#22d3ee", accent: "#cffafe", shape: "star" },
-  { bg: "#271d40", fg: "#c084fc", accent: "#f3e8ff", shape: "diamond" },
-  { bg: "#302310", fg: "#f59e0b", accent: "#fef3c7", shape: "shield" },
-  { bg: "#0c3830", fg: "#10b981", accent: "#f4c566", shape: "chip" },
-  { bg: "#1d2c45", fg: "#93c5fd", accent: "#dbeafe", shape: "bolt" },
-  { bg: "#401829", fg: "#f472b6", accent: "#fce7f3", shape: "heart" },
-  { bg: "#11352d", fg: "#5eead4", accent: "#f4c566", shape: "hex" },
-  { bg: "#331e13", fg: "#fdba74", accent: "#ffedd5", shape: "dice" },
-  { bg: "#172642", fg: "#818cf8", accent: "#e0e7ff", shape: "gem" },
-  { bg: "#10351f", fg: "#86efac", accent: "#f4c566", shape: "club" },
+  { bg: "#221d14", fg: "#dfb86b", accent: "#f5f2eb", shape: "crown" },
+  { bg: "#17212b", fg: "#8fb8de", accent: "#e8eef5", shape: "spade" },
+  { bg: "#2a171c", fg: "#dc5353", accent: "#f3dfb8", shape: "heart" },
+  { bg: "#262015", fg: "#e6c680", accent: "#faf6ed", shape: "diamond" },
+  { bg: "#15241e", fg: "#52b788", accent: "#e3f2ea", shape: "club" },
+  { bg: "#211b2b", fg: "#b49ce0", accent: "#dfb86b", shape: "star" },
+  { bg: "#192229", fg: "#9bc2d9", accent: "#dfb86b", shape: "shield" },
+  { bg: "#291d15", fg: "#d9915b", accent: "#f5ebd6", shape: "bolt" },
+  { bg: "#16241f", fg: "#68c298", accent: "#f5f2eb", shape: "hex" },
+  { bg: "#261826", fg: "#cfa0cf", accent: "#f3dfb8", shape: "gem" },
+  { bg: "#19202c", fg: "#8caad9", accent: "#dfb86b", shape: "dice" },
+  { bg: "#252012", fg: "#e0be72", accent: "#faf6ed", shape: "chip" },
+  { bg: "#17261d", fg: "#6bc496", accent: "#e4f2ea", shape: "spade" },
+  { bg: "#2b171a", fg: "#e06c75", accent: "#f7e6e6", shape: "crown" },
+  { bg: "#172229", fg: "#7ec2cf", accent: "#e2f1f4", shape: "star" },
+  { bg: "#211b29", fg: "#baa3e0", accent: "#efeaf7", shape: "diamond" },
+  { bg: "#261e13", fg: "#dea854", accent: "#f7eedb", shape: "shield" },
+  { bg: "#14241e", fg: "#58b88a", accent: "#dfb86b", shape: "chip" },
+  { bg: "#1b212c", fg: "#9db6de", accent: "#e6ecf7", shape: "bolt" },
+  { bg: "#291820", fg: "#d9829f", accent: "#f7e8ee", shape: "heart" },
+  { bg: "#162320", fg: "#73c2b4", accent: "#dfb86b", shape: "hex" },
+  { bg: "#261b14", fg: "#dba070", accent: "#f7ebe1", shape: "dice" },
+  { bg: "#1a1e2b", fg: "#969ee0", accent: "#e8eaf7", shape: "gem" },
+  { bg: "#16241a", fg: "#7ac792", accent: "#dfb86b", shape: "club" },
 ] as const;
 
 function AvatarGlyph({ shape, fg, accent }: { shape: (typeof AVATAR_PALETTES)[number]["shape"]; fg: string; accent: string }) {
@@ -130,9 +130,9 @@ export function Avatar({ id, size = 36, title, ring }: { id: string | undefined;
 export function StatusDot({ status }: { status: "online" | "in_game" | "away" | "offline" | string }) {
   const cls =
     status === "online"
-      ? "bg-primary shadow-[0_0_8px_rgba(34,229,155,0.85)]"
+      ? "bg-lime"
       : status === "in_game"
-        ? "bg-gold shadow-[0_0_8px_rgba(244,197,102,0.85)]"
+        ? "bg-gold"
         : status === "away"
           ? "bg-warning"
           : "bg-muted/40";

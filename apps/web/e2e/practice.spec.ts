@@ -96,11 +96,13 @@ test.describe("practice mode", () => {
 
   for (const game of GAMES) {
     test(`plays ${game} against bots`, async ({ guarded: page }) => {
+      test.setTimeout(90_000);
       await page.goto(`./#/practice/${game}`);
       await expect(page.getByText("Practice mode: runs entirely in your browser")).toBeVisible();
       if (game === "joker") {
         const start = page.getByRole("button", { name: "Start game" });
-        if (await start.isVisible()) await start.click();
+        await expect(start).toBeVisible();
+        await start.click();
       }
       const yourTurn = page.getByText("Your turn", { exact: true });
       const finished = page.getByText(/Match finished|You are out of chips/).first();

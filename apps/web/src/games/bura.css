@@ -189,29 +189,29 @@
   padding: 2px 9px;
   border-radius: 999px;
   font-size: 10.5px;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--ink);
-  background: rgba(7, 14, 25, 0.86);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: #151519;
+  border: 1px solid #2b2b34;
 }
 
 .pbtrick-tag[data-best="leading"] {
-  border-color: rgba(34, 229, 155, 0.7);
-  color: var(--teal-hi);
+  border-color: #dfb86b;
+  color: var(--gold);
 }
 
 .pbtrick-tag[data-best="winner"] {
-  color: #241803;
-  background: linear-gradient(180deg, #fce09c, #e4b04b);
-  border-color: transparent;
+  color: #141008;
+  background-color: #dfb86b;
+  border-color: #dfb86b;
 }
 
 .pbtrick-group[data-best="leading"] .pcard {
   box-shadow:
-    0 0 0 2px rgba(34, 229, 155, 0.85),
+    0 0 0 2px #dfb86b,
     0 10px 20px -6px rgba(0, 0, 0, 0.55);
 }
 
@@ -240,9 +240,9 @@
   width: 13px;
   height: 10px;
   border-radius: 2px;
-  background: linear-gradient(160deg, #0e5e48, #062a25);
+  background-color: #141418;
   box-shadow:
-    inset 0 0 0 1px rgba(217, 181, 109, 0.7),
+    inset 0 0 0 1px rgba(223, 184, 107, 0.75),
     0 0 0 1px rgba(0, 0, 0, 0.4);
 }
 
@@ -287,7 +287,7 @@
 }
 
 .pbura-team b {
-  font: 800 18px/1 "Segoe UI", system-ui, sans-serif;
+  font: 700 18px/1 var(--font-display, Georgia), serif;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
@@ -347,14 +347,12 @@
   max-width: 100%;
   margin-top: calc(var(--cw-hand) * 0.24);
   margin-bottom: -22px;
-  padding: 9px 10px 9px 18px;
-  border-radius: 22px;
-  background: rgba(13, 19, 32, 0.94);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 18px 38px -10px rgba(0, 0, 0, 0.65);
-  animation: rise-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  padding: 9px 10px 9px 16px;
+  border-radius: 14px;
+  background-color: #151519;
+  border: 1px solid #2b2b34;
+  box-shadow: 0 14px 32px -10px rgba(0, 0, 0, 0.65);
+  animation: rise-in 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .pactions-hint {

@@ -12,7 +12,7 @@ function LanguageToggle() {
   const { locale, setLocale } = useLocale();
   return (
     <button
-      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-surface-3 border border-line text-xs font-bold text-text-2 hover:border-primary/45 hover:text-white transition-colors"
+      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-[9px] bg-surface-3 border border-line text-xs font-semibold text-text-2 hover:border-line-strong hover:text-text transition-colors"
       onClick={() => setLocale(locale === "ka" ? "en" : "ka")}
       aria-label="language"
     >
@@ -77,33 +77,33 @@ export function AppShell() {
   ];
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-1.5 px-3.5 h-8.5 rounded-full text-xs xl:text-[13px] font-bold whitespace-nowrap transition-all ${
+    `flex items-center gap-1.5 px-3.5 h-8 rounded-[7px] text-xs xl:text-[13px] font-semibold whitespace-nowrap border transition-colors ${
       isActive
-        ? "bg-primary text-[#032215] shadow-[0_2px_12px_rgba(34,229,155,0.28)]"
-        : "text-muted hover:text-white hover:bg-surface-2/80"
+        ? "bg-surface-2 text-text border-line-strong"
+        : "border-transparent text-muted hover:text-text hover:bg-surface/70"
     }`;
 
   return (
     <div className="min-h-dvh flex flex-col">
-      <header className={`sticky top-0 z-30 bg-bg-elevated/92 backdrop-blur-md border-b border-line/80 ${atTable ? "hidden sm:block" : ""}`}>
+      <header className={`sticky top-0 z-30 bg-bg-elevated/95 backdrop-blur-md border-b border-line ${atTable ? "hidden sm:block" : ""}`}>
         <div className="max-w-7xl mx-auto flex items-center gap-3 px-3.5 sm:px-5 h-15">
           <button className="flex items-center gap-2.5 text-left group shrink-0" onClick={() => navigate("/")}>
             <BrandMark size={32} />
-            <span className="hidden sm:flex items-baseline gap-1 leading-none whitespace-nowrap">
-              <span className="font-black text-[16px] tracking-tight text-white">CROCO</span>
-              <span className="font-black text-[16px] tracking-tight text-primary">GAMES</span>
+            <span className="hidden sm:flex items-baseline gap-1 leading-none whitespace-nowrap" style={{ fontFamily: "var(--font-display)" }}>
+              <span className="font-bold text-[18px] tracking-[-0.02em] text-text">Croco</span>
+              <span className="font-semibold text-[18px] tracking-[-0.02em] text-primary">Games</span>
             </span>
           </button>
 
-          <nav className="hidden lg:flex items-center gap-1 ml-3 p-1 rounded-full bg-surface-3/90 border border-line/80 min-w-0" aria-label="main">
+          <nav className="hidden lg:flex items-center gap-1 ml-3 p-1 rounded-[10px] bg-surface-3 border border-line min-w-0" aria-label="main">
             {links.map((l) => (
               <NavLink key={l.to} to={l.to} end={l.end} className={linkClass}>
-                <l.icon size={15} className="shrink-0" /> {l.label}
+                <l.icon size={14} className="shrink-0" /> {l.label}
               </NavLink>
             ))}
             {isStaff && (
               <NavLink to="/admin" className={linkClass}>
-                <Shield size={15} className="shrink-0" /> {t("nav.admin")}
+                <Shield size={14} className="shrink-0" /> {t("nav.admin")}
               </NavLink>
             )}
           </nav>
@@ -114,29 +114,29 @@ export function AppShell() {
               <>
                 <NavLink
                   to="/notifications"
-                  className="relative inline-flex items-center justify-center size-9 rounded-full bg-surface-3 border border-line text-text-2 hover:text-white hover:border-line-strong transition-colors"
+                  className="relative inline-flex items-center justify-center size-9 rounded-[9px] bg-surface-3 border border-line text-text-2 hover:text-text hover:border-line-strong transition-colors"
                   aria-label={t("nav.notifications")}
                 >
                   <Bell size={16} />
                   {unread > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-4.5 h-4.5 px-1 rounded-full bg-primary text-[#032215] text-[10px] font-extrabold leading-[1.125rem] text-center">
+                    <span className="absolute -top-1 -right-1 min-w-4.5 h-4.5 px-1 rounded-full bg-primary text-[#141008] text-[10px] font-bold leading-[1.125rem] text-center">
                       {unread > 99 ? "99+" : unread}
                     </span>
                   )}
                 </NavLink>
                 <NavLink
                   to="/settings"
-                  className="inline-flex items-center gap-2 pl-1 pr-3 h-9 rounded-full bg-surface-3 border border-line hover:border-primary/45 transition-colors"
+                  className="inline-flex items-center gap-2 pl-1.5 pr-3 h-9 rounded-[9px] bg-surface-3 border border-line hover:border-line-strong transition-colors"
                   aria-label={t("nav.settings")}
                 >
-                  <Avatar id={me?.profile?.avatar} size={28} />
-                  <span className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-white max-w-28 truncate">
+                  <Avatar id={me?.profile?.avatar} size={26} />
+                  <span className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-text max-w-28 truncate">
                     <StatusDot status="online" />
                     <span className="truncate">{me?.profile?.username}</span>
                   </span>
                 </NavLink>
                 <button
-                  className="hidden sm:inline-flex items-center justify-center size-9 rounded-full bg-surface-3 border border-line text-muted hover:text-danger hover:border-danger/40 transition-colors"
+                  className="hidden sm:inline-flex items-center justify-center size-9 rounded-[9px] bg-surface-3 border border-line text-muted hover:text-danger hover:border-danger/40 transition-colors"
                   onClick={() => void signOut()}
                   aria-label={t("nav.logout")}
                   title={t("nav.logout")}
@@ -165,22 +165,22 @@ export function AppShell() {
         <Outlet />
       </main>
 
-      <nav className={`${atTable ? "hidden" : "lg:hidden"} fixed bottom-0 inset-x-0 z-30 bg-bg-elevated/95 backdrop-blur-md border-t border-line/80 grid grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)]`} aria-label="mobile">
+      <nav className={`${atTable ? "hidden" : "lg:hidden"} fixed bottom-0 inset-x-0 z-30 bg-bg-elevated/96 backdrop-blur-md border-t border-line grid grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)]`} aria-label="mobile">
         {[...links, isStaff ? { to: "/admin", icon: Shield, label: t("nav.admin") } : { to: "/settings", icon: Settings, label: t("nav.settings") }].map((l) => (
           <NavLink
             key={l.to}
             to={l.to}
             end={"end" in l ? l.end : false}
             className={({ isActive }) =>
-              `relative min-w-0 flex flex-col items-center justify-center h-15 text-[11px] font-bold gap-1 transition-colors ${
-                isActive ? "text-primary" : "text-muted hover:text-text-2"
+              `relative min-w-0 flex flex-col items-center justify-center h-15 text-[11px] font-semibold gap-1 transition-colors ${
+                isActive ? "text-text" : "text-muted hover:text-text-2"
               }`
             }
           >
             {({ isActive }) => (
               <>
-                <span className={`inline-flex items-center justify-center w-11 h-7 rounded-full transition-colors ${isActive ? "bg-primary/15" : ""}`}>
-                  <l.icon size={18} />
+                <span className={`inline-flex items-center justify-center w-10 h-7 rounded-[8px] transition-colors ${isActive ? "bg-surface-2 border border-line-strong text-primary" : ""}`}>
+                  <l.icon size={17} />
                 </span>
                 <span className="truncate max-w-full px-1">{l.label}</span>
               </>

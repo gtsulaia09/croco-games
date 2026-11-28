@@ -12,24 +12,26 @@ public interface. The list lives in [`apps/web/src/lib/availability.ts`](../apps
 tabs. Poker, dominoes and nardi are **not removed**: engines, API, rooms, ratings, routes and
 match history all keep working, and a game comes back by adding it to `VISIBLE_GAMES`.
 
-## Palette (tokens in `apps/web/src/styles.css`)
+## Palette & Typography (`apps/web/src/styles.css` & `apps/web/src/fonts/fonts.css`)
 
-| Token                                                           | Value                             | Use                                                   |
-| --------------------------------------------------------------- | --------------------------------- | ----------------------------------------------------- |
-| `--color-bg`                                                    | `#080c14`                         | Obsidian page canvas                                  |
-| `--color-bg-elevated` / `--color-surface` / `--color-surface-2` | `#0d1320` / `#121a2b` / `#172237` | Header, bento cards, raised surfaces                  |
-| `--color-felt` / `--color-felt-hi`                              | `#08664b` / `#0f8764`             | Tourmaline-emerald card table felt                    |
-| `--color-primary`                                               | `#22e59b`                         | Primary actions, your turn, playable cards, selection |
-| `--color-lime`                                                  | `#9ef564`                         | Positive results (met declarations)                   |
-| `--color-gold`                                                  | `#f4c566`                         | Scores, totals, trump, dealer chip, winners           |
-| `--color-danger`                                                | `#ff5c72`                         | Penalties, negative scores, urgent timer              |
-| `--color-text` / `--color-muted`                                | `#f8fafc` / `#8b9bb4`             | Primary & secondary text                              |
+| Token                                                           | Value                             | Use                                                        |
+| --------------------------------------------------------------- | --------------------------------- | ---------------------------------------------------------- |
+| `--color-bg`                                                    | `#0b0b0d`                         | Flat matte warm-onyx page canvas (zero gradients)          |
+| `--color-bg-elevated` / `--color-surface` / `--color-surface-2` | `#101013` / `#151519` / `#1c1c22` | App header, matte architectural cards, raised controls     |
+| `--color-felt` / `--color-felt-hi`                              | `#14261f` / `#1b332a`             | Flat botanical hunter club baize                           |
+| `--color-primary` / `--color-gold`                              | `#dfb86b`                         | Burnished champagne brand accent, trump, winners, totals   |
+| `.btn-primary`                                                  | `#f3efe6` bg / `#0c0c0e` ink      | Solid warm-ivory primary CTA button (zero gradient/glow)   |
+| `--color-lime`                                                  | `#52b788`                         | Botanical sage for online dots and met declarations        |
+| `--color-danger`                                                | `#dc5353`                         | Vermilion for penalties, khishti, urgent timers            |
+| `--color-text` / `--color-text-2` / `--color-muted`             | `#f5f2eb` / `#c9c5bc` / `#87837b` | Warm alabaster-ivory, stone, and pewter text hierarchy     |
+| `--font-display`                                                | `Fraunces Variable`, `Noto Serif Georgian Variable` | Self-hosted variable editorial serif for EN & KA headings, card ranks, and totals |
+| `--font-sans`                                                   | `Plus Jakarta Sans Variable`, `Noto Sans Georgian Variable` | Self-hosted variable UI sans-serif for EN & KA controls and body |
+| `--font-mono`                                                   | `JetBrains Mono Variable`         | Tabular numerals for clocks, room codes, and ratings       |
 
-Accent colours are used purposefully: emerald-mint = "you can act / primary CTA", champagne gold =
-"score / trump / leader", lime = "made it", coral-rose = "penalty / danger". Segmented pill bars
-(`.seg-bar` / `.seg-pill`) unify navigation, room filters, leaderboard tabs, and admin tabs.
-Buttons (`.btn-primary`, `.btn-secondary`, `.btn-gold`, `.btn-danger`, `.btn-ghost`) support
-normal, hover, active, disabled and loading (`data-loading="true"`) states.
+Surfaces are flat matte warm-onyx with crisp `1px` borders — never radial spotlight blobs or glossy
+beveled gradients. Primary buttons (`.btn-primary`) use solid crisp warm ivory (`#f3efe6`) with deep
+onyx ink (`#0c0c0e`); secondary buttons (`.btn-secondary`) use matte graphite (`#1c1c22`) with crisp
+`1px` hairlines; segmented bars (`.seg-bar` / `.seg-pill`) use flat surface stepping.
 
 ## Where things are
 

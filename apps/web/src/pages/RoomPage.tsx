@@ -328,7 +328,7 @@ function Results({ result, seats }: { result: MatchResult; seats: SeatInfo[] }) 
   const t = useT();
   const sorted = result.entries.slice().sort((a, b) => a.placement - b.placement);
   return (
-    <div className="card p-5 border-gold/45 bg-gradient-to-br from-gold/10 via-surface to-surface">
+    <div className="card p-5 border-gold/45 bg-surface">
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-extrabold text-base text-white flex items-center gap-2">
           <Trophy size={17} className="text-gold" /> {t("room.results")}

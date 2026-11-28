@@ -31,7 +31,7 @@ export default function Invite() {
 
   return (
     <div className="card overflow-hidden max-w-md mx-auto mt-8 fade-in">
-      <div className={`relative h-30 bg-gradient-to-br ${theme.headerBg} border-b border-line`}>
+      <div className={`relative h-30 ${theme.headerBg} border-b border-line`}>
         <GameArtwork game={validGame} className="w-full h-full" />
         <span className={`chip absolute top-3.5 left-3.5 ${theme.badgeClass}`}>{t(`games.${validGame}.name`)}</span>
       </div>

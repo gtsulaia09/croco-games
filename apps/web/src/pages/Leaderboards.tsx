@@ -89,10 +89,10 @@ export default function Leaderboards() {
           {top3.map((r, idx) => {
             const podium =
               idx === 0
-                ? { border: "border-gold/50 bg-gradient-to-b from-gold/14 via-surface to-surface", badge: "bg-gold text-[#241803]", ring: "gold" as const }
+                ? { border: "border-gold/45 bg-surface", badge: "bg-gold text-[#141008]", ring: "gold" as const }
                 : idx === 1
-                  ? { border: "border-silver/40 bg-gradient-to-b from-silver/10 via-surface to-surface", badge: "bg-silver text-[#0f172a]", ring: "none" as const }
-                  : { border: "border-bronze/45 bg-gradient-to-b from-bronze/12 via-surface to-surface", badge: "bg-bronze text-[#1f1005]", ring: "none" as const };
+                  ? { border: "border-silver/35 bg-surface", badge: "bg-silver text-[#0f172a]", ring: "none" as const }
+                  : { border: "border-bronze/40 bg-surface", badge: "bg-bronze text-[#1f1005]", ring: "none" as const };
             return (
               <div key={r.user.id} className={`card p-4.5 border ${podium.border} flex flex-col gap-3.5`}>
                 <div className="flex items-center justify-between">

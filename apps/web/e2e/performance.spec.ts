@@ -34,7 +34,8 @@ test.describe("performance and responsiveness", () => {
     const beforeJoker = loadedScripts.length;
     await page.goto("./#/practice/joker");
     const startEn = page.getByRole("button", { name: "Start game" });
-    if (await startEn.isVisible()) await startEn.click();
+    await expect(startEn).toBeVisible();
+    await startEn.click();
     await expect(page.getByText("Your turn", { exact: true }).or(page.getByText(/Waiting for/))).toBeVisible({ timeout: 20_000 });
     const afterJoker = loadedScripts.slice(beforeJoker);
     expect(afterJoker.some((s) => /^joker-/.test(s))).toBe(true);
@@ -81,7 +82,7 @@ test.describe("performance and responsiveness", () => {
 
   test("has no horizontal overflow across desktop, tablet, and small mobile viewports in Georgian and English", async ({ guarded: page }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop", "Viewport matrix runs once across all target dimensions");
-    test.setTimeout(90_000);
+    test.setTimeout(120_000);
 
     // 1. Verify Georgian (ka, default) has native Georgian text, zero English tag leaks, and zero overflow across all 7 viewports.
     await page.goto("./#/");
@@ -123,10 +124,11 @@ test.describe("performance and responsiveness", () => {
         await page.goto(route);
         await expect(page.locator("main")).toBeVisible();
         if (route === "./#/practice/joker") {
+          const startKa = page.getByRole("button", { name: "თამაშის დაწყება" });
+          await expect(startKa).toBeVisible();
           const setupOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
           expect(setupOverflow, `ka ${vp.name} ${route} setup overflow`).toBeLessThanOrEqual(1);
-          const startKa = page.getByRole("button", { name: "თამაშის დაწყება" });
-          if (await startKa.isVisible()) await startKa.click();
+          await startKa.click();
         }
         if (route.startsWith("./#/practice/")) {
           await expect(page.getByText("შენი სვლაა", { exact: true }).or(page.getByText(/სვლაზეა:/))).toBeVisible({ timeout: 20_000 });

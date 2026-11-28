@@ -16,82 +16,76 @@ export const GAME_THEMES: Record<GameType, GameVisualTheme> = {
   joker: {
     accentClass: "text-primary",
     badgeClass: "bg-primary/14 text-primary border border-primary/30",
-    headerBg: "from-[#0c3528] via-surface to-surface",
+    headerBg: "bg-surface",
     category: "cards",
   },
   japanese_joker: {
     accentClass: "text-accent",
     badgeClass: "bg-accent/14 text-accent border border-accent/30",
-    headerBg: "from-[#0e2d44] via-surface to-surface",
+    headerBg: "bg-surface",
     category: "cards",
   },
   bura3: {
     accentClass: "text-gold",
     badgeClass: "bg-gold/14 text-gold border border-gold/30",
-    headerBg: "from-[#2d2412] via-surface to-surface",
+    headerBg: "bg-surface",
     category: "cards",
   },
   bura5: {
-    accentClass: "text-primary",
-    badgeClass: "bg-primary/14 text-primary border border-primary/30",
-    headerBg: "from-[#10352e] via-surface to-surface",
+    accentClass: "text-lime",
+    badgeClass: "bg-lime/14 text-lime border border-lime/30",
+    headerBg: "bg-surface",
     category: "cards",
   },
   holdem: {
     accentClass: "text-primary",
     badgeClass: "bg-primary/14 text-primary border border-primary/30",
-    headerBg: "from-[#0c3528] via-surface to-surface",
+    headerBg: "bg-surface",
     category: "poker",
   },
   shortdeck: {
     accentClass: "text-danger",
     badgeClass: "bg-danger/14 text-danger border border-danger/30",
-    headerBg: "from-[#351523] via-surface to-surface",
+    headerBg: "bg-surface",
     category: "poker",
   },
   omaha: {
     accentClass: "text-accent",
     badgeClass: "bg-accent/14 text-accent border border-accent/30",
-    headerBg: "from-[#0f2c46] via-surface to-surface",
+    headerBg: "bg-surface",
     category: "poker",
   },
   omaha_hilo: {
     accentClass: "text-gold",
     badgeClass: "bg-gold/14 text-gold border border-gold/30",
-    headerBg: "from-[#1a2944] via-surface to-surface",
+    headerBg: "bg-surface",
     category: "poker",
   },
   dominoes: {
     accentClass: "text-text",
     badgeClass: "bg-white/10 text-text-2 border border-white/15",
-    headerBg: "from-[#162d38] via-surface to-surface",
+    headerBg: "bg-surface",
     category: "board",
   },
   backgammon: {
     accentClass: "text-gold",
     badgeClass: "bg-gold/14 text-gold border border-gold/30",
-    headerBg: "from-[#312014] via-surface to-surface",
+    headerBg: "bg-surface",
     category: "board",
   },
 };
 
-/** Signature emerald-mint squircle crest with crowned spade mark. */
+/** Signature flat matte-onyx & burnished-champagne crest with crowned spade mark. */
 export function BrandMark({ size = 32 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 36 36" fill="none" aria-hidden="true" className="shrink-0">
-      <defs>
-        <linearGradient id="cg-brand-bg" x1="3" y1="2" x2="33" y2="34" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#3bf0aa" />
-          <stop offset="100%" stopColor="#0ea86d" />
-        </linearGradient>
-      </defs>
-      <rect x="2" y="2" width="32" height="32" rx="10" fill="url(#cg-brand-bg)" />
-      <rect x="2.75" y="2.75" width="30.5" height="30.5" rx="9.25" stroke="rgba(255,255,255,0.34)" strokeWidth="1.25" />
+      <rect x="2" y="2" width="32" height="32" rx="9" fill="#151519" stroke="#DFB86B" strokeWidth="1.4" />
+      <rect x="4.5" y="4.5" width="27" height="27" rx="6.8" stroke="#282832" strokeWidth="0.9" />
       <path
         d="M18 7.6C18 7.6 9.6 15.2 9.6 19.9C9.6 22.6 11.7 24.5 14.3 24.5C15.7 24.5 16.8 23.9 17.6 22.8C17.4 24.4 16.6 25.9 15.2 27H20.8C19.4 25.9 18.6 24.4 18.4 22.8C19.2 23.9 20.3 24.5 21.7 24.5C24.3 24.5 26.4 22.6 26.4 19.9C26.4 15.2 18 7.6 18 7.6Z"
-        fill="#041c12"
+        fill="#F5F2EB"
       />
-      <path d="M13.8 16.4L15.8 18.7L18 15.5L20.2 18.7L22.2 16.4L21.3 20.6H14.7L13.8 16.4Z" fill="#f4c566" />
+      <path d="M13.8 16.4L15.8 18.7L18 15.5L20.2 18.7L22.2 16.4L21.3 20.6H14.7L13.8 16.4Z" fill="#DFB86B" />
     </svg>
   );
 }
@@ -202,10 +196,10 @@ export function GameArtwork({ game, className = "w-full h-24" }: { game: GameTyp
             <text x="5" y="14" fontSize="10" fontWeight="800" fill="#e11d48">A</text>
             <text x="18" y="36" textAnchor="middle" fontSize="19" fill="#e11d48">♥</text>
           </g>
-          <circle cx="212" cy="64" r="11" fill="#22e59b" stroke="#fff" strokeWidth="2" strokeDasharray="4 3" />
-          <circle cx="212" cy="64" r="6" fill="#063b27" />
-          <circle cx="200" cy="72" r="10" fill="#f4c566" stroke="#fff" strokeWidth="2" strokeDasharray="4 3" />
-          <circle cx="200" cy="72" r="5" fill="#9a6b10" />
+          <circle cx="212" cy="64" r="11" fill="#52b788" stroke="#faf7f0" strokeWidth="2" strokeDasharray="4 3" />
+          <circle cx="212" cy="64" r="6" fill="#14261f" />
+          <circle cx="200" cy="72" r="10" fill="#dfb86b" stroke="#faf7f0" strokeWidth="2" strokeDasharray="4 3" />
+          <circle cx="200" cy="72" r="5" fill="#78581c" />
         </svg>
       );
 
@@ -339,39 +333,39 @@ export function GameBadgeIcon({ game, size = 20 }: { game: GameType; size?: numb
     case "joker":
       return (
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M12 4L15 11L21 8L18.5 17H5.5L3 8L9 11L12 4Z" fill="#f4c566" stroke="#b8841c" strokeWidth="1.2" />
-          <rect x="6" y="18.5" width="12" height="2.2" rx="1.1" fill="#22e59b" />
+          <path d="M12 4L15 11L21 8L18.5 17H5.5L3 8L9 11L12 4Z" fill="#dfb86b" stroke="#8c6b2d" strokeWidth="1.2" />
+          <rect x="6" y="18.5" width="12" height="2.2" rx="1.1" fill="#f5f2eb" />
         </svg>
       );
     case "japanese_joker":
       return (
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <rect x="4" y="6" width="10" height="14" rx="2" fill="#133a54" stroke="#5cc8ff" strokeWidth="1.3" />
-          <rect x="10" y="4" width="10" height="14" rx="2" fill="#ffffff" stroke="#f4c566" strokeWidth="1.3" />
-          <circle cx="15" cy="11" r="2.6" fill="#e11d48" />
+          <rect x="4" y="6" width="10" height="14" rx="2" fill="#1c1c22" stroke="#8fb8de" strokeWidth="1.3" />
+          <rect x="10" y="4" width="10" height="14" rx="2" fill="#faf7f0" stroke="#dfb86b" strokeWidth="1.3" />
+          <circle cx="15" cy="11" r="2.6" fill="#c82838" />
         </svg>
       );
     case "bura3":
       return (
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M12 3.5C12 3.5 5 10 5 14C5 16.5 7 18 9.2 18C10.4 18 11.3 17.5 12 16.6C12.7 17.5 13.6 18 14.8 18C17 18 19 16.5 19 14C19 10 12 3.5 12 3.5Z" fill="#f4c566" />
-          <path d="M10 20.5H14L12.8 17H11.2L10 20.5Z" fill="#f4c566" />
+          <path d="M12 3.5C12 3.5 5 10 5 14C5 16.5 7 18 9.2 18C10.4 18 11.3 17.5 12 16.6C12.7 17.5 13.6 18 14.8 18C17 18 19 16.5 19 14C19 10 12 3.5 12 3.5Z" fill="#dfb86b" />
+          <path d="M10 20.5H14L12.8 17H11.2L10 20.5Z" fill="#dfb86b" />
         </svg>
       );
     case "bura5":
       return (
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="8" r="3.4" fill="#22e59b" />
-          <circle cx="8" cy="13.2" r="3.4" fill="#22e59b" />
-          <circle cx="16" cy="13.2" r="3.4" fill="#22e59b" />
-          <path d="M10 20.5H14L12.8 15.5H11.2L10 20.5Z" fill="#22e59b" />
+          <circle cx="12" cy="8" r="3.4" fill="#52b788" />
+          <circle cx="8" cy="13.2" r="3.4" fill="#52b788" />
+          <circle cx="16" cy="13.2" r="3.4" fill="#52b788" />
+          <path d="M10 20.5H14L12.8 15.5H11.2L10 20.5Z" fill="#52b788" />
         </svg>
       );
     case "holdem":
       return (
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="12" r="9" fill="#22e59b" stroke="#f8fafc" strokeWidth="2" strokeDasharray="3.5 2.5" />
-          <circle cx="12" cy="12" r="4.5" fill="#06291d" />
+          <circle cx="12" cy="12" r="9" fill="#52b788" stroke="#f5f2eb" strokeWidth="2" strokeDasharray="3.5 2.5" />
+          <circle cx="12" cy="12" r="4.5" fill="#14261f" />
         </svg>
       );
     case "shortdeck":

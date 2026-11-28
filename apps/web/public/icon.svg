@@ -1,1 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><defs><linearGradient id="g" x1="6" y1="4" x2="58" y2="60" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#34f0a8"/><stop offset="100%" stop-color="#0da66c"/></linearGradient></defs><rect x="3" y="3" width="58" height="58" rx="16" fill="url(#g)"/><rect x="4" y="4" width="56" height="56" rx="15" stroke="#ffffff" stroke-opacity=".28" stroke-width="2"/><path d="M32 13C32 13 17 26.8 17 35.2c0 4.9 3.8 8.3 8.4 8.3 2.5 0 4.6-1.1 6-3-.4 2.9-1.8 5.5-4.4 7.5h10c-2.6-2-4-4.6-4.4-7.5 1.4 1.9 3.5 3 6 3 4.6 0 8.4-3.4 8.4-8.3C47 26.8 32 13 32 13z" fill="#051c12"/><path d="M24.5 28.5l3.6 4.2 3.9-5.7 3.9 5.7 3.6-4.2-1.6 7.5H26.1l-1.6-7.5z" fill="#f4c566"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect x="3" y="3" width="58" height="58" rx="14" fill="#141418" stroke="#DFB86B" stroke-width="2" />
+  <rect x="7" y="7" width="50" height="50" rx="10.5" stroke="#2A2A33" stroke-width="1" />
+  <path
+    d="M32 13.5C32 13.5 17 27 17 35.4C17 40.2 20.8 43.6 25.4 43.6C27.9 43.6 29.9 42.5 31.3 40.6C30.9 43.5 29.5 46.2 27 48.2H37C34.5 46.2 33.1 43.5 32.7 40.6C34.1 42.5 36.1 43.6 38.6 43.6C43.2 43.6 47 40.2 47 35.4C47 27 32 13.5 32 13.5Z"
+    fill="#F5F2EB"
+  />
+  <path d="M24.6 29.2L28.2 33.2L32 27.6L35.8 33.2L39.4 29.2L37.8 36.6H26.2L24.6 29.2Z" fill="#DFB86B" />
+</svg>

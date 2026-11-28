@@ -66,13 +66,12 @@
   margin: 0;
   font: inherit;
   color: inherit;
-  border-radius: calc(var(--cw) * 0.095);
-  background: linear-gradient(168deg, #ffffff 0%, #fcfdff 56%, #f1f4f9 100%);
+  border-radius: calc(var(--cw) * 0.09);
+  background-color: #faf7f0;
   box-shadow:
-    0 0 0 1px rgba(15, 23, 42, 0.22),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.96),
-    0 2px 3px rgba(0, 0, 0, 0.26),
-    0 10px 20px -6px rgba(0, 0, 0, 0.52);
+    0 0 0 1px rgba(12, 12, 14, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.85),
+    0 6px 16px -4px rgba(0, 0, 0, 0.48);
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   transition:
@@ -92,33 +91,29 @@
 }
 
 .pc-rank {
-  font: 700 24px/1 "Inter", "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  letter-spacing: -0.035em;
+  font: 700 23.5px/1 "Fraunces Variable", Georgia, serif;
+  font-variation-settings: "SOFT" 20, "WONK" 0;
+  letter-spacing: -0.03em;
 }
 
 .pc-joker-index {
-  font: 800 9.6px/1 "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font: 800 9.4px/1 "Plus Jakarta Sans Variable", system-ui, sans-serif;
 }
 
-/* Card back: obsidian-emerald geometric lattice with champagne-gold frame and crest */
+/* Card back: flat matte onyx panel with burnished champagne frame and crest */
 .pc-back {
-  background: linear-gradient(168deg, #ffffff, #f1f4f9);
+  background-color: #faf7f0;
 }
 
 .pc-back::before {
   content: "";
   position: absolute;
-  inset: calc(var(--cw) * 0.058);
-  border-radius: calc(var(--cw) * 0.055);
-  background:
-    radial-gradient(ellipse 62% 45% at 50% 50%, rgba(34, 229, 155, 0.24), transparent 72%),
-    repeating-linear-gradient(45deg, rgba(244, 197, 102, 0.16) 0 1px, transparent 1px 6px),
-    repeating-linear-gradient(-45deg, rgba(244, 197, 102, 0.16) 0 1px, transparent 1px 6px),
-    linear-gradient(160deg, #0d5c44 0%, #07392c 55%, #05221c 100%);
+  inset: calc(var(--cw) * 0.06);
+  border-radius: calc(var(--cw) * 0.05);
+  background-color: #141418;
   box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
-    inset 0 0 0 2.2px rgba(244, 197, 102, 0.72),
-    inset 0 0 0 3.8px rgba(0, 0, 0, 0.24);
+    inset 0 0 0 1.5px rgba(223, 184, 107, 0.78),
+    inset 0 0 0 3px #141418;
 }
 
 .pc-back > .pc-face {
@@ -130,9 +125,9 @@
   flex: none;
   width: var(--cw);
   height: calc(var(--cw) * 1.4);
-  border-radius: calc(var(--cw) * 0.095);
-  border: 1.5px dashed rgba(255, 255, 255, 0.18);
-  background: rgba(0, 0, 0, 0.14);
+  border-radius: calc(var(--cw) * 0.09);
+  border: 1.5px dashed rgba(255, 255, 255, 0.16);
+  background-color: rgba(0, 0, 0, 0.16);
 }
 
 button.pcard {
@@ -144,7 +139,7 @@ button.pcard:disabled {
 }
 
 button.pcard:focus-visible {
-  outline: 3px solid #22e59b;
+  outline: 2.5px solid #dfb86b;
   outline-offset: 2px;
 }
 
@@ -154,14 +149,13 @@ button.pcard:focus-visible {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: rgba(8, 12, 20, 0.44);
+  background-color: rgba(11, 11, 13, 0.44);
 }
 
 .pcard[data-selected="true"] {
   box-shadow:
-    0 0 0 2.5px #22e59b,
-    0 0 0 6px rgba(34, 229, 155, 0.22),
-    0 18px 30px -8px rgba(0, 0, 0, 0.62);
+    0 0 0 2.5px #dfb86b,
+    0 16px 26px -8px rgba(0, 0, 0, 0.6);
 }
 
 .pcard[data-selected="true"]::before {
@@ -174,23 +168,21 @@ button.pcard:focus-visible {
   height: 22px;
   border-radius: 50%;
   background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23032215' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.2 4.2L19 7'/%3E%3C/svg%3E") center / 13px no-repeat,
-    #22e59b;
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23141008' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.2 4.2L19 7'/%3E%3C/svg%3E") center / 13px no-repeat,
+    #dfb86b;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
 }
 
 /* Trick highlights */
 .pcard[data-highlight="winner"] {
   box-shadow:
-    0 0 0 2.5px #f4c566,
-    0 0 26px rgba(244, 197, 102, 0.55),
+    0 0 0 2.5px #dfb86b,
     0 12px 24px -6px rgba(0, 0, 0, 0.55);
 }
 
 .pcard[data-highlight="latest"] {
   box-shadow:
-    0 0 0 2px rgba(34, 229, 155, 0.88),
-    0 0 18px rgba(34, 229, 155, 0.35),
+    0 0 0 2px #f3efe6,
     0 12px 24px -6px rgba(0, 0, 0, 0.55);
 }
 
@@ -233,8 +225,7 @@ button.pcard:focus-visible {
     translate: 0 calc(var(--fan-y, 0px) - 18px);
     z-index: 4;
     box-shadow:
-      0 0 0 1px rgba(15, 23, 42, 0.24),
-      0 0 0 3px rgba(34, 229, 155, 0.9),
+      0 0 0 2.5px #dfb86b,
       0 14px 24px rgba(0, 0, 0, 0.45);
   }
 }
