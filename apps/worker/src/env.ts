@@ -17,6 +17,13 @@ export interface Env {
   ENVIRONMENT: string;
   FIREBASE_PROJECT_ID: string;
   FIREBASE_AUTH_DOMAIN?: string;
+  /**
+   * Public Firebase web config (the same values every visitor's browser receives). Served by
+   * /api/config/public so the deploy pipeline can build the site without keeping the key in Git
+   * or in a GitHub variable. The API key is set with `wrangler secret put FIREBASE_WEB_API_KEY`.
+   */
+  FIREBASE_WEB_API_KEY?: string;
+  FIREBASE_APP_ID?: string;
   ALLOWED_ORIGINS: string;
   // Secrets (wrangler secret put …)
   MFA_ENCRYPTION_KEY?: string;

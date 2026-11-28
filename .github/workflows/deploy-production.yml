@@ -6,10 +6,11 @@ name: Deploy Production (Cloudflare)
 # The full verification gate runs first; nothing is deployed if lint, types, tests or the build fail.
 # It can also be started by hand: Actions → "Deploy Production (Cloudflare)" → Run workflow.
 #
-# Needs, in GitHub → Settings → Secrets and variables → Actions:
-#   Secret   CLOUDFLARE_API_TOKEN   Cloudflare API token (Workers Scripts: Edit, D1: Edit)
-#   Variable VITE_FIREBASE_API_KEY  Firebase web API key. Public by design (it ships in the site),
-#                                   but kept out of Git so secret scanners do not flag it.
+# Needs one secret, in GitHub → Settings → Secrets and variables → Actions:
+#   CLOUDFLARE_API_TOKEN   Cloudflare API token (Workers Scripts: Edit, D1: Edit)
+# The Firebase web API key (public by design, but kept out of Git so secret scanners do not flag
+# it) is read from the live API's /api/config/public (worker secret FIREBASE_WEB_API_KEY), unless
+# a VITE_FIREBASE_API_KEY variable is set.
 # Optional variables: VITE_FACEBOOK_LOGIN=true (once Facebook login is enabled in Firebase),
 #                     VITE_TURNSTILE_SITE_KEY.
 
@@ -53,18 +54,11 @@ jobs:
       - name: Check deploy settings
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
         run: |
-          missing=0
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-            echo "::error::Add the CLOUDFLARE_API_TOKEN secret: Settings → Secrets and variables → Actions → Secrets."
-            missing=1
+            echo "::error::Add the CLOUDFLARE_API_TOKEN secret: Settings → Secrets and variables → Actions → New repository secret."
+            exit 1
           fi
-          if [ -z "$VITE_FIREBASE_API_KEY" ]; then
-            echo "::error::Add the VITE_FIREBASE_API_KEY variable: Settings → Secrets and variables → Actions → Variables."
-            missing=1
-          fi
-          exit $missing
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -84,12 +78,26 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: pnpm exec wrangler deploy --env production
 
+      - name: Public Firebase web API key
+        env:
+          FROM_VARIABLE: ${{ vars.VITE_FIREBASE_API_KEY }}
+        run: |
+          key="$FROM_VARIABLE"
+          if [ -z "$key" ]; then
+            key=$(curl -fsS https://croco-games-api.giowulaia76.workers.dev/api/config/public \
+              | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).firebaseWeb?.apiKey ?? ''))")
+          fi
+          if [ -z "$key" ]; then
+            echo "::error::No Firebase web API key: set the worker secret FIREBASE_WEB_API_KEY or a VITE_FIREBASE_API_KEY variable."
+            exit 1
+          fi
+          echo "VITE_FIREBASE_API_KEY=$key" >> "$GITHUB_ENV"
+
       - name: Build web site (with _headers CSP/HSTS)
         env:
           VITE_DEPLOYMENT: cloudflare-pages
           VITE_BASE_PATH: /
           VITE_API_BASE: https://croco-games-api.giowulaia76.workers.dev
-          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: croco-games.firebaseapp.com
           VITE_FIREBASE_PROJECT_ID: croco-games
           VITE_FIREBASE_APP_ID: "1:448596738408:web:97d236dd816620570f56dd"

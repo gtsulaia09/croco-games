@@ -14,8 +14,8 @@ One-time GitHub setup (Settings → Secrets and variables → Actions):
 
 | Kind | Name | Value |
 |---|---|---|
-| Secret | `CLOUDFLARE_API_TOKEN` | Cloudflare API token with Workers Scripts: Edit and D1: Edit |
-| Variable | `VITE_FIREBASE_API_KEY` | Firebase web API key (public, kept out of Git so secret scanners do not flag it) |
+| Secret | `CLOUDFLARE_API_TOKEN` | Cloudflare API token with Workers Scripts: Edit and D1: Edit (the only required setting) |
+| Variable (optional) | `VITE_FIREBASE_API_KEY` | Overrides the Firebase web API key, which is otherwise read from the live API's `/api/config/public` (worker secret `FIREBASE_WEB_API_KEY`, set once with `wrangler secret put FIREBASE_WEB_API_KEY --env production`) |
 | Variable (optional) | `VITE_FACEBOOK_LOGIN` | `true` once Facebook login is enabled in Firebase |
 | Secret (optional) | `BACKUP_ENCRYPTION_KEY` | Enables the nightly encrypted D1 backup (`backup-d1.yml`); skipped until set |
 
