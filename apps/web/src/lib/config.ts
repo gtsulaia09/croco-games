@@ -12,6 +12,8 @@ export const config = {
     projectId: (env.VITE_FIREBASE_PROJECT_ID as string | undefined) ?? "",
     appId: (env.VITE_FIREBASE_APP_ID as string | undefined) ?? "",
   },
+  /** Facebook login needs a Meta app connected in Firebase; the button stays hidden until then. */
+  facebookLogin: env.VITE_FACEBOOK_LOGIN === "true",
   turnstileSiteKey: (env.VITE_TURNSTILE_SITE_KEY as string | undefined) ?? "",
   deployment: (env.VITE_DEPLOYMENT as string | undefined) ?? "cloudflare-pages",
 };

@@ -99,12 +99,14 @@ ratelimits = [
   { name = "RL_IP", namespace_id = "3005", simple = { limit = 900, period = 60 } },
 ]
 
-# Production: only the production Pages origin. Never the GitHub Pages demo origin.
+# Production: only the production site origin. Never the GitHub Pages demo origin.
+# The API is served on workers.dev (no custom domain yet); the site is the static-assets Worker
+# in apps/web (wrangler.jsonc), https://croco-games.giowulaia76.workers.dev.
 [env.production]
 name = "croco-games-api"
-workers_dev = false
-vars = { ENVIRONMENT = "production", FIREBASE_PROJECT_ID = "REPLACE_WITH_PROD_PROJECT_ID", FIREBASE_AUTH_DOMAIN = "REPLACE.firebaseapp.com", ALLOWED_ORIGINS = "https://REPLACE_WITH_PRODUCTION_PAGES_DOMAIN" }
-d1_databases = [{ binding = "DB", database_name = "croco-games-prod", database_id = "REPLACE_WITH_PROD_D1_ID", migrations_dir = "../../database/migrations" }]
+workers_dev = true
+vars = { ENVIRONMENT = "production", FIREBASE_PROJECT_ID = "croco-games", FIREBASE_AUTH_DOMAIN = "croco-games.firebaseapp.com", ALLOWED_ORIGINS = "https://croco-games.giowulaia76.workers.dev" }
+d1_databases = [{ binding = "DB", database_name = "croco-games-prod", database_id = "593eecc2-6963-4c1c-b7c0-0d16f5f8e2da", migrations_dir = "../../database/migrations" }]
 durable_objects.bindings = [{ name = "ROOM", class_name = "RoomDO" }, { name = "LOBBY", class_name = "LobbyDO" }, { name = "GAME_CHAT", class_name = "GameChatDO" }]
 ratelimits = [
   { name = "RL_AUTH", namespace_id = "4001", simple = { limit = 10, period = 60 } },

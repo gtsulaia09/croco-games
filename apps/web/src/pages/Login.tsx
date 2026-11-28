@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Navigate } from "react-router";
 import { Lock, Mail } from "lucide-react";
 import { useSession } from "../store/session";
-import { backendConfigured } from "../lib/config";
+import { backendConfigured, config } from "../lib/config";
 import { registerWithEmail, requestPasswordReset, signInWithEmail, signInWithProvider } from "../lib/firebase";
 import { useT } from "../i18n";
 import { BrandMark } from "../components/GameArt";
@@ -65,9 +65,11 @@ export default function Login() {
           <button className="btn-secondary h-11 w-full" disabled={busy} onClick={() => void run(() => signInWithProvider("google"))}>
             {t("auth.google")}
           </button>
-          <button className="btn-secondary h-11 w-full" disabled={busy} onClick={() => void run(() => signInWithProvider("facebook"))}>
-            {t("auth.facebook")}
-          </button>
+          {config.facebookLogin && (
+            <button className="btn-secondary h-11 w-full" disabled={busy} onClick={() => void run(() => signInWithProvider("facebook"))}>
+              {t("auth.facebook")}
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-3 my-5 text-xs text-muted uppercase tracking-wider">
           <span className="h-px bg-line flex-1" /> {t("auth.or")} <span className="h-px bg-line flex-1" />
