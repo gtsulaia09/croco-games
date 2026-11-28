@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
-import { ClipboardList, Crown, History, Sparkles, Trophy } from "lucide-react";
+import { ClipboardList, Crown, History, Maximize2, Sparkles, Trophy } from "lucide-react";
 import type { JokerView } from "@croco/game-engine/games/joker";
 import { useT } from "../i18n";
 import { SuitIcon, suitSymbol } from "../components/ui";
@@ -64,6 +64,73 @@ function LastTrick({ trick, name, jokerLabel }: { trick: NonNullable<JokerView["
         <Crown size={14} /> {t("table.takesTrick", { name: name(trick.winner) })}
       </p>
     </div>
+  );
+}
+
+/**
+ * The last trick taken, always on screen beside the table (above the score sheet on wide
+ * boards, next to it on narrow ones): the four cards in play order, who played each, joker
+ * calls, and who took it. Clicking it opens the larger view.
+ */
+function LastTrickPanel({
+  trick,
+  name,
+  jokerLabel,
+  onOpen,
+}: {
+  trick: JokerView["lastTrick"];
+  name(seat: number): string;
+  jokerLabel(mode: "high" | "low", lead: boolean): string;
+  onOpen(): void;
+}) {
+  const t = useT();
+  const sig = trick ? trick.plays.map((p) => p.card).join("") : "none";
+  return (
+    <section className="plt" data-empty={trick ? "false" : "true"} aria-label={t("joker.lastTrickTitle")}>
+      <button type="button" className="plt-head" onClick={onOpen} disabled={!trick} title={t("joker.lastTrickTitle")}>
+        <History size={15} aria-hidden="true" />
+        <span className="plt-title">{t("joker.lastTrick")}</span>
+        {trick && <Maximize2 size={13} className="plt-open" aria-hidden="true" />}
+      </button>
+      <ol className="plt-cards" key={sig}>
+        {trick
+          ? trick.plays.map((p, i) => {
+              const won = p.seat === trick.winner;
+              return (
+                <li key={`${p.seat}-${p.card}`} className="plt-play" data-winner={won ? "true" : "false"}>
+                  <PlayingCard card={p.card} size="mini" highlight={won ? "winner" : undefined} animate="flip" style={{ "--deal-i": i } as CSSProperties} />
+                  <span className="plt-who">
+                    <span className="plt-name">
+                      {won && <Crown size={11} aria-hidden="true" className="shrink-0" />}
+                      <span className="truncate">{name(p.seat)}</span>
+                    </span>
+                    {p.joker && (
+                      <span className="plt-tag">
+                        {jokerLabel(p.joker.mode, i === 0)}
+                        {p.joker.suit ? ` ${suitSymbol(p.joker.suit)}` : ""}
+                      </span>
+                    )}
+                  </span>
+                </li>
+              );
+            })
+          : [0, 1, 2, 3].map((i) => (
+              <li key={i} className="plt-play">
+                <span className="pc-slot" data-size="mini" />
+              </li>
+            ))}
+      </ol>
+      <p className="plt-winner">
+        {trick ? (
+          <>
+            <Crown size={14} aria-hidden="true" className="shrink-0" />
+            <span className="truncate">{t("joker.lastTrickTook", { name: name(trick.winner) })}</span>
+          </>
+        ) : (
+          <span className="truncate">{t("joker.noLastTrick")}</span>
+        )}
+      </p>
+    </section>
   );
 }
 
@@ -288,112 +355,106 @@ export default function JokerBoard({ view, mySeat, seats, deadline, onAction }: 
           </>
         }
         actions={
-          <>
-            <button
-              type="button"
-              className="phud-btn"
-              onClick={() => setLastOpen(true)}
-              disabled={!view.lastTrick}
-              title={t("joker.lastTrickTitle")}
-              aria-label={t("joker.lastTrickTitle")}
-            >
-              <History size={15} /> <span>{t("joker.lastTrick")}</span>
-            </button>
-            <button type="button" className="phud-btn" onClick={() => setSheet(true)}>
-              <ClipboardList size={15} /> <span>{t("joker.sheet")}</span>
-            </button>
-          </>
+          <button type="button" className="phud-btn" onClick={() => setSheet(true)}>
+            <ClipboardList size={15} /> <span>{t("joker.sheet")}</span>
+          </button>
         }
       />
 
       <div className="pj-layout">
-        <CompactScoreboard view={view} seats={seats} mySeat={mySeat} onOpen={() => setSheet(true)} />
-
-        <GameTable shape="oval" label={t("games.joker.name")} overlay={<GameNotification notice={notice} />}>
-          <div className="pj-grid">
-            <div data-area="n">{renderSeat(northSeat, "row")}</div>
-            <div data-area="w">{renderSeat(westSeat, "column")}</div>
-            <div data-area="e">{renderSeat(eastSeat, "column")}</div>
-            <div data-area="c" className="pj-center">
-              <div className="pj-trump" aria-label={declaredText ?? t("game.trump")}>
-                {view.trumpCard ? (
-                  <PlayingCard key={`${view.handNumber}-${view.trumpCard}`} card={view.trumpCard} size="pile" animate={mounted ? "flip" : false} />
-                ) : trumpBy !== null ? (
-                  // A declared trump: the suit (or ბეზი) and who declared it.
-                  <span key={`${view.handNumber}-declared`} className="pj-declared-trump" data-red={view.trump && isRedSuit(view.trump) ? "true" : "false"}>
-                    {view.trump ? <SuitIcon suit={view.trump} size={34} /> : <b>{t("game.noTrump")}</b>}
-                  </span>
-                ) : declaringTrump ? (
-                  <span className="pj-declared-trump" data-pending="true">
-                    ?
-                  </span>
-                ) : (
-                  <span className="pc-slot" data-size="pile" />
-                )}
-                <span className="pj-plaque-label">
-                  {trumpBy !== null
-                    ? t("joker.declaredBy", { name: name(trumpBy) })
-                    : declaringTrump && view.toAct !== null
-                      ? view.toAct === mySeat
-                        ? t("joker.declaringYou")
-                        : t("joker.declaring", { name: name(view.toAct) })
-                      : t("game.trump")}
-                </span>
-              </div>
-
-              <div className="pj-stage">
-                {showTrick ? (
-                  <div className="ptrick-cross" data-stage={stage}>
-                    {plays.map((p, i) => {
-                      const isWinner = stage !== "live" && p.seat === winner;
-                      const latest = stage === "live" && i === plays.length - 1;
-                      const tag = p.joker ? `${jokerLabel(p.joker.mode, i === 0)}${p.joker.suit ? ` ${suitSymbol(p.joker.suit)}` : ""}` : undefined;
-                      return (
-                        <TrickCard
-                          key={`${p.seat}-${p.card}`}
-                          play={p}
-                          pos={posOf[p.seat] ?? "s"}
-                          highlight={isWinner ? "winner" : latest ? "latest" : undefined}
-                          tag={tag}
-                          scope={boardRef}
-                          animate={mounted}
-                        />
-                      );
-                    })}
-                  </div>
-                ) : (
-                  centre
-                )}
-              </div>
-
-              <div className="pj-declared" data-tone={!allDeclared ? "open" : diff > 0 ? "over" : "under"} aria-label={t("table.declaredTitle")}>
-                <span className="pj-plaque-label">{t("table.declaredTitle")}</span>
-                <b>
-                  {declared}
-                  <small>/{view.cards}</small>
-                </b>
-                <span className="pj-declared-state">{!allDeclared ? t("table.declaring") : diff > 0 ? t("table.overShort", { n: diff }) : t("table.underShort", { n: -diff })}</span>
-              </div>
-            </div>
-            <div data-area="s">{renderSeat(southSeat, "row")}</div>
-          </div>
-        </GameTable>
-      </div>
-
-      {mySeat !== null && view.you && (
-        <div className="pdock">
-          <div className="pdock-hint" data-on={handActive || (myTurn && view.phase === "bid") ? "true" : "false"}>
-            {handActive ? t("joker.playHint") : t("table.declareHint")}
-          </div>
-          <PlayerHand
-            label={t("game.yourHand")}
-            dealKey={view.handNumber}
-            active={handActive}
-            onPick={play}
-            cards={hand.map((c) => ({ card: c, playable: playable.has(c) }))}
-          />
+        <div className="pj-side">
+          <CompactScoreboard view={view} seats={seats} mySeat={mySeat} onOpen={() => setSheet(true)} />
+          <LastTrickPanel trick={view.lastTrick} name={name} jokerLabel={jokerLabel} onOpen={() => setLastOpen(true)} />
         </div>
-      )}
+
+        <div className="pj-main">
+          <GameTable shape="oval" label={t("games.joker.name")} overlay={<GameNotification notice={notice} />}>
+            <div className="pj-grid">
+              <div data-area="n">{renderSeat(northSeat, "row")}</div>
+              <div data-area="w">{renderSeat(westSeat, "column")}</div>
+              <div data-area="e">{renderSeat(eastSeat, "column")}</div>
+              <div data-area="c" className="pj-center">
+                <div className="pj-trump" aria-label={declaredText ?? t("game.trump")}>
+                  {view.trumpCard ? (
+                    <PlayingCard key={`${view.handNumber}-${view.trumpCard}`} card={view.trumpCard} size="pile" animate={mounted ? "flip" : false} />
+                  ) : trumpBy !== null ? (
+                    // A declared trump: the suit (or ბეზი) and who declared it.
+                    <span key={`${view.handNumber}-declared`} className="pj-declared-trump" data-red={view.trump && isRedSuit(view.trump) ? "true" : "false"}>
+                      {view.trump ? <SuitIcon suit={view.trump} size={34} /> : <b>{t("game.noTrump")}</b>}
+                    </span>
+                  ) : declaringTrump ? (
+                    <span className="pj-declared-trump" data-pending="true">
+                      ?
+                    </span>
+                  ) : (
+                    <span className="pc-slot" data-size="pile" />
+                  )}
+                  <span className="pj-plaque-label">
+                    {trumpBy !== null
+                      ? t("joker.declaredBy", { name: name(trumpBy) })
+                      : declaringTrump && view.toAct !== null
+                        ? view.toAct === mySeat
+                          ? t("joker.declaringYou")
+                          : t("joker.declaring", { name: name(view.toAct) })
+                        : t("game.trump")}
+                  </span>
+                </div>
+  
+                <div className="pj-stage">
+                  {showTrick ? (
+                    <div className="ptrick-cross" data-stage={stage}>
+                      {plays.map((p, i) => {
+                        const isWinner = stage !== "live" && p.seat === winner;
+                        const latest = stage === "live" && i === plays.length - 1;
+                        const tag = p.joker ? `${jokerLabel(p.joker.mode, i === 0)}${p.joker.suit ? ` ${suitSymbol(p.joker.suit)}` : ""}` : undefined;
+                        return (
+                          <TrickCard
+                            key={`${p.seat}-${p.card}`}
+                            play={p}
+                            pos={posOf[p.seat] ?? "s"}
+                            highlight={isWinner ? "winner" : latest ? "latest" : undefined}
+                            tag={tag}
+                            scope={boardRef}
+                            animate={mounted}
+                          />
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    centre
+                  )}
+                </div>
+  
+                <div className="pj-declared" data-tone={!allDeclared ? "open" : diff > 0 ? "over" : "under"} aria-label={t("table.declaredTitle")}>
+                  <span className="pj-plaque-label">{t("table.declaredTitle")}</span>
+                  <b>
+                    {declared}
+                    <small>/{view.cards}</small>
+                  </b>
+                  <span className="pj-declared-state">{!allDeclared ? t("table.declaring") : diff > 0 ? t("table.overShort", { n: diff }) : t("table.underShort", { n: -diff })}</span>
+                </div>
+              </div>
+              <div data-area="s">{renderSeat(southSeat, "row")}</div>
+            </div>
+          </GameTable>
+
+          {/* The hand sits right under the table (in the same column), so the side panel never pushes it down */}
+          {mySeat !== null && view.you && (
+            <div className="pdock">
+              <div className="pdock-hint" data-on={handActive || (myTurn && view.phase === "bid") ? "true" : "false"}>
+                {handActive ? t("joker.playHint") : t("table.declareHint")}
+              </div>
+              <PlayerHand
+                label={t("game.yourHand")}
+                dealKey={view.handNumber}
+                active={handActive}
+                onPick={play}
+                cards={hand.map((c) => ({ card: c, playable: playable.has(c) }))}
+              />
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Joker: lead "high" or "let it take" (with a suit); follow "joker it" or low */}
       <ActionSheet open={jokerCard !== null} onClose={closeJoker} title={leading ? t("joker.jokerLead") : t("joker.jokerFollow")} subtitle={t("table.jokerSubtitle")}>

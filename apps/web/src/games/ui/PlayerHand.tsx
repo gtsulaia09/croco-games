@@ -1,7 +1,14 @@
-import { useState, type CSSProperties, type MouseEvent } from "react";
+import { useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent } from "react";
 import { useT } from "../../i18n";
 import { PlayingCard, type CardSize } from "../cards";
-import { rememberCardRect } from "./motion";
+import { motionAllowed, rememberCardRect } from "./motion";
+
+/** Where each card sat in the hand after the last render (layout position, ignoring transforms). */
+interface HandLayout {
+  deal: string | number | undefined;
+  width: number;
+  x: Map<string, number>;
+}
 
 export interface HandEntry {
   card: string;
@@ -44,7 +51,32 @@ export function PlayerHand({
 }) {
   const t = useT();
   const [armed, setArmed] = useState<string | null>(null);
+  const handRef = useRef<HTMLDivElement>(null);
+  const layout = useRef<HandLayout>({ deal: undefined, width: 0, x: new Map() });
   const n = cards.length;
+
+  // When a card leaves (or a drawn card arrives), the others glide to their new places instead of
+  // jumping there, so the hand never looks redrawn. Same deal and same width only (not on resize).
+  useLayoutEffect(() => {
+    const el = handRef.current;
+    if (!el) return;
+    const prev = layout.current;
+    const width = el.clientWidth;
+    const glide = prev.deal === dealKey && prev.width === width && motionAllowed();
+    const x = new Map<string, number>();
+    el.querySelectorAll<HTMLElement>(":scope > [data-card]").forEach((c) => {
+      const card = c.dataset.card!;
+      x.set(card, c.offsetLeft);
+      const from = prev.x.get(card);
+      if (glide && from !== undefined && Math.abs(from - c.offsetLeft) > 1) {
+        c.animate([{ transform: `translateX(${from - c.offsetLeft}px)` }, { transform: "translateX(0)" }], {
+          duration: 280,
+          easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+        });
+      }
+    });
+    layout.current = { deal: dealKey, width, x };
+  });
   const mid = (n - 1) / 2;
   const spread = Math.min(2.4, 18 / Math.max(n, 1));
   const live = active && Boolean(onPick);
@@ -63,7 +95,7 @@ export function PlayerHand({
 
   return (
     <div className="phand-wrap" data-mode={mode} data-live={live ? "true" : "false"}>
-      <div key={dealKey} className="phand" role="group" aria-label={label} style={{ "--gaps": Math.max(1, n - 1) } as CSSProperties}>
+      <div key={dealKey} ref={handRef} className="phand" role="group" aria-label={label} style={{ "--gaps": Math.max(1, n - 1) } as CSSProperties}>
         {cards.map((c, i) => {
           const off = i - mid;
           const vars = {

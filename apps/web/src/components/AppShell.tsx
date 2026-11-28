@@ -156,7 +156,8 @@ export function AppShell() {
         </div>
       </header>
 
-      <main className={`flex-1 w-full max-w-7xl mx-auto px-2.5 sm:px-5 py-3 sm:py-4 ${atTable ? "pb-4" : "pb-20 lg:pb-8"}`}>
+      {/* Game tables may use more of a wide screen than the other pages (bigger felt, bigger cards) */}
+      <main className={`flex-1 w-full mx-auto px-2.5 sm:px-5 py-3 sm:py-4 ${atTable ? "max-w-[1600px] pb-4" : "max-w-7xl pb-20 lg:pb-8"}`}>
         {maintenance && (
           <div role="status" className="card p-3.5 mb-4 border-warning/50 bg-warning/10 text-sm text-text-2 flex items-center gap-2.5">
             <AlertTriangle size={16} className="text-warning shrink-0" />
