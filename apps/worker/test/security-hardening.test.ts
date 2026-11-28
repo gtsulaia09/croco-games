@@ -52,7 +52,10 @@ async function bootstrapAdminWithStepUp(): Promise<{ admin: Client & { userId: s
   const p = await player("sec_adm");
   p.uid = "owner-firebase-uid";
   p.tok = await token("owner-firebase-uid", { email: "owner@croco.test" });
-  await p.json("POST", "/api/me/profile", { username: "Owner_sec_1", avatar: "a01", locale: "en" });
+  // "owner" is a reserved username, so the admin profile uses a regular name (as in admin.test.ts);
+  // another test file may already have created it.
+  const prof = await p.json("POST", "/api/me/profile", { username: "Giorgi_sec_1", avatar: "a01", locale: "en" });
+  if (prof.status !== 201 && prof.body?.error?.code !== "profile_exists") throw new Error(JSON.stringify(prof.body));
   const me = await p.json("GET", "/api/me");
   const admin = Object.assign(p, { userId: me.body.profile.id as string });
   
