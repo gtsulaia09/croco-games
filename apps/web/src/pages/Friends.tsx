@@ -48,16 +48,16 @@ export default function Friends() {
   }
 
   return (
-    <div className="grid gap-4 fade-in max-w-4xl">
-      <div className="flex items-center gap-3">
-        <span className="size-10 rounded-xl bg-primary/15 border border-primary/35 text-primary flex items-center justify-center">
-          <Users size={20} />
+    <div className="grid gap-4 fade-in max-w-4xl mx-auto">
+      <section className="card hero-surface p-4 sm:p-5 flex items-center gap-3.5">
+        <span className="size-11 rounded-2xl bg-primary/14 border border-primary/35 text-primary flex items-center justify-center shrink-0">
+          <Users size={21} />
         </span>
         <div>
           <h1 className="text-xl font-black text-white tracking-tight">{t("friends.title")}</h1>
-          <p className="text-xs text-muted">{friends.filter((f) => f.status !== "offline").length} {t("common.online")}</p>
+          <p className="text-xs text-muted mt-0.5">{friends.filter((f) => f.status !== "offline").length} {t("common.online")}</p>
         </div>
-      </div>
+      </section>
 
       <ErrorText error={error} />
 

@@ -51,32 +51,31 @@ export default function Admin() {
   const tabs = isAdmin ? [...STAFF_TABS, ...ADMIN_TABS] : STAFF_TABS;
   return (
     <div className="grid gap-4 fade-in">
-      <div className="card p-4 sm:p-5 border-gold/40 bg-gradient-to-r from-gold/10 via-surface to-surface flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span className="size-11 rounded-xl bg-gold/15 border border-gold/40 text-gold flex items-center justify-center">
+      <div className="card hero-surface p-4 sm:p-5 border-gold/35 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3.5">
+          <span className="size-11 rounded-2xl bg-gold/14 border border-gold/40 text-gold flex items-center justify-center shrink-0">
             <ShieldCheck size={22} />
           </span>
           <div>
             <h1 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
               {t("admin.title")} {isAdmin && <AdminBadge />}
             </h1>
-            <p className="text-xs text-muted">{t("ui.staffConsole")}</p>
+            <p className="text-xs text-muted mt-0.5">{t("ui.staffConsole")}</p>
           </div>
         </div>
-        <span className="chip bg-primary/15 text-primary border border-primary/35">
+        <span className="chip bg-primary/14 text-primary border border-primary/35">
           <Lock size={11} /> {t("admin.mfaVerified")}
         </span>
       </div>
 
-      <div className="flex gap-1.5 overflow-x-auto pb-1" role="tablist">
+      <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]" role="tablist">
         {tabs.map((x) => (
           <button
             key={x}
             role="tab"
             aria-selected={tab === x}
-            className={`h-9 px-3.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
-              tab === x ? "bg-gold text-[#1d1404]" : "bg-surface border border-line text-text-2 hover:border-line-strong"
-            }`}
+            data-tone="gold"
+            className={`seg-pill border ${tab === x ? "border-transparent" : "bg-surface border-line text-text-2 hover:border-line-strong"}`}
             onClick={() => setTab(x)}
           >
             {t(`admin.tabs.${x}`)}

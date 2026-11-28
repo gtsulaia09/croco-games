@@ -44,9 +44,6 @@ export default function RoomPage() {
   const me = useSession((s) => s.me);
   const refresh = useSession((s) => s.refresh);
   const conn = useRoom(roomId, me?.profile?.id);
-  // The table chat. While waiting it sits beside the seats on wide screens (it can be hidden
-  // there) and below them on phones. During a match it opens as a chat window over the table
-  // from the game header's "ჩატი" button, so the board keeps the full width.
   const [desktopChat, setDesktopChat] = useState(true);
   const [chatWindow, setChatWindow] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -66,8 +63,8 @@ export default function RoomPage() {
   if (conn.status === "closed") {
     const key = conn.closeCode === WS_CLOSE.kicked ? "room.kicked" : conn.closeCode === WS_CLOSE.superseded ? "room.superseded" : "room.closed";
     return (
-      <div className="card p-7 text-center grid gap-4 max-w-md mx-auto mt-8 fade-in">
-        <p className="text-base font-bold text-white">{t(key)}</p>
+      <div className="card p-8 text-center grid gap-4 max-w-md mx-auto mt-8 fade-in">
+        <p className="text-base font-extrabold text-white">{t(key)}</p>
         <Link to="/" className="btn-primary mx-auto">{t("nav.dashboard")}</Link>
       </div>
     );
@@ -89,7 +86,7 @@ export default function RoomPage() {
     <div className="grid gap-3 fade-in">
       {/* Room Top Bar */}
       <div className="card px-3.5 py-2.5 flex flex-wrap items-center gap-2.5">
-        <Link to={`/games/${room.gameType}`} className="btn-ghost btn-sm size-8 px-0" aria-label={t("common.back")}>
+        <Link to={`/games/${room.gameType}`} className="btn-ghost btn-sm size-8.5 px-0" aria-label={t("common.back")}>
           <ArrowLeft size={15} />
         </Link>
         <GameBadgeIcon game={room.gameType} size={22} />
@@ -165,14 +162,14 @@ export default function RoomPage() {
           </ChatWindow>
         </GameChatContext.Provider>
       ) : (
-        <div className={`grid gap-3 items-start ${desktopChat ? "lg:grid-cols-[minmax(0,1fr)_320px]" : ""}`}>
+        <div className={`grid gap-4 items-start ${desktopChat ? "lg:grid-cols-[minmax(0,1fr)_336px]" : ""}`}>
           <div className="min-w-0">
             <Lobby room={room} you={you} send={conn.send} result={conn.result} />
           </div>
           <div
             ref={chatRef}
             id="room-chat"
-            className={`block ${desktopChat ? "lg:block" : "lg:hidden"} scroll-mt-20 lg:sticky lg:top-18 h-[26rem] max-h-[70dvh] lg:max-h-none lg:h-[calc(100dvh-5.5rem)]`}
+            className={`block ${desktopChat ? "lg:block" : "lg:hidden"} scroll-mt-20 lg:sticky lg:top-19 h-[26rem] max-h-[70dvh] lg:max-h-none lg:h-[calc(100dvh-6rem)]`}
           >
             <ChatPanel
               messages={conn.chat}
@@ -197,12 +194,12 @@ function Lobby({ room, you, send, result }: { room: RoomSnapshot; you: NonNullab
   const mySeat = you.seat !== null ? room.seats[you.seat] : undefined;
   const occupied = room.seats.filter((s) => s.occupant !== "empty").length;
   return (
-    <div className="grid gap-3.5">
+    <div className="grid gap-4">
       {result && <Results result={result} seats={room.seats} />}
-      <div className="card p-4 sm:p-5 grid gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-line">
+      <div className="card p-5 sm:p-6 grid gap-5">
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-line">
           <div>
-            <h2 className="font-extrabold text-base text-white">{t("room.seats")}</h2>
+            <h2 className="font-extrabold text-base sm:text-lg text-white">{t("room.seats")}</h2>
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted mt-1">
               <span className="inline-flex items-center gap-1">
                 <Clock size={12} /> {room.settings.turnSeconds}s
@@ -217,26 +214,26 @@ function Lobby({ room, you, send, result }: { room: RoomSnapshot; you: NonNullab
               )}
             </div>
           </div>
-          <span className="chip bg-primary/15 text-primary border border-primary/35 font-bold tabular-nums">
+          <span className="chip bg-primary/14 text-primary border border-primary/35 font-extrabold tabular-nums">
             {occupied} / {room.maxPlayers}
           </span>
         </div>
 
-        <ul className="grid sm:grid-cols-2 gap-2.5">
+        <ul className="grid sm:grid-cols-2 gap-3">
           {room.seats.map((s) => (
             <li
               key={s.seat}
-              className={`flex items-center gap-3 rounded-xl p-3 border min-h-[4.25rem] transition-colors ${
+              className={`flex items-center gap-3 rounded-2xl p-3.5 border min-h-[4.5rem] transition-colors ${
                 s.occupant === "empty"
-                  ? "bg-surface-3/60 border-dashed border-line"
+                  ? "bg-surface-3/65 border-dashed border-line"
                   : s.ready
-                    ? "bg-primary/8 border-primary/40"
-                    : "bg-surface-2 border-line"
+                    ? "bg-primary/9 border-primary/45 shadow-[inset_0_0_0_1px_rgba(34,229,155,0.12)]"
+                    : "bg-surface-2/85 border-line"
               }`}
             >
               {s.occupant === "human" && s.user ? (
                 <>
-                  <Avatar id={s.user.avatar} size={38} ring={s.ready ? "primary" : room.hostId === s.user.id ? "gold" : "none"} />
+                  <Avatar id={s.user.avatar} size={40} ring={s.ready ? "primary" : room.hostId === s.user.id ? "gold" : "none"} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 text-sm font-bold text-white">
                       <UserName user={s.user} you={s.user.id === you.userId} />
@@ -274,7 +271,7 @@ function Lobby({ room, you, send, result }: { room: RoomSnapshot; you: NonNullab
                 </>
               ) : s.occupant === "bot" ? (
                 <>
-                  <span className="size-9 rounded-full bg-secondary/40 border border-secondary/60 text-accent flex items-center justify-center shrink-0">
+                  <span className="size-10 rounded-full bg-surface-3 border border-accent/35 text-accent flex items-center justify-center shrink-0">
                     <Bot size={18} />
                   </span>
                   <div className="flex-1 min-w-0">
@@ -291,7 +288,7 @@ function Lobby({ room, you, send, result }: { room: RoomSnapshot; you: NonNullab
                 </>
               ) : (
                 <div className="flex items-center gap-2.5 text-sm text-muted/80 px-1">
-                  <span className="size-9 rounded-full border border-dashed border-line-strong flex items-center justify-center text-xs font-bold">#{s.seat + 1}</span>
+                  <span className="size-10 rounded-full border border-dashed border-line-strong flex items-center justify-center text-xs font-bold">#{s.seat + 1}</span>
                   <span>{t("room.emptySeat")}</span>
                 </div>
               )}
@@ -299,7 +296,7 @@ function Lobby({ room, you, send, result }: { room: RoomSnapshot; you: NonNullab
           ))}
         </ul>
 
-        <div className="flex flex-wrap gap-2.5 pt-2 border-t border-line items-center">
+        <div className="flex flex-wrap gap-2.5 pt-3 border-t border-line items-center">
           {mySeat && (
             <button className={mySeat.ready ? "btn-secondary" : "btn-gold"} onClick={() => send({ type: "room.ready", ready: !mySeat.ready })}>
               <CheckCircle2 size={15} /> {mySeat.ready ? t("room.notReady") : t("room.ready")}
@@ -331,12 +328,12 @@ function Results({ result, seats }: { result: MatchResult; seats: SeatInfo[] }) 
   const t = useT();
   const sorted = result.entries.slice().sort((a, b) => a.placement - b.placement);
   return (
-    <div className="card p-4 sm:p-5 border-gold/45 bg-gradient-to-br from-gold/8 via-surface to-surface">
+    <div className="card p-5 border-gold/45 bg-gradient-to-br from-gold/10 via-surface to-surface">
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-extrabold text-base text-white flex items-center gap-2">
           <Trophy size={17} className="text-gold" /> {t("room.results")}
         </h2>
-        <span className={`chip border ${result.rated ? "bg-primary/15 text-primary border-primary/35" : "bg-surface-3 text-muted border-line"}`}>
+        <span className={`chip border ${result.rated ? "bg-primary/14 text-primary border-primary/35" : "bg-surface-3 text-muted border-line"}`}>
           {result.rated ? t("room.rated") : t("room.unrated")}
         </span>
       </div>
@@ -352,7 +349,7 @@ function Results({ result, seats }: { result: MatchResult; seats: SeatInfo[] }) 
         <tbody>
           {sorted.map((e) => (
             <tr key={e.seat} className="table-row">
-              <td className={`py-2 font-extrabold ${e.placement === 1 ? "text-gold" : e.placement === 2 ? "text-silver" : e.placement === 3 ? "text-bronze" : "text-muted"}`}>
+              <td className={`py-2.5 font-extrabold ${e.placement === 1 ? "text-gold" : e.placement === 2 ? "text-silver" : e.placement === 3 ? "text-bronze" : "text-muted"}`}>
                 #{e.placement}
               </td>
               <td className="font-semibold text-white">{e.isBot ? `${t("common.bot")} ${seats[e.seat]?.botName ?? ""}` : e.username ?? "—"}</td>
@@ -394,7 +391,7 @@ function InviteDialog({ open, onClose, room }: { open: boolean; onClose(): void;
         ) : (
           <ul className="grid gap-2 max-h-72 overflow-y-auto">
             {friends.map((f) => (
-              <li key={f.user.id} className="flex items-center gap-2.5 rounded-xl bg-surface-2 border border-line/70 px-3 py-2 text-sm">
+              <li key={f.user.id} className="flex items-center gap-2.5 rounded-2xl bg-surface-2 border border-line/70 px-3.5 py-2.5 text-sm">
                 <StatusDot status={f.status} />
                 <Avatar id={f.user.avatar} size={28} />
                 <UserName user={f.user} className="font-semibold" />

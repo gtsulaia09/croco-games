@@ -31,7 +31,7 @@ async function step(page: Page, game: (typeof GAMES)[number]): Promise<void> {
   }
   switch (game) {
     case "joker":
-      if (await clickFirst(page.getByRole("group", { name: "Choose trump" }).getByRole("button"))) return;
+      if (await clickFirst(page.getByRole("group", { name: /Choose trump|Declare trump/ }).getByRole("button"))) return;
       if (await clickFirst(page.getByRole("group", { name: "How many tricks will you take?" }).getByRole("button"))) return;
       await clickFirst(hand(page).locator("button.pcard"));
       return;
@@ -98,6 +98,10 @@ test.describe("practice mode", () => {
     test(`plays ${game} against bots`, async ({ guarded: page }) => {
       await page.goto(`./#/practice/${game}`);
       await expect(page.getByText("Practice mode: runs entirely in your browser")).toBeVisible();
+      if (game === "joker") {
+        const start = page.getByRole("button", { name: "Start game" });
+        if (await start.isVisible()) await start.click();
+      }
       const yourTurn = page.getByText("Your turn", { exact: true });
       const finished = page.getByText(/Match finished|You are out of chips/).first();
       let turns = 0;

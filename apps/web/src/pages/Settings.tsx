@@ -60,12 +60,12 @@ export default function Settings() {
   }
 
   return (
-    <div className="grid gap-5 fade-in max-w-4xl">
+    <div className="grid gap-5 fade-in max-w-4xl mx-auto">
       <ErrorText error={error} />
 
       {/* Player Profile Hero Banner */}
       <section className="card overflow-hidden">
-        <div className="bg-gradient-to-br from-[#0f3828] via-surface-2 to-surface p-5 sm:p-6 border-b border-line flex flex-wrap items-center gap-4">
+        <div className="hero-surface p-5 sm:p-6 border-b border-line flex flex-wrap items-center gap-4">
           <Avatar id={profile.avatar} size={64} ring={profile.badges.admin ? "gold" : "primary"} />
           <div className="min-w-0 flex-1">
             <div className="text-xl font-black text-white">
@@ -83,15 +83,15 @@ export default function Settings() {
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-line bg-surface-2/60">
+        <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-line bg-surface-2/65">
           {[
             { label: t("ui.totalMatches"), value: totalMatches },
             { label: t("ui.totalWins"), value: totalWins },
             { label: t("ui.winRate"), value: `${winRate}%` },
             { label: t("ui.bestRating"), value: bestRating !== null ? bestRating.toLocaleString() : "—" },
           ].map((k) => (
-            <div key={k.label} className="p-3.5 text-center">
-              <div className="text-[11px] uppercase tracking-wider text-muted">{k.label}</div>
+            <div key={k.label} className="p-4 text-center">
+              <div className="text-[11px] uppercase tracking-wider text-muted font-bold">{k.label}</div>
               <div className="text-xl font-black text-white tabular-nums mt-0.5">{k.value}</div>
             </div>
           ))}

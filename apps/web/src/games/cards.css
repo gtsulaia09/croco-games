@@ -9,7 +9,7 @@
   --cw: 72px;
 }
 
-/* Legacy fixed steps (boards outside the redesign) */
+/* Legacy fixed steps (poker boards) */
 .pcard:where([data-size="xs"]),
 .pc-slot:where([data-size="xs"]),
 .hand:where([data-size="xs"]) {
@@ -34,7 +34,7 @@
   --cw: clamp(76px, 6vw + 32px, 118px);
 }
 
-/* Role sizes: the redesigned boards set --cw-* from their own width (container units) */
+/* Role sizes: boards set --cw-* from their own width (container units) */
 .pcard:where([data-size="mini"]),
 .pc-slot:where([data-size="mini"]) {
   --cw: var(--cw-mini, 34px);
@@ -66,13 +66,13 @@
   margin: 0;
   font: inherit;
   color: inherit;
-  border-radius: calc(var(--cw) * 0.085);
-  background: linear-gradient(165deg, #ffffff 0%, #fcfbf8 50%, #f3f0e8 100%);
+  border-radius: calc(var(--cw) * 0.095);
+  background: linear-gradient(168deg, #ffffff 0%, #fcfdff 56%, #f1f4f9 100%);
   box-shadow:
-    0 0 0 1px rgba(15, 22, 34, 0.2),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.9),
-    0 1px 1.5px rgba(0, 0, 0, 0.3),
-    0 8px 16px -6px rgba(0, 0, 0, 0.5);
+    0 0 0 1px rgba(15, 23, 42, 0.22),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.96),
+    0 2px 3px rgba(0, 0, 0, 0.26),
+    0 10px 20px -6px rgba(0, 0, 0, 0.52);
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   transition:
@@ -92,33 +92,33 @@
 }
 
 .pc-rank {
-  font: 700 24px/1 "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  letter-spacing: -0.03em;
+  font: 700 24px/1 "Inter", "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  letter-spacing: -0.035em;
 }
 
 .pc-joker-index {
-  font: 800 9.6px/1 "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font: 800 9.6px/1 "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
-/* Card back: emerald lattice with a champagne-gold frame and emblem */
+/* Card back: obsidian-emerald geometric lattice with champagne-gold frame and crest */
 .pc-back {
-  background: linear-gradient(165deg, #fbf8f0, #efe9da);
+  background: linear-gradient(168deg, #ffffff, #f1f4f9);
 }
 
 .pc-back::before {
   content: "";
   position: absolute;
-  inset: calc(var(--cw) * 0.06);
-  border-radius: calc(var(--cw) * 0.05);
+  inset: calc(var(--cw) * 0.058);
+  border-radius: calc(var(--cw) * 0.055);
   background:
-    radial-gradient(ellipse 60% 42% at 50% 50%, rgba(57, 214, 176, 0.22), transparent 72%),
-    repeating-linear-gradient(45deg, rgba(217, 181, 109, 0.17) 0 1px, transparent 1px 6px),
-    repeating-linear-gradient(-45deg, rgba(217, 181, 109, 0.17) 0 1px, transparent 1px 6px),
-    linear-gradient(160deg, #0e5e48 0%, #093d32 55%, #062a25 100%);
+    radial-gradient(ellipse 62% 45% at 50% 50%, rgba(34, 229, 155, 0.24), transparent 72%),
+    repeating-linear-gradient(45deg, rgba(244, 197, 102, 0.16) 0 1px, transparent 1px 6px),
+    repeating-linear-gradient(-45deg, rgba(244, 197, 102, 0.16) 0 1px, transparent 1px 6px),
+    linear-gradient(160deg, #0d5c44 0%, #07392c 55%, #05221c 100%);
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.45),
-    inset 0 0 0 2.5px rgba(217, 181, 109, 0.75),
-    inset 0 0 0 4px rgba(0, 0, 0, 0.22);
+    inset 0 0 0 2.2px rgba(244, 197, 102, 0.72),
+    inset 0 0 0 3.8px rgba(0, 0, 0, 0.24);
 }
 
 .pc-back > .pc-face {
@@ -130,9 +130,9 @@
   flex: none;
   width: var(--cw);
   height: calc(var(--cw) * 1.4);
-  border-radius: calc(var(--cw) * 0.085);
+  border-radius: calc(var(--cw) * 0.095);
   border: 1.5px dashed rgba(255, 255, 255, 0.18);
-  background: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.14);
 }
 
 button.pcard {
@@ -144,24 +144,24 @@ button.pcard:disabled {
 }
 
 button.pcard:focus-visible {
-  outline: 3px solid #39d6b0;
+  outline: 3px solid #22e59b;
   outline-offset: 2px;
 }
 
-/* Not a legal card right now: shaded, but rank and suit stay readable */
+/* Not a legal card right now: cleanly shaded, rank and suit stay readable */
 .pcard[data-playable="false"]::after {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: rgba(9, 15, 27, 0.42);
+  background: rgba(8, 12, 20, 0.44);
 }
 
 .pcard[data-selected="true"] {
   box-shadow:
-    0 0 0 2.5px #39d6b0,
-    0 0 0 5.5px rgba(57, 214, 176, 0.22),
-    0 18px 30px -8px rgba(0, 0, 0, 0.6);
+    0 0 0 2.5px #22e59b,
+    0 0 0 6px rgba(34, 229, 155, 0.22),
+    0 18px 30px -8px rgba(0, 0, 0, 0.62);
 }
 
 .pcard[data-selected="true"]::before {
@@ -174,28 +174,28 @@ button.pcard:focus-visible {
   height: 22px;
   border-radius: 50%;
   background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2304241c' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.2 4.2L19 7'/%3E%3C/svg%3E") center / 13px no-repeat,
-    #39d6b0;
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23032215' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.2 4.2L19 7'/%3E%3C/svg%3E") center / 13px no-repeat,
+    #22e59b;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
 }
 
 /* Trick highlights */
 .pcard[data-highlight="winner"] {
   box-shadow:
-    0 0 0 2.5px #d9b56d,
-    0 0 26px rgba(217, 181, 109, 0.55),
+    0 0 0 2.5px #f4c566,
+    0 0 26px rgba(244, 197, 102, 0.55),
     0 12px 24px -6px rgba(0, 0, 0, 0.55);
 }
 
 .pcard[data-highlight="latest"] {
   box-shadow:
-    0 0 0 2px rgba(57, 214, 176, 0.85),
-    0 0 18px rgba(57, 214, 176, 0.35),
+    0 0 0 2px rgba(34, 229, 155, 0.88),
+    0 0 18px rgba(34, 229, 155, 0.35),
     0 12px 24px -6px rgba(0, 0, 0, 0.55);
 }
 
 /* ---------------------------------------------------------------------------
- * Legacy held hand (CSS grid; boards outside the redesign)
+ * Held hand (CSS grid; poker boards)
  * ------------------------------------------------------------------------- */
 .hand {
   --hand-step: calc(var(--cw) * 0.7);
@@ -233,8 +233,8 @@ button.pcard:focus-visible {
     translate: 0 calc(var(--fan-y, 0px) - 18px);
     z-index: 4;
     box-shadow:
-      0 0 0 1px rgba(22, 27, 36, 0.24),
-      0 0 0 3px rgba(57, 214, 176, 0.9),
+      0 0 0 1px rgba(15, 23, 42, 0.24),
+      0 0 0 3px rgba(34, 229, 155, 0.9),
       0 14px 24px rgba(0, 0, 0, 0.45);
   }
 }

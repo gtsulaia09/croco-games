@@ -52,26 +52,28 @@ function Choice<T extends string>({ name, legend, value, options, label, hint, o
 }
 
 /**
- * Before a Joker practice game: the player chooses the format, the premia rule (ბოლო იშლება /
- * ბოლო არ იშლება), who sets trump in nine-card deals and the ხიშტი, as a table creator does.
+ * Before a Joker practice game: clean, effortless rule cards for format, premia,
+ * nine-card trump declaration, and khishti penalty.
  */
 export function JokerSetup({ rules, onChange, onStart }: { rules: JokerTableRules; onChange(patch: Partial<JokerTableRules>): void; onStart(): void }) {
   const t = useT();
   return (
     <form
-      className="jsetup"
+      className="jsetup fade-in"
       onSubmit={(e) => {
         e.preventDefault();
         onStart();
       }}
     >
       <div className="jsetup-head">
-        <span className="jsetup-icon">
-          <ScrollText size={20} />
-        </span>
-        <div className="min-w-0">
-          <h2>{t("joker.setupTitle")}</h2>
-          <p>{t("joker.setupText")}</p>
+        <div className="jsetup-head-main">
+          <span className="jsetup-icon">
+            <ScrollText size={20} />
+          </span>
+          <div className="min-w-0">
+            <h2>{t("joker.setupTitle")}</h2>
+            <p>{t("joker.setupText")}</p>
+          </div>
         </div>
       </div>
       <Choice
@@ -109,8 +111,8 @@ export function JokerSetup({ rules, onChange, onStart }: { rules: JokerTableRule
         onChange={(hist) => onChange({ hist })}
       />
       <p className="jsetup-note">{t(`opt.hints.${rules.hist}`)}</p>
-      <button type="submit" className="btn-primary h-11 w-full sm:w-auto sm:justify-self-end sm:px-8">
-        <Play size={16} /> {t("joker.start")}
+      <button type="submit" className="btn-primary btn-lg w-full sm:w-auto sm:justify-self-end sm:px-9">
+        <Play size={16} className="fill-current" /> {t("joker.start")}
       </button>
     </form>
   );

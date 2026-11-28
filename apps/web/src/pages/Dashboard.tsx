@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router";
-import { ArrowRight, Dumbbell, Info, Play, PlayCircle, Trophy, Users } from "lucide-react";
+import { ArrowRight, Dumbbell, Info, Play, PlayCircle, Sparkles, Trophy, Users } from "lucide-react";
 import type { FriendDto, GameLeaderDto, GameType, MatchHistoryDto, PresenceStatus, PublicUser } from "@croco/shared/client";
 import { get } from "../lib/api";
 import { useSession } from "../store/session";
@@ -44,11 +44,11 @@ export default function Dashboard() {
   if (status === "needsProfile" || status === "needsVerification") return <Navigate to={status === "needsProfile" ? "/setup" : "/verify"} replace />;
 
   return (
-    <div className="grid gap-5 fade-in">
-      {/* Compact honest demo notice when unconfigured — single clean bar, no double banner */}
+    <div className="grid gap-6 fade-in">
+      {/* Honest demo notice when no game server is configured */}
       {status === "unconfigured" && (
-        <div className="rounded-xl border border-warning/35 bg-warning/8 px-3.5 py-2.5 text-xs sm:text-sm text-text-2 flex flex-wrap items-center justify-between gap-3">
-          <span className="flex items-center gap-2 min-w-0">
+        <div className="notice-pill border-warning/30 bg-warning/8 text-text-2">
+          <span className="flex items-center gap-2.5 min-w-0">
             <Info size={15} className="text-warning shrink-0" />
             <span>{t("demo.notConfigured")}</span>
           </span>
@@ -59,9 +59,9 @@ export default function Dashboard() {
       )}
 
       {ready && me?.activeRoomId && (
-        <div className="rounded-xl border border-primary/45 bg-primary/10 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-sm">
-          <span className="flex items-center gap-2 font-medium text-white">
-            <span className="size-2 rounded-full bg-primary turn-dot" />
+        <div className="notice-pill border-primary/40 bg-primary/10">
+          <span className="flex items-center gap-2.5 font-bold text-white">
+            <span className="size-2.5 rounded-full bg-primary turn-dot" />
             {t("dashboard.activeGame")}
           </span>
           <Link to={`/room/${me.activeRoomId}`} className="btn-primary btn-sm">
@@ -70,17 +70,17 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Hero */}
+      {/* Bento Hero */}
       <section className="lobby-hero">
         <div className="lobby-hero-copy">
           {ready && me?.profile ? (
-            <div className="flex items-center gap-2.5 mb-3">
-              <Avatar id={me.profile.avatar} size={36} ring={me.profile.badges.admin ? "gold" : "primary"} />
-              <span className="text-sm font-semibold text-text-2 truncate">{t("dashboard.hello", { name: me.profile.username })}</span>
+            <div className="inline-flex items-center gap-2.5 mb-4 p-1.5 pr-3 rounded-full bg-surface-3/85 border border-line/80 max-w-full">
+              <Avatar id={me.profile.avatar} size={32} ring={me.profile.badges.admin ? "gold" : "primary"} />
+              <span className="text-xs sm:text-sm font-bold text-white truncate">{t("dashboard.hello", { name: me.profile.username })}</span>
               {me.profile.badges.admin && <AdminBadge />}
-              <span className="chip bg-surface-3/80 border border-line text-text-2 ml-1">
+              <span className="chip bg-primary/12 border border-primary/25 text-primary ml-0.5">
                 <StatusDot status="online" />
-                <b className="text-white tabular-nums">{online.length}</b> {t("common.online")}
+                <b className="tabular-nums">{online.length}</b> {t("common.online")}
               </span>
             </div>
           ) : (
@@ -88,11 +88,11 @@ export default function Dashboard() {
           )}
           <h1 className="lobby-hero-title">{t("lobby.heroTitle")}</h1>
           <p className="lobby-hero-text">{t("lobby.heroText")}</p>
-          <div className="flex flex-wrap gap-2.5 mt-5">
+          <div className="flex flex-wrap gap-3 mt-6">
             {ready ? (
               me?.activeRoomId ? (
                 <Link to={`/room/${me.activeRoomId}`} className="btn-gold btn-lg">
-                  <PlayCircle size={17} /> {t("dashboard.returnToGame")}
+                  <PlayCircle size={18} /> {t("dashboard.returnToGame")}
                 </Link>
               ) : (
                 <Link to="/games/joker" className="btn-primary btn-lg">
@@ -112,9 +112,14 @@ export default function Dashboard() {
         <HeroArt className="lobby-hero-art" />
       </section>
 
-      <div className={`grid gap-5 ${ready ? "xl:grid-cols-[1fr_296px]" : ""}`}>
-        <div className="grid gap-3.5 content-start">
-          <h2 className="text-lg font-bold text-white">{t("lobby.choose")}</h2>
+      <div className={`grid gap-6 ${ready ? "xl:grid-cols-[1fr_304px]" : ""}`}>
+        <div className="grid gap-4 content-start">
+          <div className="flex items-center gap-2.5">
+            <span className="size-8 rounded-xl bg-primary/12 border border-primary/25 text-primary inline-flex items-center justify-center">
+              <Sparkles size={15} />
+            </span>
+            <h2 className="text-lg sm:text-xl font-extrabold text-white tracking-tight">{t("lobby.choose")}</h2>
+          </div>
           <LobbyGrid online={ready} leaders={leaders} />
         </div>
 
@@ -125,7 +130,7 @@ export default function Dashboard() {
               title={t("dashboard.friendsOnline")}
               icon={<Users size={15} />}
               action={
-                <Link to="/friends" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
+                <Link to="/friends" className="text-xs font-bold text-primary hover:underline flex items-center gap-1">
                   {t("nav.friends")} <ArrowRight size={12} />
                 </Link>
               }
@@ -133,10 +138,10 @@ export default function Dashboard() {
               {friends.length ? (
                 <ul className="grid gap-2">
                   {friends.map((f) => (
-                    <li key={f.user.id} className="flex items-center gap-2.5 rounded-xl bg-surface-2 px-2.5 py-2 text-sm">
-                      <Avatar id={f.user.avatar} size={28} />
+                    <li key={f.user.id} className="flex items-center gap-2.5 rounded-2xl bg-surface-2/80 border border-line/60 px-3 py-2 text-sm">
+                      <Avatar id={f.user.avatar} size={30} />
                       <div className="min-w-0 flex-1">
-                        <UserName user={f.user} className="font-semibold text-xs" />
+                        <UserName user={f.user} className="font-bold text-xs text-white" />
                         <div className="flex items-center gap-1.5 text-[11px] text-muted mt-0.5">
                           <StatusDot status={f.status} />
                           <span className="truncate">
@@ -156,12 +161,12 @@ export default function Dashboard() {
             <Section
               title={t("dashboard.online")}
               icon={<StatusDot status="online" />}
-              action={<span className="chip bg-surface-3 text-text-2 tabular-nums">{online.length}</span>}
+              action={<span className="chip bg-surface-3 border border-line text-text-2 tabular-nums">{online.length}</span>}
             >
               {online.length ? (
                 <ul className="grid gap-1 max-h-56 overflow-y-auto pr-1">
                   {online.map((o) => (
-                    <li key={o.user.id} className="flex items-center gap-2 text-xs py-1 px-2 rounded-lg hover:bg-surface-2">
+                    <li key={o.user.id} className="flex items-center gap-2 text-xs py-1.5 px-2.5 rounded-xl hover:bg-surface-2 transition-colors">
                       <StatusDot status={o.status} />
                       <Avatar id={o.user.avatar} size={22} />
                       <UserName user={o.user} you={o.user.id === me?.profile?.id} />
@@ -178,21 +183,21 @@ export default function Dashboard() {
                 title={t("settings.matches")}
                 icon={<Trophy size={15} />}
                 action={
-                  <Link to="/settings" className="text-xs font-semibold text-primary hover:underline">
+                  <Link to="/settings" className="text-xs font-bold text-primary hover:underline">
                     {t("nav.settings")}
                   </Link>
                 }
               >
                 <ul className="grid gap-1.5">
                   {recentMatches.map((m) => (
-                    <li key={m.matchId} className="flex items-center justify-between gap-2 rounded-lg bg-surface-2 px-2.5 py-2 text-xs">
+                    <li key={m.matchId} className="flex items-center justify-between gap-2 rounded-xl bg-surface-2/80 border border-line/60 px-3 py-2 text-xs">
                       <div className="flex items-center gap-2 min-w-0">
                         <GameBadgeIcon game={m.gameType as GameType} size={15} />
-                        <span className="font-medium text-text-2 truncate">{t(`games.${m.gameType}.name`)}</span>
+                        <span className="font-semibold text-text-2 truncate">{t(`games.${m.gameType}.name`)}</span>
                         <span className="text-muted">#{m.placement}/{m.players}</span>
                       </div>
                       <span
-                        className={`font-semibold tabular-nums ${
+                        className={`font-bold tabular-nums ${
                           m.ratingDelta && m.ratingDelta > 0 ? "text-primary" : m.ratingDelta && m.ratingDelta < 0 ? "text-danger" : "text-muted"
                         }`}
                       >

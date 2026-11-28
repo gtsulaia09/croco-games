@@ -153,7 +153,7 @@ export function SeatTag({
         {s?.occupant === "human" ? (
           <Avatar id={s.user?.avatar} size={size} />
         ) : (
-          <span className="rounded-full flex items-center justify-center text-[#8fd3ff] border border-white/15" style={{ width: size, height: size, background: "#0e3a4c" }}>
+          <span className="rounded-full flex items-center justify-center text-[#5cc8ff] border border-white/15" style={{ width: size, height: size, background: "#132238" }}>
             <Bot size={compact ? 16 : 18} />
           </span>
         )}

@@ -24,12 +24,12 @@ export const SUIT_PATH: Record<string, string> = {
   C: "M12 3.1A4.3 4.3 0 0 1 15.9 9.2A4.3 4.3 0 1 1 13.1 16C13.3 18.2 14 20 15.2 21.6H8.8C10 20 10.7 18.2 10.9 16A4.3 4.3 0 1 1 8.1 9.2A4.3 4.3 0 0 1 12 3.1Z",
 };
 
-const RED = "#c8102e";
-const BLACK = "#141a24";
-const GOLD = "#c9a046";
+const RED = "#e11d48";
+const BLACK = "#0f172a";
+const GOLD = "#d4a74a";
 const GOLD_DARK = "#8c6a22";
-const NAVY = "#1c2d52";
-const CRIMSON = "#b3122e";
+const NAVY = "#1e293b";
+const CRIMSON = "#be123c";
 const SKIN = "#f3d4b8";
 const RANK_TEXT: Record<string, string> = { T: "10" };
 
@@ -251,9 +251,9 @@ function BackEmblem() {
   return (
     <svg viewBox="0 0 100 140" className="pc-face" aria-hidden="true">
       <g transform="translate(50 70)">
-        <path d="M0-21L15 0L0 21L-15 0Z" fill="none" stroke="#d9b56d" strokeWidth={1.4} />
-        <path d="M0-15L10.5 0L0 15L-10.5 0Z" fill="#0b3b30" stroke="#d9b56d" strokeWidth={0.8} />
-        <path d="M0-8.5C0-8.5-5.5-3-5.5 0.6C-5.5 2.6-4 3.8-2.4 3.8C-1.4 3.8-0.6 3.4 0 2.6C0.6 3.4 1.4 3.8 2.4 3.8C4 3.8 5.5 2.6 5.5 0.6C5.5-3 0-8.5 0-8.5ZM-1.8 7.8H1.8L0.6 3.6H-0.6Z" fill="#d9b56d" />
+        <path d="M0-22L16 0L0 22L-16 0Z" fill="none" stroke="#f4c566" strokeWidth={1.3} strokeOpacity={0.85} />
+        <path d="M0-15.5L11 0L0 15.5L-11 0Z" fill="#072b20" stroke="#f4c566" strokeWidth={0.85} />
+        <path d="M0-8.5C0-8.5-5.5-3-5.5 0.6C-5.5 2.6-4 3.8-2.4 3.8C-1.4 3.8-0.6 3.4 0 2.6C0.6 3.4 1.4 3.8 2.4 3.8C4 3.8 5.5 2.6 5.5 0.6C5.5-3 0-8.5 0-8.5ZM-1.8 7.8H1.8L0.6 3.6H-0.6Z" fill="#f4c566" />
       </g>
     </svg>
   );

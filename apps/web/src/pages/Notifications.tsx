@@ -38,18 +38,18 @@ export default function Notifications() {
   }
 
   return (
-    <div className="grid gap-4 fade-in max-w-3xl">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3">
-          <span className="size-10 rounded-xl bg-primary/15 border border-primary/35 text-primary flex items-center justify-center">
-            <Bell size={20} />
+    <div className="grid gap-4 fade-in max-w-3xl mx-auto">
+      <section className="card hero-surface p-4 sm:p-5 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3.5">
+          <span className="size-11 rounded-2xl bg-primary/14 border border-primary/35 text-primary flex items-center justify-center shrink-0">
+            <Bell size={21} />
           </span>
           <h1 className="text-xl font-black text-white tracking-tight">{t("notifications.title")}</h1>
         </div>
         <button className="btn-secondary btn-sm" onClick={() => void markAll()}>
           <CheckCheck size={14} /> {t("notifications.markAll")}
         </button>
-      </div>
+      </section>
 
       <ErrorText error={error} />
 

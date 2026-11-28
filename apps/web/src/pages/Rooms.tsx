@@ -62,8 +62,8 @@ function RoomBrowser({ game }: { game: GameType }) {
   return (
     <div className="grid gap-4 fade-in">
       {/* Game Server Browser Banner */}
-      <section className="relative overflow-hidden rounded-2xl border border-line bg-gradient-to-r from-[#0c2a28] via-surface to-surface p-4 sm:p-5">
-        <div className="absolute right-0 top-0 bottom-0 w-72 opacity-60 pointer-events-none hidden sm:block">
+      <section className="card hero-surface relative overflow-hidden p-4 sm:p-5">
+        <div className="absolute right-0 top-0 bottom-0 w-72 opacity-55 pointer-events-none hidden sm:block">
           {game === "joker" ? (
             <JokerArt cw={50} className="w-full h-full" />
           ) : game === "japanese_joker" ? (
@@ -75,11 +75,13 @@ function RoomBrowser({ game }: { game: GameType }) {
           )}
         </div>
         <div className="relative z-10 flex flex-wrap items-center gap-3">
-          <Link to="/" className="btn-secondary btn-sm px-2.5">
+          <Link to="/" className="btn-secondary btn-sm px-3">
             <ArrowLeft size={14} /> {t("rooms.backToGames")}
           </Link>
           <div className="flex items-center gap-2.5 min-w-0">
-            <GameBadgeIcon game={game} size={24} />
+            <span className="size-10 rounded-xl bg-surface-3/85 border border-line flex items-center justify-center shrink-0">
+              <GameBadgeIcon game={game} size={22} />
+            </span>
             <div className="min-w-0">
               <h1 className="text-lg sm:text-xl font-black text-white tracking-tight truncate">{t("rooms.title", { game: t(`games.${game}.name`) })}</h1>
               <p className="text-xs text-text-2/80 truncate">{t(`games.${game}.desc`)}</p>
@@ -101,21 +103,19 @@ function RoomBrowser({ game }: { game: GameType }) {
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] items-start">
         <div className="grid gap-4 min-w-0">
-          {/* Search & Tactical Filter Strip */}
+          {/* Search & Capsule Filter Strip */}
           <div className="card p-3 flex flex-wrap gap-2.5 items-center">
             <div className="relative w-full sm:w-64">
               <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
               <input className="input pl-9 h-9 text-xs" placeholder={t("rooms.searchPlaceholder")} value={q} maxLength={40} onChange={(e) => setQ(e.target.value)} aria-label={t("common.search")} />
             </div>
-            <div className="flex flex-wrap gap-1" role="tablist">
+            <div className="flex flex-wrap gap-1 p-1 rounded-2xl bg-surface-3/90 border border-line/80" role="tablist">
               {FILTERS.map((f) => (
                 <button
                   key={f}
                   role="tab"
                   aria-selected={filter === f}
-                  className={`h-8 px-3 rounded-full text-xs font-semibold transition-colors ${
-                    filter === f ? "bg-primary text-[#04180b]" : "bg-surface-2 border border-line text-text-2 hover:border-line-strong hover:text-white"
-                  }`}
+                  className="seg-pill !h-7.5 !px-3"
                   onClick={() => setFilter(f)}
                 >
                   {t(`rooms.filters.${f}`)}
@@ -134,15 +134,15 @@ function RoomBrowser({ game }: { game: GameType }) {
               <EmptyState icon={<Users size={20} />}>{t("rooms.empty")}</EmptyState>
             ) : (
               <table className="w-full text-sm">
-                <thead className="bg-surface-2 text-muted text-[11px] uppercase tracking-wider border-b border-line">
+                <thead className="bg-surface-2/75 text-muted text-[11px] uppercase tracking-wider border-b border-line">
                   <tr>
-                    <th className="text-left px-3.5 py-2.5 w-10" aria-label={t("rooms.cols.access")} />
-                    <th className="text-left px-3 py-2.5">{t("rooms.cols.name")}</th>
-                    <th className="text-left px-3 py-2.5 hidden md:table-cell">{t("rooms.cols.host")}</th>
-                    <th className="text-left px-3 py-2.5">{t("rooms.cols.players")}</th>
-                    <th className="text-left px-3 py-2.5 hidden sm:table-cell">{t("rooms.cols.status")}</th>
-                    <th className="text-left px-3 py-2.5 hidden lg:table-cell">{t("rooms.cols.stage")}</th>
-                    <th className="px-3.5 py-2.5" />
+                    <th className="text-left px-3.5 py-3 w-10" aria-label={t("rooms.cols.access")} />
+                    <th className="text-left px-3 py-3">{t("rooms.cols.name")}</th>
+                    <th className="text-left px-3 py-3 hidden md:table-cell">{t("rooms.cols.host")}</th>
+                    <th className="text-left px-3 py-3">{t("rooms.cols.players")}</th>
+                    <th className="text-left px-3 py-3 hidden sm:table-cell">{t("rooms.cols.status")}</th>
+                    <th className="text-left px-3 py-3 hidden lg:table-cell">{t("rooms.cols.stage")}</th>
+                    <th className="px-3.5 py-3" />
                   </tr>
                 </thead>
                 <tbody>
@@ -150,18 +150,18 @@ function RoomBrowser({ game }: { game: GameType }) {
                     const full = r.players >= r.maxPlayers;
                     const fillPct = Math.min(100, Math.round((r.players / Math.max(1, r.maxPlayers)) * 100));
                     return (
-                      <tr key={r.id} className="table-row hover:bg-surface-hover/70">
+                      <tr key={r.id} className="table-row hover:bg-surface-hover/60">
                         <td className="px-3.5 py-3">
                           {r.visibility === "invite" ? (
-                            <span className="inline-flex size-7 rounded-lg bg-accent/15 border border-accent/30 text-accent items-center justify-center" title={t("create.invite")}>
+                            <span className="inline-flex size-7.5 rounded-xl bg-accent/14 border border-accent/30 text-accent items-center justify-center" title={t("create.invite")}>
                               <Mail size={13} />
                             </span>
                           ) : r.hasPassword ? (
-                            <span className="inline-flex size-7 rounded-lg bg-warning/15 border border-warning/35 text-warning items-center justify-center" title={t("rooms.filters.password")}>
+                            <span className="inline-flex size-7.5 rounded-xl bg-warning/14 border border-warning/35 text-warning items-center justify-center" title={t("rooms.filters.password")}>
                               <Lock size={13} />
                             </span>
                           ) : (
-                            <span className="inline-flex size-7 rounded-lg bg-primary/12 border border-primary/25 text-primary items-center justify-center" title={t("create.public")}>
+                            <span className="inline-flex size-7.5 rounded-xl bg-primary/12 border border-primary/25 text-primary items-center justify-center" title={t("create.public")}>
                               <Globe size={13} />
                             </span>
                           )}
@@ -195,10 +195,10 @@ function RoomBrowser({ game }: { game: GameType }) {
                           <span
                             className={`chip border ${
                               r.phase === "playing"
-                                ? "bg-gold/15 text-gold border-gold/35"
+                                ? "bg-gold/14 text-gold border-gold/35"
                                 : full
-                                  ? "bg-danger/15 text-danger border-danger/35"
-                                  : "bg-primary/15 text-primary border-primary/35"
+                                  ? "bg-danger/14 text-danger border-danger/35"
+                                  : "bg-primary/14 text-primary border-primary/35"
                             }`}
                           >
                             {r.phase === "playing" ? t("rooms.status.playing") : full ? t("rooms.status.full") : t("rooms.status.waiting")}
@@ -207,11 +207,11 @@ function RoomBrowser({ game }: { game: GameType }) {
                         <td className="px-3 py-3 hidden lg:table-cell text-muted text-xs">{r.stage ?? "—"}</td>
                         <td className="px-3.5 py-3 text-right whitespace-nowrap">
                           <div className="inline-flex items-center gap-1.5">
-                            <button className="btn-ghost btn-sm size-8 px-0" onClick={() => setDetailsFor(r)} title={t("rooms.details")} aria-label={t("rooms.details")}>
+                            <button className="btn-ghost btn-sm size-8.5 px-0" onClick={() => setDetailsFor(r)} title={t("rooms.details")} aria-label={t("rooms.details")}>
                               <Info size={14} />
                             </button>
                             {r.allowSpectators && (
-                              <button className="btn-secondary btn-sm size-8 px-0" onClick={() => void join(r, { asSpectator: true }).catch(setError)} title={t("rooms.spectate")} aria-label={t("rooms.spectate")}>
+                              <button className="btn-secondary btn-sm size-8.5 px-0" onClick={() => void join(r, { asSpectator: true }).catch(setError)} title={t("rooms.spectate")} aria-label={t("rooms.spectate")}>
                                 <Eye size={14} />
                               </button>
                             )}
@@ -231,7 +231,7 @@ function RoomBrowser({ game }: { game: GameType }) {
           </div>
         </div>
 
-        {/* This game's own chat room: only players of this game are in it. */}
+        {/* Game-isolated chat room */}
         <GameChat game={game} />
       </div>
 
@@ -251,14 +251,13 @@ function RoomBrowser({ game }: { game: GameType }) {
   );
 }
 
-/** The chat room of one game, beside its room list. Each game has its own, separate room. */
 function GameChat({ game }: { game: GameType }) {
   const t = useT();
   const myUserId = useSession((s) => s.me?.profile?.id);
   const chat = useGameChat(game);
   const live = chat.status === "open";
   return (
-    <div className="lg:sticky lg:top-18 h-[24rem] lg:h-[calc(100dvh-7rem)] min-h-80">
+    <div className="lg:sticky lg:top-19 h-[24rem] lg:h-[calc(100dvh-7.5rem)] min-h-80">
       <ChatPanel
         key={game}
         messages={chat.messages}
@@ -285,7 +284,7 @@ function RoomDetailsDialog({ room, onClose, onJoin }: { room: RoomSummary | null
   const full = room.players >= room.maxPlayers;
   return (
     <Modal open onClose={onClose} title={t("rooms.details")}>
-      <dl className="grid grid-cols-2 gap-y-2.5 text-sm mb-5 panel-inset p-3.5">
+      <dl className="grid grid-cols-2 gap-y-2.5 text-sm mb-5 panel-inset p-4">
         <dt className="text-muted text-xs">{t("rooms.cols.name")}</dt>
         <dd className="font-bold text-white truncate">{room.name}</dd>
         <dt className="text-muted text-xs">{t("rooms.cols.host")}</dt>
@@ -322,7 +321,7 @@ function InviteCodeDialog({ open, onClose, onCode }: { open: boolean; onClose():
   return (
     <Modal open={open} onClose={onClose} title={t("rooms.joinWithCode")}>
       <form
-        className="grid gap-3"
+        className="grid gap-3.5"
         onSubmit={(e) => {
           e.preventDefault();
           if (extracted.length >= 22) {
@@ -333,7 +332,7 @@ function InviteCodeDialog({ open, onClose, onCode }: { open: boolean; onClose():
       >
         <label className="label" htmlFor="invite-code-input">{t("rooms.enterInviteCode")}</label>
         <input id="invite-code-input" className="input font-mono" value={raw} onChange={(e) => setRaw(e.target.value)} maxLength={200} />
-        <button className="btn-primary h-10" disabled={extracted.length < 22}>
+        <button className="btn-primary h-11" disabled={extracted.length < 22}>
           {t("rooms.join")}
         </button>
       </form>
@@ -348,7 +347,7 @@ function PasswordDialog({ room, onClose, onJoin }: { room: RoomSummary | null; o
   return (
     <Modal open={Boolean(room)} onClose={onClose} title={t("rooms.passwordPrompt")}>
       <form
-        className="grid gap-3"
+        className="grid gap-3.5"
         onSubmit={(e) => {
           e.preventDefault();
           onJoin(password).catch(setError);
@@ -357,7 +356,7 @@ function PasswordDialog({ room, onClose, onJoin }: { room: RoomSummary | null; o
         <label className="label" htmlFor="room-password">{t("rooms.enterPassword")}</label>
         <input id="room-password" className="input" type="password" autoComplete="off" maxLength={64} value={password} onChange={(e) => setPassword(e.target.value)} />
         <ErrorText error={error} />
-        <button className="btn-primary h-10" disabled={password.length < 4}>
+        <button className="btn-primary h-11" disabled={password.length < 4}>
           {t("rooms.join")}
         </button>
       </form>
@@ -407,8 +406,8 @@ function CreateRoomDialog({ game, open, onClose, onCreated }: { game: GameType; 
     <Modal open={open} onClose={onClose} title={t("create.title", { game: t(`games.${game}.name`) })} wide>
       <form onSubmit={(e) => void submit(e)} className="grid gap-4">
         {/* Group 1: Room Basics */}
-        <div className="panel-inset p-3.5 grid sm:grid-cols-2 gap-3">
-          <div className="sm:col-span-2 text-xs font-bold uppercase tracking-wider text-primary">{t("ui.roomBasics")}</div>
+        <div className="panel-inset p-4 grid sm:grid-cols-2 gap-3">
+          <div className="sm:col-span-2 text-xs font-extrabold uppercase tracking-wider text-primary">{t("ui.roomBasics")}</div>
           <div className="sm:col-span-2">
             <label className="label" htmlFor="room-name">{t("create.name")}</label>
             <input id="room-name" className="input" required minLength={3} maxLength={40} value={form.name} onChange={(e) => set("name", e.target.value)} />
@@ -430,8 +429,8 @@ function CreateRoomDialog({ game, open, onClose, onCreated }: { game: GameType; 
         </div>
 
         {/* Group 2: Seats & Timer */}
-        <div className="panel-inset p-3.5 grid sm:grid-cols-2 gap-3">
-          <div className="sm:col-span-2 text-xs font-bold uppercase tracking-wider text-primary">{t("ui.seatsAndTimer")}</div>
+        <div className="panel-inset p-4 grid sm:grid-cols-2 gap-3">
+          <div className="sm:col-span-2 text-xs font-extrabold uppercase tracking-wider text-primary">{t("ui.seatsAndTimer")}</div>
           <div>
             <label className="label" htmlFor="max-players">{t("create.maxPlayers")}</label>
             <select id="max-players" className="input" value={form.maxPlayers} onChange={(e) => set("maxPlayers", Number(e.target.value))}>
@@ -463,12 +462,12 @@ function CreateRoomDialog({ game, open, onClose, onCreated }: { game: GameType; 
         </div>
 
         {/* Group 3: Table Options */}
-        <div className="panel-inset p-3.5 grid sm:grid-cols-2 gap-2.5 text-sm">
-          <div className="sm:col-span-2 text-xs font-bold uppercase tracking-wider text-primary">{t("ui.roomRules")}</div>
+        <div className="panel-inset p-4 grid sm:grid-cols-2 gap-2.5 text-sm">
+          <div className="sm:col-span-2 text-xs font-extrabold uppercase tracking-wider text-primary">{t("ui.roomRules")}</div>
           {(["allowSpectators", "autoStart", "chatEnabled", "allowInvites"] as const).map((k) => (
-            <label key={k} className="flex items-center gap-2.5 rounded-lg bg-surface-2/70 border border-line/60 px-3 py-2 cursor-pointer">
+            <label key={k} className="flex items-center gap-2.5 rounded-xl bg-surface-2/75 border border-line/65 px-3.5 py-2.5 cursor-pointer hover:border-line-strong transition-colors">
               <input type="checkbox" className="accent-[var(--color-primary)]" checked={form[k]} onChange={(e) => set(k, e.target.checked)} />
-              <span className="text-xs font-medium text-text-2">
+              <span className="text-xs font-semibold text-text-2">
                 {t(`create.${k === "allowSpectators" ? "spectators" : k === "chatEnabled" ? "chat" : k === "allowInvites" ? "invites" : "autoStart"}`)}
               </span>
             </label>
@@ -476,12 +475,12 @@ function CreateRoomDialog({ game, open, onClose, onCreated }: { game: GameType; 
         </div>
 
         {/* Group 4: Game-Specific Options */}
-        <fieldset className="panel-inset p-3.5 grid sm:grid-cols-2 gap-3">
-          <legend className="text-xs font-bold uppercase tracking-wider text-gold px-1">{t("create.gameOptions")}</legend>
+        <fieldset className="panel-inset p-4 grid sm:grid-cols-2 gap-3">
+          <legend className="text-xs font-extrabold uppercase tracking-wider text-gold px-1">{t("create.gameOptions")}</legend>
           {GAME_OPTIONS[game].map((opt) => (
             <div key={opt.key}>
               {opt.kind === "boolean" ? (
-                <label className="flex items-center gap-2.5 text-xs font-medium text-text-2 mt-4 rounded-lg bg-surface-2/70 border border-line/60 px-3 py-2 cursor-pointer">
+                <label className="flex items-center gap-2.5 text-xs font-semibold text-text-2 mt-4 rounded-xl bg-surface-2/75 border border-line/65 px-3.5 py-2.5 cursor-pointer hover:border-line-strong transition-colors">
                   <input type="checkbox" className="accent-[var(--color-primary)]" checked={Boolean(gameConfig[opt.key])} onChange={(e) => setGameConfig((g) => ({ ...g, [opt.key]: e.target.checked }))} />
                   {t(`opt.${opt.key}`)}
                 </label>
@@ -500,7 +499,7 @@ function CreateRoomDialog({ game, open, onClose, onCreated }: { game: GameType; 
                           <option key={String(v)} value={String(v)}>{typeof v === "number" ? v : t(`opt.values.${v}`)}</option>
                         ))}
                       </select>
-                      {opt.hints && <p className="mt-1 text-[11px] leading-snug text-muted">{t(`opt.hints.${String(gameConfig[opt.key])}`)}</p>}
+                      {opt.hints && <p className="mt-1.5 text-[11.5px] leading-snug text-muted">{t(`opt.hints.${String(gameConfig[opt.key])}`)}</p>}
                     </>
                   ) : (
                     <input
@@ -521,7 +520,7 @@ function CreateRoomDialog({ game, open, onClose, onCreated }: { game: GameType; 
         </fieldset>
 
         <ErrorText error={error} />
-        <button className="btn-primary h-11 w-full" disabled={busy}>
+        <button className="btn-primary btn-lg w-full" disabled={busy}>
           {t("create.submit")}
         </button>
       </form>

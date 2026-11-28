@@ -31,9 +31,9 @@ export default function Invite() {
 
   return (
     <div className="card overflow-hidden max-w-md mx-auto mt-8 fade-in">
-      <div className={`relative h-28 bg-gradient-to-br ${theme.headerBg} border-b border-line`}>
+      <div className={`relative h-30 bg-gradient-to-br ${theme.headerBg} border-b border-line`}>
         <GameArtwork game={validGame} className="w-full h-full" />
-        <span className={`chip absolute top-3 left-3 ${theme.badgeClass}`}>{t(`games.${validGame}.name`)}</span>
+        <span className={`chip absolute top-3.5 left-3.5 ${theme.badgeClass}`}>{t(`games.${validGame}.name`)}</span>
       </div>
       <div className="p-6 grid gap-4 text-center">
         <h1 className="text-xl font-black text-white">{room.name}</h1>
@@ -42,7 +42,7 @@ export default function Invite() {
           <UserName user={room.host} />
         </div>
         <button
-          className="btn-primary h-11 w-full"
+          className="btn-primary h-11.5 w-full"
           onClick={() =>
             post(`/api/rooms/${room.id}/join`, { inviteCode: code })
               .then(() => navigate(`/room/${room.id}`))

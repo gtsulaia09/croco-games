@@ -17,8 +17,8 @@ export interface LobbyMode {
 }
 
 /**
- * A premium game tile in the lobby: illustration on felt, title, short description, the modes
- * the game supports and clear Play / Practice actions for each.
+ * Trendy 2026 game bento card in the lobby: spotlighted card-art stage, crisp title,
+ * concise description, current leader badge, and effortless Play / Practice mode actions.
  */
 export function GameLobbyCard({
   title,
@@ -43,11 +43,14 @@ export function GameLobbyCard({
       <div className="lobby-card-art">
         {art}
         <span className="lobby-card-tag">
-          <Users size={12} /> {tag}
+          <Users size={12} className="text-primary" /> {tag}
         </span>
       </div>
       <div className="lobby-card-body">
-        <h3 className="lobby-card-title">{title}</h3>
+        <div className="lobby-card-head">
+          <h3 className="lobby-card-title">{title}</h3>
+          <span className="lobby-card-dot" aria-hidden="true" />
+        </div>
         <p className="lobby-card-desc">{description}</p>
 
         {leader?.leader && (
@@ -60,30 +63,39 @@ export function GameLobbyCard({
         )}
 
         <div className="lobby-modes">
-            <span className="lobby-modes-label">{t("lobby.modes")}</span>
-            {modes.map((m) => (
-              <div key={m.label} className="lobby-mode">
-                <div className="min-w-0">
-                  <div className="lobby-mode-name">{m.label}</div>
-                  {m.note && <div className="lobby-mode-note">{m.note}</div>}
-                </div>
-                <div className="flex gap-1.5 shrink-0">
-                  {m.playTo && (
-                    <Link to={m.playTo} className="btn-primary btn-sm" aria-label={`${t("lobby.play")} · ${m.label}`}>
-                      <Play size={12} className="fill-current" /> {t("lobby.play")}
-                    </Link>
-                  )}
-                  <Link
-                    to={m.practiceTo}
-                    className={m.playTo ? "btn-secondary btn-sm px-2.5" : "btn-primary btn-sm"}
-                    aria-label={`${t("lobby.practice")} · ${m.label}`}
-                    title={t("lobby.practice")}
-                  >
-                    <Dumbbell size={13} /> {m.playTo ? null : t("lobby.practiceShort")}
-                  </Link>
-                </div>
+          <span className="lobby-modes-label">{t("lobby.modes")}</span>
+          {modes.map((m) => (
+            <div key={m.label} className="lobby-mode">
+              <div className="min-w-0">
+                <div className="lobby-mode-name">{m.label}</div>
+                {m.note && <div className="lobby-mode-note">{m.note}</div>}
               </div>
-            ))}
+              <div className="flex gap-1.5 shrink-0">
+                {m.playTo && (
+                  <Link to={m.playTo} className="btn-primary btn-sm" aria-label={`${t("lobby.play")} · ${m.label}`}>
+                    <Play size={12} className="fill-current" /> {t("lobby.play")}
+                  </Link>
+                )}
+                <Link
+                  to={m.practiceTo}
+                  className={m.playTo ? "btn-secondary btn-sm px-3" : "btn-primary btn-sm"}
+                  aria-label={`${t("lobby.practice")} · ${m.label}`}
+                  title={t("lobby.practice")}
+                >
+                  {m.playTo ? (
+                    <>
+                      <Dumbbell size={13} />
+                      <span className="hidden sm:inline">{t("lobby.practiceShort")}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play size={12} className="fill-current" /> {t("lobby.practiceShort")}
+                    </>
+                  )}
+                </Link>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </li>

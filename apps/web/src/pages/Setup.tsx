@@ -85,15 +85,15 @@ export default function Setup() {
 
   return (
     <form onSubmit={(e) => void submit(e)} className="max-w-lg mx-auto mt-6 card overflow-hidden fade-in">
-      <div className="bg-gradient-to-br from-[#0e3627] via-surface-2 to-surface px-6 py-5 border-b border-line flex items-center gap-3.5">
-        <BrandMark size={38} />
+      <div className="hero-surface px-6 py-5 border-b border-line flex items-center gap-3.5">
+        <BrandMark size={40} />
         <div>
           <h1 className="text-xl font-black text-white">{t("setup.title")}</h1>
-          <p className="text-xs text-muted">{t("app.tagline")}</p>
+          <p className="text-xs text-muted mt-0.5">{t("app.tagline")}</p>
         </div>
       </div>
       <div className="p-6 grid gap-5">
-        <div className="flex items-center gap-3.5 rounded-xl bg-surface-3 border border-line p-3">
+        <div className="flex items-center gap-3.5 rounded-2xl bg-surface-3 border border-line p-3.5">
           <Avatar id={avatar} size={50} ring="primary" />
           <div className="min-w-0">
             <div className="font-bold text-white truncate">{username.trim() || t("setup.username")}</div>

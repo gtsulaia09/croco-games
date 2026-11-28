@@ -33,6 +33,8 @@ test.describe("performance and responsiveness", () => {
 
     const beforeJoker = loadedScripts.length;
     await page.goto("./#/practice/joker");
+    const startEn = page.getByRole("button", { name: "Start game" });
+    if (await startEn.isVisible()) await startEn.click();
     await expect(page.getByText("Your turn", { exact: true }).or(page.getByText(/Waiting for/))).toBeVisible({ timeout: 20_000 });
     const afterJoker = loadedScripts.slice(beforeJoker);
     expect(afterJoker.some((s) => /^joker-/.test(s))).toBe(true);
@@ -120,6 +122,12 @@ test.describe("performance and responsiveness", () => {
       for (const route of sampleRoutes) {
         await page.goto(route);
         await expect(page.locator("main")).toBeVisible();
+        if (route === "./#/practice/joker") {
+          const setupOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+          expect(setupOverflow, `ka ${vp.name} ${route} setup overflow`).toBeLessThanOrEqual(1);
+          const startKa = page.getByRole("button", { name: "თამაშის დაწყება" });
+          if (await startKa.isVisible()) await startKa.click();
+        }
         if (route.startsWith("./#/practice/")) {
           await expect(page.getByText("შენი სვლაა", { exact: true }).or(page.getByText(/სვლაზეა:/))).toBeVisible({ timeout: 20_000 });
         }

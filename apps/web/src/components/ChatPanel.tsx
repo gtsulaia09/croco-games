@@ -88,16 +88,11 @@ export function ChatPanel({
   roomId?: string;
   chatGame?: GameType;
   muted?: boolean;
-  /** Header title (default "ჩატი"). */
   title?: string;
-  /** Shown in the header instead of the message count (e.g. who is online). */
   meta?: ReactNode;
-  /** Shown instead of the input when sending is not possible. */
   disabledText?: string;
   className?: string;
-  /** Practice chat is local: there is nobody to report. */
   canReport?: boolean;
-  /** Shows a close button in the header (chat window). */
   onClose?: () => void;
 }) {
   const t = useT();
@@ -108,7 +103,6 @@ export function ChatPanel({
   const [picker, setPicker] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  /** Insert at the cursor (or append), keeping the text within the limit. */
   function insert(fragment: string) {
     const el = inputRef.current;
     const start = el?.selectionStart ?? text.length;
@@ -155,8 +149,8 @@ export function ChatPanel({
 
   return (
     <div className={`card flex flex-col h-full min-h-72 overflow-hidden ${className}`}>
-      <div className="px-3.5 py-2.5 border-b border-line bg-surface-2 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-sm font-bold text-white min-w-0">
+      <div className="px-4 py-3 border-b border-line bg-surface-2/75 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-sm font-extrabold text-white min-w-0">
           <MessageSquare size={15} className="text-primary shrink-0" />
           <span className="truncate">{title ?? t("chat.title")}</span>
         </div>
@@ -165,7 +159,7 @@ export function ChatPanel({
           {hasBots && (
             <button
               type="button"
-              className="btn-ghost btn-sm size-7 px-0"
+              className="btn-ghost btn-sm size-7.5 px-0 rounded-full"
               aria-pressed={hideBots}
               title={hideBots ? t("chat.showBots") : t("chat.hideBots")}
               aria-label={hideBots ? t("chat.showBots") : t("chat.hideBots")}
@@ -180,22 +174,22 @@ export function ChatPanel({
             </button>
           )}
           {onClose && (
-            <button type="button" className="btn-ghost btn-sm size-7 px-0" onClick={onClose} aria-label={t("common.close")} title={t("common.close")}>
+            <button type="button" className="btn-ghost btn-sm size-7.5 px-0 rounded-full" onClick={onClose} aria-label={t("common.close")} title={t("common.close")}>
               <X size={15} />
             </button>
           )}
         </div>
       </div>
 
-      <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-2.5 grid gap-2 content-start text-sm" aria-live="polite">
+      <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-3 grid gap-2 content-start text-sm" aria-live="polite">
         {visible.map((m) =>
           m.kind === "system" ? (
-            <div key={m.id} className="text-[11px] text-muted bg-surface-3/80 border border-line/60 rounded-lg px-2.5 py-1 text-center">
+            <div key={m.id} className="text-[11px] font-medium text-muted bg-surface-3/85 border border-line/65 rounded-full px-3 py-1 text-center justify-self-center max-w-full truncate">
               {m.key ? t(`chat.system.${m.key}`, m.params) : m.text}
             </div>
           ) : m.kind === "bot" ? (
-            <div key={m.id} className="flex gap-2 items-start rounded-xl px-2.5 py-2 border bg-accent/8 border-accent/25">
-              <span className="size-6 rounded-full bg-secondary/60 border border-accent/40 text-accent flex items-center justify-center shrink-0" aria-hidden="true">
+            <div key={m.id} className="flex gap-2.5 items-start rounded-2xl px-3 py-2 border bg-accent/8 border-accent/22">
+              <span className="size-6 rounded-full bg-surface-3 border border-accent/35 text-accent flex items-center justify-center shrink-0" aria-hidden="true">
                 <Bot size={13} />
               </span>
               <div className="min-w-0 flex-1">
@@ -211,11 +205,11 @@ export function ChatPanel({
           ) : (
             <div
               key={m.id}
-              className={`group flex gap-2 items-start rounded-xl px-2.5 py-2 border ${
-                m.user?.id === myUserId ? "bg-primary/10 border-primary/25" : "bg-surface-2/80 border-line/60"
+              className={`group flex gap-2.5 items-start rounded-2xl px-3 py-2 border ${
+                m.user?.id === myUserId ? "bg-primary/10 border-primary/25" : "bg-surface-2/80 border-line/65"
               }`}
             >
-              <Avatar id={m.user?.avatar} size={24} />
+              <Avatar id={m.user?.avatar} size={25} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 text-[11px]">
                   <UserName user={m.user} you={m.user?.id === myUserId} className="font-bold text-text-2" />
@@ -239,7 +233,7 @@ export function ChatPanel({
         )}
       </div>
 
-      {notice && <p className="px-3.5 py-1 text-xs font-semibold text-primary bg-primary/10 border-t border-primary/25">{notice}</p>}
+      {notice && <p className="px-4 py-1.5 text-xs font-semibold text-primary bg-primary/10 border-t border-primary/25">{notice}</p>}
 
       {enabled && !muted ? (
         <div className="p-2.5 border-t border-line bg-surface-2/60 grid gap-2">
@@ -248,7 +242,7 @@ export function ChatPanel({
               <button
                 key={e}
                 type="button"
-                className="h-6 px-2 rounded-full bg-surface-3 border border-line text-[11px] font-bold text-text-2 hover:border-primary/50 hover:text-white transition-colors shrink-0"
+                className="h-6.5 px-2.5 rounded-full bg-surface-3 border border-line text-[11px] font-bold text-text-2 hover:border-primary/45 hover:text-white transition-colors shrink-0"
                 onClick={() => insert(`${text && !text.endsWith(" ") ? " " : ""}${e}`)}
                 aria-label={e}
               >
@@ -266,7 +260,7 @@ export function ChatPanel({
           >
             <button
               type="button"
-              className={`btn-secondary h-9 w-9 px-0 shrink-0 ${picker ? "border-primary/60 text-primary" : ""}`}
+              className={`btn-secondary h-9.5 w-9.5 px-0 shrink-0 ${picker ? "border-primary/60 text-primary" : ""}`}
               onClick={() => setPicker((v) => !v)}
               aria-expanded={picker}
               aria-label={t("chat.emoji")}
@@ -276,7 +270,7 @@ export function ChatPanel({
             </button>
             <input
               ref={inputRef}
-              className="input h-9 text-xs"
+              className="input h-9.5 text-xs"
               value={text}
               maxLength={MAX_TEXT}
               placeholder={t("chat.placeholder")}
@@ -284,7 +278,7 @@ export function ChatPanel({
               onKeyDown={(e) => e.key === "Escape" && picker && (e.stopPropagation(), setPicker(false))}
               aria-label={t("chat.placeholder")}
             />
-            <button className="btn-primary h-9 px-3" aria-label={t("common.send")}>
+            <button className="btn-primary h-9.5 px-3.5" aria-label={t("common.send")}>
               <Send size={14} />
             </button>
           </form>

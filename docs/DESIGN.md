@@ -1,7 +1,8 @@
-# Croco Games — Table & Card Design (2026 premium redesign)
+# Croco Games — Studio UI & Table Design (2026 Redesign)
 
-The card games look like a premium physical card table; the app around them is a calm, dark,
-modern product. This page is the reference for anyone changing the lobby or a game board.
+The card games look like a tactile luxury card table; the app around them is an effortless, modern
+obsidian-slate gaming lounge. This page is the reference for anyone changing the lobby, shell or a
+game board.
 
 ## Games offered in this phase
 
@@ -15,19 +16,20 @@ match history all keep working, and a game comes back by adding it to `VISIBLE_G
 
 | Token                                                           | Value                             | Use                                                   |
 | --------------------------------------------------------------- | --------------------------------- | ----------------------------------------------------- |
-| `--color-bg`                                                    | `#0b1220`                         | Page background                                       |
-| `--color-bg-elevated` / `--color-surface` / `--color-surface-2` | `#0f1829` / `#131f32` / `#18263b` | Header, panels, raised panels                         |
-| `--color-felt` / `--color-felt-hi`                              | `#075b45` / `#0c7657`             | Card table felt                                       |
-| `--color-primary`                                               | `#39d6b0`                         | Primary actions, your turn, playable cards, selection |
-| `--color-lime`                                                  | `#a7f36b`                         | Positive results only (a met declaration)             |
-| `--color-gold`                                                  | `#d9b56d`                         | Scores, totals, trump, dealer chip, winners           |
-| `--color-danger`                                                | `#f0616d`                         | Penalties, negative scores, urgent timer              |
-| `--color-text` / `--color-muted`                                | `#f5f7fa` / `#9aa8b8`             | Text                                                  |
+| `--color-bg`                                                    | `#080c14`                         | Obsidian page canvas                                  |
+| `--color-bg-elevated` / `--color-surface` / `--color-surface-2` | `#0d1320` / `#121a2b` / `#172237` | Header, bento cards, raised surfaces                  |
+| `--color-felt` / `--color-felt-hi`                              | `#08664b` / `#0f8764`             | Tourmaline-emerald card table felt                    |
+| `--color-primary`                                               | `#22e59b`                         | Primary actions, your turn, playable cards, selection |
+| `--color-lime`                                                  | `#9ef564`                         | Positive results (met declarations)                   |
+| `--color-gold`                                                  | `#f4c566`                         | Scores, totals, trump, dealer chip, winners           |
+| `--color-danger`                                                | `#ff5c72`                         | Penalties, negative scores, urgent timer              |
+| `--color-text` / `--color-muted`                                | `#f8fafc` / `#8b9bb4`             | Primary & secondary text                              |
 
-Accent colours are used sparingly: teal = "you can act", gold = "score / winner", lime =
-"made it", red = "penalty". Buttons (`.btn-primary`, `.btn-secondary`, `.btn-gold`,
-`.btn-danger`, `.btn-ghost`) have normal, hover, active, disabled and loading
-(`data-loading="true"`) states.
+Accent colours are used purposefully: emerald-mint = "you can act / primary CTA", champagne gold =
+"score / trump / leader", lime = "made it", coral-rose = "penalty / danger". Segmented pill bars
+(`.seg-bar` / `.seg-pill`) unify navigation, room filters, leaderboard tabs, and admin tabs.
+Buttons (`.btn-primary`, `.btn-secondary`, `.btn-gold`, `.btn-danger`, `.btn-ghost`) support
+normal, hover, active, disabled and loading (`data-loading="true"`) states.
 
 ## Where things are
 

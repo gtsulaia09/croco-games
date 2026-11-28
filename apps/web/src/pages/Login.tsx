@@ -53,12 +53,12 @@ export default function Login() {
 
   return (
     <div className="max-w-md mx-auto mt-6 card overflow-hidden fade-in">
-      <div className="bg-gradient-to-br from-[#0e3627] via-surface-2 to-surface px-6 pt-6 pb-5 border-b border-line text-center">
-        <div className="inline-flex justify-center mb-3">
-          <BrandMark size={44} />
+      <div className="hero-surface px-6 pt-7 pb-6 border-b border-line text-center">
+        <div className="inline-flex justify-center mb-3.5">
+          <BrandMark size={46} />
         </div>
         <h1 className="text-xl font-black tracking-tight text-white">{t("auth.title")}</h1>
-        <p className="text-xs sm:text-sm text-muted mt-1">{t("auth.subtitle")}</p>
+        <p className="text-xs sm:text-sm text-muted mt-1.5 leading-relaxed">{t("auth.subtitle")}</p>
       </div>
       <div className="p-6">
         <div className="grid gap-2.5">
@@ -71,7 +71,7 @@ export default function Login() {
             </button>
           )}
         </div>
-        <div className="flex items-center gap-3 my-5 text-xs text-muted uppercase tracking-wider">
+        <div className="flex items-center gap-3 my-5 text-xs text-muted uppercase tracking-wider font-semibold">
           <span className="h-px bg-line flex-1" /> {t("auth.or")} <span className="h-px bg-line flex-1" />
         </div>
         <form onSubmit={(e) => void submit(e)} className="grid gap-3.5" noValidate>
@@ -101,13 +101,13 @@ export default function Login() {
               </div>
             </div>
           )}
-          {error && <p role="alert" className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-xl px-3 py-2">{error}</p>}
-          {message && <p role="status" className="text-sm text-primary bg-primary/10 border border-primary/30 rounded-xl px-3 py-2">{message}</p>}
-          <button className="btn-primary h-11 w-full" disabled={busy || !email}>
+          {error && <p role="alert" className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-2xl px-3.5 py-2.5">{error}</p>}
+          {message && <p role="status" className="text-sm text-primary bg-primary/10 border border-primary/30 rounded-2xl px-3.5 py-2.5">{message}</p>}
+          <button className="btn-primary h-11.5 w-full" disabled={busy || !email}>
             {mode === "login" ? t("auth.login") : mode === "register" ? t("auth.register") : t("common.send")}
           </button>
         </form>
-        <div className="flex flex-wrap justify-between gap-2 mt-5 pt-4 border-t border-line/70 text-xs font-semibold">
+        <div className="flex flex-wrap justify-between gap-2 mt-5 pt-4 border-t border-line/70 text-xs font-bold">
           <button className="text-primary hover:underline" onClick={() => setMode(mode === "login" ? "register" : "login")}>
             {mode === "login" ? `${t("auth.noAccount")} ${t("auth.register")}` : `${t("auth.haveAccount")} ${t("auth.login")}`}
           </button>

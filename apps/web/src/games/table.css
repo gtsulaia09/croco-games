@@ -7,18 +7,18 @@
  * ============================================================================ */
 
 .board {
-  --brand: #189541;
-  --brand-hi: #27b654;
-  --navy: #00141e;
-  --navy-2: #001e28;
-  --navy-3: #072c38;
-  --navy-4: #093948;
-  --ink: #d9e3ef;
-  --ink-2: #a3acb7;
-  --gold: #e2c27a;
-  --gold-deep: #c0ab7d;
-  --select: #f2c94c;
-  --danger: #d9443f;
+  --brand: #15c481;
+  --brand-hi: #22e59b;
+  --navy: #080c14;
+  --navy-2: #121a2b;
+  --navy-3: #0d1320;
+  --navy-4: #182338;
+  --ink: #f8fafc;
+  --ink-2: #8b9bb4;
+  --gold: #f4c566;
+  --gold-deep: #d4a74a;
+  --select: #f4c566;
+  --danger: #ff5c72;
   --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
   --dh: 30px;
   container-type: inline-size;
@@ -124,14 +124,14 @@ button.hud-chip:hover {
 }
 
 .turn-pill[data-state="mine"] {
-  background: linear-gradient(180deg, #1ea84b, #147d37);
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 4px 14px rgba(24, 149, 65, 0.35);
+  background: linear-gradient(180deg, #4bf0b0, #18d48c);
+  color: #032215;
+  border-color: transparent;
+  box-shadow: 0 6px 18px rgba(34, 229, 155, 0.3);
 }
 
 .turn-pill[data-state="mine"]::before {
-  background: #fff;
+  background: #032215;
   animation: turn-pulse 1.6s ease-in-out infinite;
 }
 
@@ -315,11 +315,11 @@ button.hud-chip:hover {
   gap: 9px;
   min-width: 0;
   max-width: 100%;
-  padding: 5px 13px 5px 5px;
+  padding: 5px 14px 5px 5px;
   border-radius: 999px;
-  background: rgba(0, 20, 30, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.38);
+  background: rgba(9, 14, 24, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.45);
   color: #fff;
   transition:
     border-color 0.25s,

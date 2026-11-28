@@ -12,8 +12,8 @@ export default function Verify() {
   if (status !== "needsVerification") return <Navigate to="/" replace />;
   return (
     <div className="max-w-md mx-auto mt-8 card overflow-hidden fade-in">
-      <div className="p-6 text-center bg-gradient-to-br from-[#0e3627] via-surface-2 to-surface border-b border-line">
-        <span className="size-12 rounded-2xl bg-primary/15 border border-primary/35 text-primary inline-flex items-center justify-center mb-3">
+      <div className="p-6 text-center hero-surface border-b border-line">
+        <span className="size-12 rounded-2xl bg-primary/14 border border-primary/35 text-primary inline-flex items-center justify-center mb-3">
           <MailCheck size={24} />
         </span>
         <h1 className="text-xl font-black text-white">{t("auth.verifyTitle")}</h1>

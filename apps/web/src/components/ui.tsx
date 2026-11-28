@@ -5,30 +5,30 @@ import { ApiError } from "../lib/api";
 import { useT } from "../i18n";
 
 const AVATAR_PALETTES = [
-  { bg: "#083d23", fg: "#00e676", accent: "#ffc845", shape: "crown" },
-  { bg: "#0e3554", fg: "#38bdf8", accent: "#e0f2fe", shape: "spade" },
-  { bg: "#4c1726", fg: "#fb7185", accent: "#fde68a", shape: "heart" },
-  { bg: "#38280e", fg: "#ffc845", accent: "#fef3c7", shape: "diamond" },
-  { bg: "#0f3d39", fg: "#2dd4bf", accent: "#ccfbf1", shape: "club" },
-  { bg: "#2b1c4a", fg: "#a78bfa", accent: "#ffc845", shape: "star" },
-  { bg: "#163345", fg: "#67e8f9", accent: "#00d95f", shape: "shield" },
-  { bg: "#45210e", fg: "#fb923c", accent: "#fef08a", shape: "bolt" },
-  { bg: "#0a3830", fg: "#34d399", accent: "#ffffff", shape: "hex" },
-  { bg: "#38183b", fg: "#e879f9", accent: "#fde68a", shape: "gem" },
-  { bg: "#19304f", fg: "#60a5fa", accent: "#ffc845", shape: "dice" },
-  { bg: "#382e0e", fg: "#facc15", accent: "#fef9c3", shape: "chip" },
-  { bg: "#114026", fg: "#22c55e", accent: "#dcfce7", shape: "spade" },
-  { bg: "#47171c", fg: "#f87171", accent: "#fee2e2", shape: "crown" },
-  { bg: "#113245", fg: "#22d3ee", accent: "#cffafe", shape: "star" },
-  { bg: "#2a1f42", fg: "#c084fc", accent: "#f3e8ff", shape: "diamond" },
-  { bg: "#332510", fg: "#f59e0b", accent: "#fef3c7", shape: "shield" },
-  { bg: "#0d3b32", fg: "#10b981", accent: "#ffc845", shape: "chip" },
-  { bg: "#1f2e47", fg: "#93c5fd", accent: "#dbeafe", shape: "bolt" },
-  { bg: "#45192b", fg: "#f472b6", accent: "#fce7f3", shape: "heart" },
-  { bg: "#133830", fg: "#5eead4", accent: "#ffc845", shape: "hex" },
-  { bg: "#361f13", fg: "#fdba74", accent: "#ffedd5", shape: "dice" },
-  { bg: "#182845", fg: "#818cf8", accent: "#e0e7ff", shape: "gem" },
-  { bg: "#113820", fg: "#86efac", accent: "#ffc845", shape: "club" },
+  { bg: "#093826", fg: "#22e59b", accent: "#f4c566", shape: "crown" },
+  { bg: "#0f2e4a", fg: "#5cc8ff", accent: "#e0f2fe", shape: "spade" },
+  { bg: "#421628", fg: "#ff5c72", accent: "#fde68a", shape: "heart" },
+  { bg: "#35260f", fg: "#f4c566", accent: "#fef3c7", shape: "diamond" },
+  { bg: "#0d3834", fg: "#2dd4bf", accent: "#ccfbf1", shape: "club" },
+  { bg: "#281b47", fg: "#a78bfa", accent: "#f4c566", shape: "star" },
+  { bg: "#142f42", fg: "#67e8f9", accent: "#22e59b", shape: "shield" },
+  { bg: "#3f2010", fg: "#fb923c", accent: "#fef08a", shape: "bolt" },
+  { bg: "#0a362e", fg: "#34d399", accent: "#ffffff", shape: "hex" },
+  { bg: "#351739", fg: "#e879f9", accent: "#fde68a", shape: "gem" },
+  { bg: "#172d4c", fg: "#60a5fa", accent: "#f4c566", shape: "dice" },
+  { bg: "#352b0f", fg: "#facc15", accent: "#fef9c3", shape: "chip" },
+  { bg: "#0f3c24", fg: "#4ade80", accent: "#dcfce7", shape: "spade" },
+  { bg: "#43161d", fg: "#fb7185", accent: "#fee2e2", shape: "crown" },
+  { bg: "#102f42", fg: "#22d3ee", accent: "#cffafe", shape: "star" },
+  { bg: "#271d40", fg: "#c084fc", accent: "#f3e8ff", shape: "diamond" },
+  { bg: "#302310", fg: "#f59e0b", accent: "#fef3c7", shape: "shield" },
+  { bg: "#0c3830", fg: "#10b981", accent: "#f4c566", shape: "chip" },
+  { bg: "#1d2c45", fg: "#93c5fd", accent: "#dbeafe", shape: "bolt" },
+  { bg: "#401829", fg: "#f472b6", accent: "#fce7f3", shape: "heart" },
+  { bg: "#11352d", fg: "#5eead4", accent: "#f4c566", shape: "hex" },
+  { bg: "#331e13", fg: "#fdba74", accent: "#ffedd5", shape: "dice" },
+  { bg: "#172642", fg: "#818cf8", accent: "#e0e7ff", shape: "gem" },
+  { bg: "#10351f", fg: "#86efac", accent: "#f4c566", shape: "club" },
 ] as const;
 
 function AvatarGlyph({ shape, fg, accent }: { shape: (typeof AVATAR_PALETTES)[number]["shape"]; fg: string; accent: string }) {
@@ -94,16 +94,16 @@ function AvatarGlyph({ shape, fg, accent }: { shape: (typeof AVATAR_PALETTES)[nu
       return (
         <>
           <rect x="5.5" y="5.5" width="13" height="13" rx="3" fill={fg} />
-          <circle cx="9.2" cy="9.2" r="1.4" fill="#060b11" />
-          <circle cx="12" cy="12" r="1.4" fill="#060b11" />
-          <circle cx="14.8" cy="14.8" r="1.4" fill="#060b11" />
+          <circle cx="9.2" cy="9.2" r="1.4" fill="#080c14" />
+          <circle cx="12" cy="12" r="1.4" fill="#080c14" />
+          <circle cx="14.8" cy="14.8" r="1.4" fill="#080c14" />
         </>
       );
     case "chip":
       return (
         <>
           <circle cx="12" cy="12" r="7.5" fill={fg} stroke={accent} strokeWidth="2" strokeDasharray="3 2.5" />
-          <circle cx="12" cy="12" r="3.5" fill="#060b11" />
+          <circle cx="12" cy="12" r="3.5" fill="#080c14" />
         </>
       );
   }
@@ -117,7 +117,7 @@ export function Avatar({ id, size = 36, title, ring }: { id: string | undefined;
     <span
       role="img"
       aria-label={title ?? "avatar"}
-      className={`inline-flex items-center justify-center rounded-full shrink-0 border border-white/20 overflow-hidden shadow-md ${ringCls}`}
+      className={`inline-flex items-center justify-center rounded-full shrink-0 border border-white/18 overflow-hidden shadow-sm ${ringCls}`}
       style={{ width: size, height: size, background: p.bg }}
     >
       <svg width={size * 0.78} height={size * 0.78} viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -130,9 +130,9 @@ export function Avatar({ id, size = 36, title, ring }: { id: string | undefined;
 export function StatusDot({ status }: { status: "online" | "in_game" | "away" | "offline" | string }) {
   const cls =
     status === "online"
-      ? "bg-primary shadow-[0_0_8px_rgba(0,217,95,0.9)]"
+      ? "bg-primary shadow-[0_0_8px_rgba(34,229,155,0.85)]"
       : status === "in_game"
-        ? "bg-gold shadow-[0_0_8px_rgba(255,200,69,0.85)]"
+        ? "bg-gold shadow-[0_0_8px_rgba(244,197,102,0.85)]"
         : status === "away"
           ? "bg-warning"
           : "bg-muted/40";
@@ -141,7 +141,7 @@ export function StatusDot({ status }: { status: "online" | "in_game" | "away" | 
 
 export function AdminBadge() {
   return (
-    <span className="chip bg-gold/18 text-gold border border-gold/45 h-5 px-2 text-[10px]">
+    <span className="chip bg-gold/16 text-gold border border-gold/40 h-5 px-2 text-[10px]">
       <Shield size={10} /> Admin
     </span>
   );
@@ -154,7 +154,7 @@ export function UserName({ user, you, className = "" }: { user: PublicUser | und
     <span className={`inline-flex items-center gap-1.5 min-w-0 ${className}`}>
       <span className="truncate">{user.username}</span>
       {user.badges.admin && <AdminBadge />}
-      {!user.badges.admin && user.badges.moderator && <span className="chip bg-accent/15 text-accent border border-accent/35 h-5 px-2 text-[10px]">{t("common.moderator")}</span>}
+      {!user.badges.admin && user.badges.moderator && <span className="chip bg-accent/14 text-accent border border-accent/35 h-5 px-2 text-[10px]">{t("common.moderator")}</span>}
       {you && <span className="text-muted text-[11px] font-normal">({t("common.you")})</span>}
     </span>
   );
@@ -163,8 +163,8 @@ export function UserName({ user, you, className = "" }: { user: PublicUser | und
 export function BotBadge({ difficulty }: { difficulty?: string }) {
   const t = useT();
   return (
-    <span className="chip bg-secondary/45 text-text-2 border border-line-strong h-5 px-2 text-[10px]">
-      <Bot size={11} />
+    <span className="chip bg-surface-3 text-text-2 border border-line-strong h-5 px-2 text-[10px]">
+      <Bot size={11} className="text-accent" />
       {t("common.bot")}
       {difficulty ? ` · ${t(`difficulty.${difficulty}`)}` : ""}
     </span>
@@ -174,7 +174,7 @@ export function BotBadge({ difficulty }: { difficulty?: string }) {
 export function Spinner({ label }: { label?: string }) {
   const t = useT();
   return (
-    <div className="flex items-center justify-center gap-3 py-10 text-muted text-sm" role="status">
+    <div className="flex items-center justify-center gap-3 py-12 text-muted text-sm" role="status">
       <span className="size-5 rounded-full border-2 border-line-strong border-t-primary animate-spin" />
       <span>{label ?? t("common.loading")}</span>
     </div>
@@ -189,7 +189,7 @@ export function ErrorText({ error }: { error: unknown }) {
   else if (typeof error === "string") key = error.startsWith("errors.") ? error : `errors.${error}`;
   const text = t(key);
   return (
-    <p role="alert" className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-xl px-3.5 py-2">
+    <p role="alert" className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-2xl px-4 py-2.5">
       {text.startsWith("errors.") ? t("errors.generic") : text}
     </p>
   );
@@ -212,16 +212,16 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
   }, [open, onClose]);
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 p-0 sm:p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/72 p-0 sm:p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div
         ref={ref}
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`card w-full ${wide ? "sm:max-w-2xl" : "sm:max-w-md"} max-h-[92dvh] overflow-y-auto rounded-b-none sm:rounded-2xl border-line-strong fade-in`}
+        className={`card w-full ${wide ? "sm:max-w-2xl" : "sm:max-w-md"} max-h-[92dvh] overflow-y-auto rounded-b-none sm:rounded-3xl border-line-strong fade-in`}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-line bg-surface-2">
-          <h2 className="font-bold text-base tracking-tight">{title}</h2>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-line bg-surface-2/80">
+          <h2 className="font-extrabold text-base tracking-tight text-white">{title}</h2>
           <button className="btn-ghost btn-sm size-8 px-0 rounded-full" onClick={onClose} aria-label="close">
             <X size={16} />
           </button>
@@ -234,9 +234,9 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
 
 export function EmptyState({ children, icon }: { children: ReactNode; icon?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 text-center text-muted py-12 px-4 text-sm">
-      {icon && <div className="size-11 rounded-full bg-surface-3 border border-line flex items-center justify-center text-muted">{icon}</div>}
-      <p className="max-w-sm">{children}</p>
+    <div className="flex flex-col items-center justify-center gap-2.5 text-center text-muted py-12 px-4 text-sm">
+      {icon && <div className="size-12 rounded-2xl bg-surface-3 border border-line flex items-center justify-center text-muted">{icon}</div>}
+      <p className="max-w-sm leading-relaxed">{children}</p>
     </div>
   );
 }
@@ -317,9 +317,9 @@ export function Section({ title, subtitle, action, icon, children }: { title: st
     <section className="card p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4 gap-2">
         <div className="flex items-center gap-2.5 min-w-0">
-          {icon && <span className="size-8 rounded-lg bg-primary/14 border border-primary/30 text-primary flex items-center justify-center shrink-0">{icon}</span>}
+          {icon && <span className="size-8.5 rounded-xl bg-primary/12 border border-primary/28 text-primary flex items-center justify-center shrink-0">{icon}</span>}
           <div className="min-w-0">
-            <h2 className="font-bold text-sm sm:text-base text-white tracking-tight truncate">{title}</h2>
+            <h2 className="font-extrabold text-sm sm:text-base text-white tracking-tight truncate">{title}</h2>
             {subtitle && <p className="text-xs text-muted truncate">{subtitle}</p>}
           </div>
         </div>

@@ -118,21 +118,23 @@ export default function Practice() {
   const t = useT();
   if (!isGameType(gameType)) {
     return (
-      <div className="grid gap-4 fade-in">
-        <div className="flex items-center gap-3">
-          <span className="size-11 rounded-2xl bg-primary/12 border border-primary/30 text-primary flex items-center justify-center shrink-0">
-            <Dumbbell size={20} />
-          </span>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white">{t("practice.title")}</h1>
-            <p className="text-sm text-muted">{t("practice.choose")}</p>
+      <div className="grid gap-5 fade-in">
+        <section className="card hero-surface p-5 sm:p-6 flex flex-col gap-4">
+          <div className="flex items-center gap-3.5">
+            <span className="size-12 rounded-2xl bg-primary/14 border border-primary/30 text-primary flex items-center justify-center shrink-0">
+              <Dumbbell size={22} />
+            </span>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">{t("practice.title")}</h1>
+              <p className="text-sm text-text-2/85 mt-0.5">{t("practice.choose")}</p>
+            </div>
           </div>
-        </div>
 
-        <p className="rounded-xl border border-warning/30 bg-warning/8 px-3.5 py-2 text-xs sm:text-sm text-text-2 flex items-center gap-2">
-          <Info size={14} className="text-warning shrink-0" />
-          <span>{t("demo.practiceBanner")}</span>
-        </p>
+          <p className="rounded-xl border border-warning/28 bg-warning/8 px-3.5 py-2 text-xs sm:text-sm text-text-2 flex items-center gap-2.5">
+            <Info size={14} className="text-warning shrink-0" />
+            <span>{t("demo.practiceBanner")}</span>
+          </p>
+        </section>
 
         <LobbyGrid online={false} />
       </div>
@@ -224,7 +226,7 @@ function PracticeGame({ gameType }: { gameType: GameType }) {
 
   return (
     <div className="grid gap-2.5 min-w-0 fade-in">
-      {/* Compact table bar: back, game, ruleset, new game; the practice notice stays visible but small */}
+      {/* Compact table bar: back, game, ruleset, new game; the practice notice stays visible */}
       <div className="practice-bar">
         <Link to="/practice" className="btn-ghost btn-sm px-2.5" aria-label={t("common.back")}>
           <ArrowLeft size={15} /> <span className="hidden sm:inline">{t("common.back")}</span>
@@ -260,17 +262,17 @@ function PracticeGame({ gameType }: { gameType: GameType }) {
       ) : (
         <>
           {humanOut && !engine.isOver(state) && (
-            <div className="card p-3 border-danger/45 bg-danger/10 text-sm flex flex-wrap items-center gap-3">
-              <span className="font-semibold text-white">{t("practice.busted")}</span>
+            <div className="card p-3.5 border-danger/45 bg-danger/10 text-sm flex flex-wrap items-center gap-3">
+              <span className="font-bold text-white">{t("practice.busted")}</span>
               <button className="btn-primary btn-sm ml-auto" onClick={newGame}>
                 <RotateCcw size={13} /> {t("practice.newGame")}
               </button>
             </div>
           )}
           {engine.isOver(state) && (
-            <div className="card p-3 border-gold/50 bg-gold/10 text-sm flex flex-wrap items-center gap-3">
+            <div className="card p-3.5 border-gold/50 bg-gold/10 text-sm flex flex-wrap items-center gap-3">
               <Trophy size={16} className="text-gold shrink-0" />
-              <span className="font-bold text-white">
+              <span className="font-extrabold text-white">
                 {t("game.finished")} — {t("game.placement")}: #{engine.outcome(state).placements[0]} / {players}
               </span>
               <button className="btn-gold btn-sm ml-auto" onClick={newGame}>
